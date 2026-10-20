@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algamar — Como funciona</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/como-funciona.css" />
+  </head>
+  <body>
+    <div class="topbar" id="topbar"></div>
+    <div class="topbar-spacer"></div>
+    <canvas id="plancton" aria-hidden="true"></canvas>
+
+    <header class="header" id="siteHeader">
+      <div class="container header__inner">
+        <a
+          href="../index.html"
+          class="header__logo"
+          aria-label="Algamar — página inicial"
+        >
+          <img src="../../shared/assets/LogoEscura.png" alt="Algamar" />
+        </a>
+
+        <nav class="nav">
+          <ul class="nav__list">
+            <li>
+              <a href="../index.html" class="nav__link">Página inicial</a>
+            </li>
+            <li>
+              <a href="o-que-preve.html" class="nav__link">O que prevê</a>
+            </li>
+            <li>
+              <a href="como-funciona.html" class="nav__link nav__link--active"
+                >Como funciona</a
+              >
+            </li>
+          </ul>
+        </nav>
+
+        <a href="../../software/pages/login.html" class="btn btn--primary header__cta">
+          Acessar Software
+          <img class="btn__icon" src="../assets/icon-arrow-white.svg" alt="" />
+        </a>
+
+        <button
+          class="hamburger"
+          id="hamburgerBtn"
+          aria-expanded="false"
+          aria-controls="mobileNav"
+          aria-label="Abrir menu de navegação"
+        >
+          <span class="hamburger__bar"></span>
+          <span class="hamburger__bar"></span>
+          <span class="hamburger__bar"></span>
+        </button>
+      </div>
+
+      <div class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav__list">
+          <li><a href="../index.html" class="nav__link">Página inicial</a></li>
+          <li>
+            <a href="o-que-preve.html" class="nav__link">O que prevê</a>
+          </li>
+          <li>
+            <a href="como-funciona.html" class="nav__link nav__link--active"
+              >Como funciona</a
+            >
+          </li>
+        </ul>
+        <a href="../../software/pages/login.html" class="btn btn--primary">
+          Acessar Software
+          <img class="btn__icon" src="../assets/icon-arrow-white.svg" alt="" />
+        </a>
+      </div>
+    </header>
+
+    <aside class="side-rail" id="sideRail" aria-hidden="true">
+      <span class="side-rail__label" id="railLabel">Início</span>
+      <div class="side-rail__track">
+        <div class="side-rail__fill" id="railFill"></div>
+        <span class="side-rail__marker" id="railMarker"></span>
+      </div>
+      <span class="side-rail__percent" id="railPercent">0%</span>
+    </aside>
+
+    <main>
+      <!-- Hero -->
+      <section
+        class="como-hero"
+        id="inicio"
+        data-checkpoint="0"
+        data-checkpoint-label="Início"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Como funciona
+          </p>
+          <h1 class="como-hero__title split-text" data-reveal>
+            A máquina por trás do alerta.
+          </h1>
+          <p class="como-hero__body reveal reveal-d2" data-reveal>
+            Cinco módulos separam o dado bruto da decisão sanitária. No meio
+            deles há um modelo que aprende com o histórico — mas que, por
+            escolha de projeto, nunca interdita nada sozinho.
+          </p>
+        </div>
+      </section>
+
+      <!-- Os cinco módulos -->
+      <section
+        class="como-section"
+        id="arquitetura"
+        data-checkpoint="10"
+        data-checkpoint-label="Arquitetura"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Arquitetura
+          </p>
+          <h2 class="como-heading split-text" data-reveal>
+            O caminho do dado até a decisão.
+          </h2>
+          <p class="como-body reveal reveal-d2" data-reveal>
+            Nada pula etapa. Uma contagem de células feita no microscópio hoje
+            de manhã percorre os cinco módulos antes de virar uma ordem de
+            suspensão de despesca.
+          </p>
+
+          <div class="como-modules__grid reveal reveal-d3" data-reveal>
+            <div class="como-module">
+              <div class="como-module__head">
+                <span class="como-module__num">01</span>
+                <span class="como-module__phase">Coleta</span>
+              </div>
+              <h3 class="como-module__title">Ingestão de dados</h3>
+              <p class="como-module__desc">
+                Recebe leituras de boias por API ou formulário manual,
+                contagens de fitoplâncton por estrato de coleta e laudos de
+                biotoxina dos laboratórios de referência.
+              </p>
+            </div>
+            <div class="como-module">
+              <div class="como-module__head">
+                <span class="como-module__num">02</span>
+                <span class="como-module__phase">Previsão</span>
+              </div>
+              <h3 class="como-module__title">Inteligência preditiva</h3>
+              <p class="como-module__desc">
+                Roda as simulações de crescimento populacional e de dispersão,
+                cruzando meteorologia em tempo real com a hidrodinâmica em
+                três escalas.
+              </p>
+            </div>
+            <div class="como-module">
+              <div class="como-module__head">
+                <span class="como-module__num">03</span>
+                <span class="como-module__phase">Regras</span>
+              </div>
+              <h3 class="como-module__title">Motor de regras</h3>
+              <p class="como-module__desc">
+                Compara os resultados com os limites regulatórios e alterna
+                cada região entre as três fases de alerta, disparando as
+                ações de cada uma.
+              </p>
+            </div>
+            <div class="como-module">
+              <div class="como-module__head">
+                <span class="como-module__num">04</span>
+                <span class="como-module__phase">Rastreio</span>
+              </div>
+              <h3 class="como-module__title">Rastreabilidade</h3>
+              <p class="como-module__desc">
+                Liga a decisão à cadeia produtiva: cadastro das unidades de
+                cultivo, bloqueio de guias de trânsito e cálculo de depuração
+                por espécie.
+              </p>
+            </div>
+            <div class="como-module">
+              <div class="como-module__head">
+                <span class="como-module__num">05</span>
+                <span class="como-module__phase">Alerta</span>
+              </div>
+              <h3 class="como-module__title">Vigilância e portal</h3>
+              <p class="como-module__desc">
+                Publica o status sanitário para a população, recebe
+                notificações de casos pelo SUS e denúncias georreferenciadas
+                de anomalias na costa.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quatro famílias de variáveis -->
+      <section
+        class="como-section como-section--mint"
+        id="variaveis"
+        data-checkpoint="24"
+        data-checkpoint-label="As variáveis"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Arquitetura
+          </p>
+          <h2 class="como-heading split-text" data-reveal>
+            Quatro famílias de variáveis.
+          </h2>
+          <p class="como-body reveal reveal-d2" data-reveal>
+            Elas não pesam igual. A pesquisa mostrou que os parâmetros
+            meteorológicos locais preveem melhor do que a leitura isolada de
+            clorofila por satélite nesta faixa do litoral — e o modelo foi
+            montado assim.
+          </p>
+
+          <div class="como-families__grid reveal reveal-d3" data-reveal>
+            <div class="como-family">
+              <p class="como-family__num">Família 01</p>
+              <h3 class="como-family__tag">Peso alto · gatilho principal</h3>
+              <ul class="como-family__list">
+                <li>Pressão atmosférica</li>
+                <li>Direção e velocidade do vento</li>
+                <li>Radiação solar</li>
+                <li>Nebulosidade</li>
+                <li>Precipitação acumulada</li>
+              </ul>
+            </div>
+            <div class="como-family">
+              <p class="como-family__num">Família 02</p>
+              <h3 class="como-family__tag">Peso alto · transporte</h3>
+              <ul class="como-family__list">
+                <li>Correntes de maré</li>
+                <li>Corrente do Brasil</li>
+                <li>Frentes e convergências</li>
+                <li>Ressurgência local</li>
+                <li>Estratificação da coluna</li>
+              </ul>
+            </div>
+            <div class="como-family">
+              <p class="como-family__num">Família 03</p>
+              <h3 class="como-family__tag">Peso médio · condição da água</h3>
+              <ul class="como-family__list">
+                <li>Temperatura</li>
+                <li>Salinidade</li>
+                <li>pH</li>
+                <li>Oxigênio dissolvido</li>
+                <li>Razões N:P, N:Si, P:Si</li>
+              </ul>
+            </div>
+            <div class="como-family">
+              <p class="como-family__num">Família 04</p>
+              <h3 class="como-family__tag">Rótulo · valor de referência</h3>
+              <ul class="como-family__list">
+                <li>Densidade celular por espécie</li>
+                <li>Estrato de coleta</li>
+                <li>Laudos de biotoxina</li>
+                <li>Histórico de interdições</li>
+                <li>Clorofila-a orbital</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="preve-note como-note reveal reveal-d4" data-reveal>
+            <div class="preve-note__bar"></div>
+            <p class="preve-note__text">
+              A família 04 não é só entrada: é o gabarito. Cada laudo de
+              laboratório que chega diz ao sistema se a previsão daquela
+              semana estava certa ou errada — o que torna o próprio
+              monitoramento de rotina a fonte de treino do modelo.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Um ciclo que não fecha nunca -->
+      <section
+        class="como-section"
+        id="ciclo"
+        data-checkpoint="38"
+        data-checkpoint-label="O ciclo"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Aprendizado de máquina
+          </p>
+          <h2 class="como-heading split-text" data-reveal>
+            Um ciclo que não fecha nunca.
+          </h2>
+          <p class="como-body reveal reveal-d2" data-reveal>
+            O modelo não é treinado uma vez e esquecido. Ele roda, erra,
+            recebe o laudo que prova o erro e volta para o treino com esse
+            caso incorporado.
+          </p>
+
+          <div class="como-cycle reveal reveal-d3" data-reveal>
+            <div class="como-cycle__diagram">
+              <svg
+                viewBox="0 0 300 300"
+                aria-hidden="true"
+                class="como-cycle__svg"
+              >
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="90"
+                  fill="none"
+                  stroke="var(--color-rail-track)"
+                  stroke-width="2"
+                />
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="90"
+                  fill="none"
+                  stroke="var(--color-teal)"
+                  stroke-width="2"
+                  stroke-dasharray="10 9"
+                  class="como-cycle__flow"
+                />
+                <g class="como-cycle__node">
+                  <circle cx="150" cy="60" r="7" fill="var(--color-teal)" />
+                  <text x="150" y="36" text-anchor="middle">HISTÓRICO</text>
+                </g>
+                <g class="como-cycle__node">
+                  <circle cx="240" cy="150" r="7" fill="var(--color-teal)" />
+                  <text x="252" y="154" text-anchor="start">TREINO</text>
+                </g>
+                <g class="como-cycle__node">
+                  <circle cx="150" cy="240" r="7" fill="var(--color-teal)" />
+                  <text x="150" y="266" text-anchor="middle">PREVISÃO</text>
+                </g>
+                <g class="como-cycle__node">
+                  <circle cx="60" cy="150" r="7" fill="var(--color-teal)" />
+                  <text x="48" y="154" text-anchor="end">LAUDO</text>
+                </g>
+              </svg>
+            </div>
+            <div class="como-cycle__steps">
+              <div class="como-cycle__step">
+                <p class="como-cycle__step-label">Etapa 01 · Série histórica</p>
+                <p class="como-cycle__step-desc">
+                  Anos de registros de floração, de laudos e das condições
+                  ambientais que os antecederam formam a base de exemplos.
+                </p>
+              </div>
+              <div class="como-cycle__step">
+                <p class="como-cycle__step-label">Etapa 02 · Treino</p>
+                <p class="como-cycle__step-desc">
+                  O modelo aprende quais combinações de vento, pressão,
+                  radiação e condição da água precederam florações reais — e
+                  quais não precederam nada.
+                </p>
+              </div>
+              <div class="como-cycle__step">
+                <p class="como-cycle__step-label">Etapa 03 · Previsão diária</p>
+                <p class="como-cycle__step-desc">
+                  Com os dados do dia, ele estima a probabilidade de floração
+                  por região e projeta o transporte da mancha para os dias
+                  seguintes.
+                </p>
+              </div>
+              <div class="como-cycle__step">
+                <p class="como-cycle__step-label">
+                  Etapa 04 · Confronto com o laudo
+                </p>
+                <p class="como-cycle__step-desc">
+                  Quando o resultado de laboratório chega, ele vira o
+                  veredito daquela previsão. Acertos e erros voltam para a
+                  base e o ciclo recomeça mais informado.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p class="como-fineprint reveal reveal-d4" data-reveal>
+            A arquitetura de cinco módulos, os limiares e as integrações vêm
+            da especificação de requisitos do projeto. O desenho interno do
+            modelo — algoritmo, janela temporal e forma de validação — ainda
+            está em definição e deve ser fechado com os dados reais de
+            campo.
+          </p>
+        </div>
+      </section>
+
+      <!-- O modelo sugere, a regra decide (dark) -->
+      <section
+        class="como-section como-section--ink"
+        id="decisao"
+        data-checkpoint="52"
+        data-checkpoint-label="A decisão"
+      >
+        <div class="container">
+          <p class="eyebrow eyebrow--on-ink reveal" data-reveal>
+            <span class="eyebrow__line"></span>A decisão de projeto mais
+            importante
+          </p>
+          <h2 class="como-heading como-heading--on-ink split-text" data-reveal>
+            O modelo sugere. A regra decide.
+          </h2>
+          <p class="como-body como-body--on-ink reveal reveal-d2" data-reveal>
+            Nenhuma interdição sanitária é disparada por probabilidade. O
+            Alerta 2 exige laudo de densidade celular acima do limite; o
+            Alerta 3 exige confirmação de biotoxina no tecido por
+            cromatografia. O aprendizado de máquina antecipa e prioriza — a
+            decisão que tira o sustento de alguém continua ancorada em
+            análise laboratorial.
+          </p>
+
+          <div class="como-decision__grid reveal reveal-d3" data-reveal>
+            <div class="como-decision__card">
+              <p class="como-decision__tag">O que o modelo faz</p>
+              <h3 class="como-decision__title">Antecipa e prioriza</h3>
+              <p class="como-decision__desc">
+                Aponta onde a floração é provável, com quantos dias de
+                antecedência, e ordena a fila de coleta para que o
+                laboratório analise primeiro os pontos de maior risco.
+              </p>
+              <ul class="como-decision__list">
+                <li>Estima probabilidade por região</li>
+                <li>Projeta o transporte da mancha</li>
+                <li>Sugere onde coletar primeiro</li>
+                <li>Propõe a ativação do Alerta 1</li>
+              </ul>
+            </div>
+            <div class="como-decision__card">
+              <p class="como-decision__tag">O que só a regra faz</p>
+              <h3 class="como-decision__title">Interdita e libera</h3>
+              <p class="como-decision__desc">
+                Compara resultados de laboratório com limites normatizados.
+                Sem laudo dentro do critério, nada é interditado — e nada é
+                liberado.
+              </p>
+              <ul class="como-decision__list">
+                <li>Dispara Alerta 2 e Alerta 3</li>
+                <li>Bloqueia guias de trânsito animal</li>
+                <li>Exige 3 análises de água para reverter</li>
+                <li>Exige 2 análises de tecido para reverter</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Matriz de acerto -->
+      <section
+        class="como-section"
+        id="acerto"
+        data-checkpoint="64"
+        data-checkpoint-label="Como medimos acerto"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Como medimos acerto
+          </p>
+          <h2 class="como-heading split-text" data-reveal>
+            Nem todo erro custa o mesmo.
+          </h2>
+          <p class="como-body reveal reveal-d2" data-reveal>
+            Um modelo de saúde pública não é avaliado só pela taxa de acerto
+            geral. O que importa é qual tipo de erro ele comete — e o sistema
+            é calibrado assumindo que um deles é bem mais caro que o outro.
+          </p>
+
+          <div class="como-matrix reveal reveal-d3" data-reveal>
+            <div class="como-matrix__corner"></div>
+            <div class="como-matrix__colhead">Floração aconteceu</div>
+            <div class="como-matrix__colhead">Não aconteceu</div>
+
+            <div class="como-matrix__rowhead">Previu risco</div>
+            <div class="como-matrix__cell">
+              <p class="como-matrix__cell-tag">Acerto</p>
+              <h3 class="como-matrix__cell-title">Prevenção a tempo</h3>
+              <p class="como-matrix__cell-desc">
+                A coleta foi direcionada ao ponto certo, o produtor
+                antecipou a despesca e a interdição chegou antes do
+                consumo.
+              </p>
+            </div>
+            <div class="como-matrix__cell">
+              <p class="como-matrix__cell-tag">Falso positivo</p>
+              <h3 class="como-matrix__cell-title">Susto e custo</h3>
+              <p class="como-matrix__cell-desc">
+                Coleta extra de laboratório e apreensão desnecessária.
+                Desgasta a confiança do produtor no sistema, mas ninguém
+                adoece.
+              </p>
+            </div>
+
+            <div class="como-matrix__rowhead">Não previu</div>
+            <div class="como-matrix__cell como-matrix__cell--critical">
+              <p class="como-matrix__cell-tag">Falso negativo</p>
+              <h3 class="como-matrix__cell-title">O erro que não se aceita</h3>
+              <p class="como-matrix__cell-desc">
+                Molusco contaminado chega à mesa sem que nada tenha sido
+                rastreado. É o erro que o sistema existe para evitar, e é
+                por ele que o limiar de disparo é deliberadamente sensível.
+              </p>
+            </div>
+            <div class="como-matrix__cell">
+              <p class="como-matrix__cell-tag">Acerto</p>
+              <h3 class="como-matrix__cell-title">Rotina preservada</h3>
+              <p class="como-matrix__cell-desc">
+                Nenhum alarme, nenhuma interrupção. A cadeia produtiva segue
+                e o monitoramento continua de fundo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Previsão só vale se o aviso chegar -->
+      <section
+        class="como-section como-section--mint"
+        id="saida"
+        data-checkpoint="78"
+        data-checkpoint-label="A saída"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Como medimos acerto
+          </p>
+          <h2 class="como-heading split-text" data-reveal>
+            Previsão só vale se o aviso chegar.
+          </h2>
+
+          <div class="como-stats__grid reveal reveal-d2" data-reveal>
+            <div class="como-stat-card">
+              <p class="como-stat-card__value">99,9%</p>
+              <p class="como-stat-card__label">
+                Disponibilidade do motor de alertas
+              </p>
+              <p class="como-stat-card__desc">
+                O envio automatizado de notificações é tratado como serviço
+                crítico, não como funcionalidade acessória.
+              </p>
+            </div>
+            <div class="como-stat-card">
+              <p class="como-stat-card__value">5 min</p>
+              <p class="como-stat-card__label">
+                Tempo até o disparo da notificação
+              </p>
+              <p class="como-stat-card__desc">
+                Do laudo confirmado até o SMS, e-mail ou WhatsApp sair para
+                o cadastro afetado.
+              </p>
+            </div>
+            <div class="como-stat-card">
+              <p class="como-stat-card__value">2FA</p>
+              <p class="como-stat-card__label">
+                Autenticação de acesso ao portal
+              </p>
+              <p class="como-stat-card__desc">
+                Login de vigilância sanitária e gestores exige segundo
+                fator, dado o peso da decisão que o sistema apoia.
+              </p>
+            </div>
+          </div>
+
+          <div class="como-integrations__list reveal reveal-d3" data-reveal>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name">SMS e WhatsApp</span>
+              <span class="como-integration-row__desc"
+                >Canal direto com maricultores e extratores cadastrados.</span
+              >
+              <span class="como-integration-row__tag">Saída</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name"
+                >E-mail institucional</span
+              >
+              <span class="como-integration-row__desc"
+                >Vigilâncias sanitárias e epidemiológicas do SUS.</span
+              >
+              <span class="como-integration-row__tag">Saída</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name">GEDAVE · CDA/SAA</span>
+              <span class="como-integration-row__desc"
+                >Bloqueio automático de guias de trânsito animal de área
+                interditada.</span
+              >
+              <span class="como-integration-row__tag">Integração</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name">PGA · MAPA</span>
+              <span class="como-integration-row__desc"
+                >Gestão agropecuária e rastreabilidade dos lotes de
+                bivalves.</span
+              >
+              <span class="como-integration-row__tag">Integração</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name"
+                >RENAQUA e LAQUA</span
+              >
+              <span class="como-integration-row__desc"
+                >Entrada credenciada dos laudos de ficotoxinas por HPLC,
+                LC-MS/MS e ELISA.</span
+              >
+              <span class="como-integration-row__tag">Entrada</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name">INMET e SimCosta</span>
+              <span class="como-integration-row__desc"
+                >Meteorologia e oceanografia em tempo real, principal
+                gatilho preditivo.</span
+              >
+              <span class="como-integration-row__tag">Entrada</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name"
+                >Registro criptográfico</span
+              >
+              <span class="como-integration-row__desc"
+                >Histórico imutável das interdições, para impedir fraude de
+                lotes de área interditada.</span
+              >
+              <span class="como-integration-row__tag">Opcional</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Continue (dark CTA) -->
+      <section
+        class="como-cta"
+        id="continue"
+        data-checkpoint="92"
+        data-checkpoint-label="Continue"
+      >
+        <div class="container como-cta__inner">
+          <p class="eyebrow eyebrow--on-ink como-cta__eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Continue
+          </p>
+          <h2 class="como-cta__title split-text" data-reveal>
+            Veja o que sai do outro lado.
+          </h2>
+          <p class="como-cta__desc reveal reveal-d2" data-reveal>
+            Os fenômenos previstos, os limiares por espécie e as três fases
+            de alerta.
+          </p>
+          <a href="o-que-preve.html" class="btn btn--nav como-cta__btn reveal reveal-d3" data-reveal>
+            O que o sistema prevê
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner reveal" data-reveal>
+        <div class="footer__logo" aria-hidden="true">
+          <img src="../../shared/assets/LogoBranca.png" alt="" />
+        </div>
+        <p class="footer__text">
+          Grupo de pesquisa em previsão de florações de algas nocivas no litoral
+          de São Paulo.<br />
+          Os resultados de pesquisa apresentados nesta página são uma simulação
+          para fins de demonstração.<br />
+          Em caso de suspeita de contaminação, procure a vigilância sanitária
+          local.
+        </p>
+      </div>
+    </footer>
+    <div class="footer__bar"></div>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/como-funciona.js"></script>
+  </body>
+</html>

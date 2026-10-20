@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algamar — Entrar no sistema</title>
+    <meta
+      name="description"
+      content="Acesso restrito ao painel Algamar para órgãos conveniados e equipes de campo."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+    <link rel="stylesheet" href="../css/login.css" />
+    <script src="../js/api-config.js"></script>
+    <script src="../js/api-client.js"></script>
+  </head>
+  <body class="login-body">
+    <div class="login-page">
+      <section class="login-visual">
+        <img
+          class="login-visual__coastline"
+          src="../assets/login-coastline.svg"
+          alt=""
+          aria-hidden="true"
+        />
+        <div class="login-visual__lines" aria-hidden="true"></div>
+
+        <a
+          href="../../site/index.html"
+          class="login-visual__logo"
+          aria-label="Algamar — página inicial"
+        >
+          <img src="../../shared/assets/LogoEscura.png" alt="Algamar" />
+        </a>
+
+        <div class="login-visual__bottom">
+          <p class="login-visual__eyebrow">Algamar – SP • Litoral Paulista</p>
+          <h1 class="login-visual__headline">
+            Onde a água vai virar, e quando.
+          </h1>
+          <p class="login-visual__caption">
+            Previsão de florações de algas nocivas em 15 estações costeiras
+          </p>
+        </div>
+      </section>
+
+      <section class="login-panel">
+        <div class="login-card">
+          <h2 class="login-card__title">Entrar no sistema</h2>
+          <p class="login-card__subtitle">
+            Acesso restrito a órgãos conveniados e equipes de campo.
+          </p>
+
+          <form class="login-form" id="loginForm" novalidate>
+            <div class="login-field">
+              <label for="loginEmail">E-mail institucional</label>
+              <input
+                type="email"
+                id="loginEmail"
+                name="email"
+                autocomplete="username"
+                placeholder="nome@orgao.sp.gov.br"
+                required
+              />
+            </div>
+
+            <div class="login-field">
+              <label for="loginPassword">Senha</label>
+              <input
+                type="password"
+                id="loginPassword"
+                name="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+
+            <p class="login-form__error" id="loginError" role="alert" hidden></p>
+
+            <button type="submit" class="login-submit" id="loginSubmit">
+              Entrar
+            </button>
+          </form>
+
+          <p class="login-card__signup">
+            Não tem uma conta?
+            <a href="criar-conta.html" class="login-card__link">Criar conta</a>
+          </p>
+
+          <hr class="login-card__divider" />
+
+          <p class="login-card__disclaimer">
+            Login integrado à API do Algamar. Em produção, o acesso usará
+            <strong>SSO gov.br</strong>
+            + segundo fator obrigatório, com permissões por perfil e registro
+            de auditoria.
+          </p>
+
+          <button type="button" class="login-demo-btn" id="loginDemoBtn">
+            Entrar em modo demonstração (sem API)
+          </button>
+          <p class="login-demo-hint">
+            Use enquanto o backend não estiver no ar. Nenhum dado será real.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <script src="../js/login.js" defer></script>
+  </body>
+</html>

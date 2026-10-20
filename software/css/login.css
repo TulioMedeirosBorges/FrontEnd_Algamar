@@ -1,0 +1,351 @@
+/* ==========================================================================
+   Login — tokens locais
+   ========================================================================== */
+:root {
+  --login-navy-deep: #0b3947;
+  --login-navy-darker: #0a2c37;
+  --login-field-bg: #062028;
+  --login-field-border: var(--color-teal);
+  --login-mint: #7fe3d0;
+  --login-muted: #8fb0b6;
+  --login-sand: #d5cfbc;
+  --login-line: #115266;
+}
+
+/* ==========================================================================
+   Layout base — preenche exatamente a tela, sem scroll, em qualquer tamanho
+   ========================================================================== */
+html,
+body.login-body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+body.login-body {
+  margin: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--login-navy-darker);
+  color: var(--color-white);
+  font-family: var(--font-ui);
+}
+
+.login-page {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+.login-page > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ==========================================================================
+   Painel visual (esquerda)
+   ========================================================================== */
+.login-visual {
+  position: relative;
+  flex: 0 0 52.7%;
+  height: 100%;
+  background: var(--login-navy-deep);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+}
+
+.login-visual__coastline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: 0;
+}
+
+.login-visual__lines {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.9;
+  background-image: url("../assets/login-wave-line.svg");
+  background-repeat: repeat-y;
+  background-position: top center;
+  background-size: 100% 14.5%;
+}
+
+.login-visual__logo {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-self: flex-start;
+  flex: none;
+  padding: clamp(12px, 3vh, 32px) clamp(20px, 3.7vw, 40px) 0;
+}
+.login-visual__logo img {
+  width: clamp(40px, min(6vw, 6.5vh), 76px);
+  height: auto;
+}
+
+.login-visual__bottom {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  flex: none;
+  padding: 0 clamp(20px, 3.7vw, 40px) clamp(14px, 3.4vh, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(4px, 1.3vh, 16px);
+  overflow: hidden;
+}
+
+.login-visual__eyebrow {
+  font-family: var(--font-mono);
+  font-size: clamp(10px, min(1.1vw, 1.9vh), 20px);
+  color: var(--color-white);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.login-visual__headline {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-variation-settings: "opsz" 96;
+  color: var(--color-white);
+  font-size: clamp(22px, min(4.4vw, 5.6vh), 64px);
+  line-height: 1.08;
+  max-width: 11ch;
+}
+
+.login-visual__caption {
+  font-family: var(--font-mono);
+  font-size: clamp(9px, min(0.95vw, 1.5vh), 18px);
+  color: var(--color-white);
+  text-transform: uppercase;
+  line-height: 1.35;
+  max-width: 40ch;
+}
+
+/* ==========================================================================
+   Painel do formulário (direita)
+   ========================================================================== */
+.login-panel {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  background: var(--login-navy-darker);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(10px, 5vh, 64px) clamp(20px, 6vw, 64px);
+  overflow: hidden;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 480px;
+  min-width: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.login-card__title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-variation-settings: "opsz" 14;
+  color: var(--color-white);
+  font-size: clamp(18px, min(2vw, 3.2vh), 32px);
+  margin-bottom: clamp(2px, 0.6vh, 8px);
+}
+
+.login-card__subtitle {
+  font-family: var(--font-heading);
+  font-variation-settings: "opsz" 14;
+  color: var(--login-muted);
+  font-size: clamp(11px, 1.8vh, 16px);
+  line-height: 1.35;
+  margin-bottom: clamp(8px, 2.6vh, 40px);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.8vh, 28px);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2px, 0.5vh, 6px);
+}
+.login-field label {
+  font-family: var(--font-ui);
+  font-size: clamp(10px, 1.5vh, 16px);
+  color: var(--login-muted);
+  white-space: nowrap;
+}
+.login-field input {
+  height: clamp(32px, 6vh, 54px);
+  border-radius: var(--radius-lg);
+  background: var(--login-field-bg);
+  border: 1px solid var(--login-field-border);
+  color: var(--color-white);
+  font-family: var(--font-ui);
+  font-size: clamp(12px, 1.6vh, 15px);
+  padding: 0 clamp(10px, 2vw, 18px);
+  width: 100%;
+}
+.login-field input::placeholder {
+  color: rgba(143, 176, 182, 0.55);
+}
+.login-field input:focus {
+  outline: none;
+  border-color: var(--login-mint);
+  box-shadow: 0 0 0 3px rgba(127, 227, 208, 0.18);
+}
+.login-field input:-webkit-autofill,
+.login-field input:-webkit-autofill:hover,
+.login-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-white);
+  -webkit-box-shadow: 0 0 0 1000px var(--login-field-bg) inset;
+  box-shadow: 0 0 0 1000px var(--login-field-bg) inset;
+  caret-color: var(--color-white);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.login-submit {
+  height: clamp(36px, 6.6vh, 64px);
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--login-mint);
+  color: var(--login-navy-darker);
+  font-family: var(--font-heading);
+  font-size: clamp(13px, 2.6vh, 24px);
+  font-variation-settings: "opsz" 14;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.login-submit:hover {
+  filter: brightness(0.95);
+}
+.login-submit:disabled {
+  cursor: progress;
+  filter: brightness(0.9);
+}
+
+.login-card__signup {
+  margin-top: clamp(4px, 1.4vh, 20px);
+  font-family: var(--font-heading);
+  font-variation-settings: "opsz" 14;
+  color: var(--login-muted);
+  font-size: clamp(10px, 1.5vh, 16px);
+}
+.login-card__link {
+  color: var(--login-mint);
+}
+.login-card__link:hover {
+  text-decoration: underline;
+}
+
+.login-card__divider {
+  margin: clamp(6px, 1.8vh, 32px) 0 clamp(4px, 1.2vh, 16px);
+  border: none;
+  border-top: 1px solid var(--login-muted);
+  opacity: 0.5;
+}
+
+.login-card__disclaimer {
+  font-family: var(--font-heading);
+  font-variation-settings: "opsz" 14;
+  color: var(--login-muted);
+  font-size: clamp(9px, 1.3vh, 14px);
+  line-height: 1.35;
+  text-transform: lowercase;
+}
+.login-card__disclaimer::first-letter {
+  text-transform: uppercase;
+}
+.login-card__disclaimer strong {
+  color: var(--color-white);
+  font-weight: 400;
+}
+
+.login-field--error input {
+  border-color: #e07a5f;
+}
+
+.login-demo-btn {
+  width: 100%;
+  margin-top: clamp(10px, 2vh, 16px);
+  padding: clamp(8px, 1.6vh, 12px) clamp(10px, 2vw, 14px);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  border: 1px dashed var(--login-muted);
+  color: var(--login-muted);
+  font-family: var(--font-ui);
+  font-size: clamp(11px, 1.5vh, 13px);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.login-demo-btn:hover {
+  border-color: var(--login-mint);
+  color: var(--login-mint);
+}
+.login-demo-hint {
+  margin: 4px 0 0;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: clamp(9px, 1.2vh, 11px);
+  color: var(--login-muted);
+  opacity: 0.75;
+}
+
+.login-form__error {
+  margin: 0;
+  padding: clamp(8px, 1.6vh, 12px) clamp(10px, 2vw, 14px);
+  border-radius: var(--radius-md);
+  background: rgba(224, 122, 95, 0.12);
+  border: 1px solid #e07a5f;
+  color: #f2b8a3;
+  font-family: var(--font-ui);
+  font-size: clamp(11px, 1.5vh, 14px);
+}
+
+.login-field__hint {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: clamp(10px, 1.3vh, 13px);
+  color: #e07a5f;
+}
+.login-field--error .login-field__hint {
+  display: block;
+}
+
+/* ==========================================================================
+   Responsivo — empilha em telas estreitas E suficientemente altas
+   (celulares em paisagem/janelas curtas continuam lado a lado, onde
+   cada painel tem a altura toda disponível pra se ajustar)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .login-visual__headline {
+    max-width: 14ch;
+  }
+}
+
+@media (max-width: 860px) and (min-height: 560px) {
+  .login-page {
+    flex-direction: column;
+  }
+  .login-visual {
+    flex: 0 1 clamp(120px, 32vh, 420px);
+    min-height: 0;
+  }
+  .login-visual__headline {
+    max-width: 16ch;
+  }
+  .login-panel {
+    flex: 1 1 auto;
+  }
+}

@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algamar — Previsões</title>
+    <meta
+      name="description"
+      content="Previsão de floração de algas tóxicas no litoral paulista."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <script src="../js/api-config.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/user-prefs.js"></script>
+    <script src="../js/notifications.js"></script>
+  </head>
+  <body class="dash-body forecast-page">
+    <div class="dash">
+      <div class="dash-sidebar-overlay" id="sidebarOverlay" hidden></div>
+
+      <aside class="dash-sidebar" id="sidebar">
+        <div class="dash-sidebar__top">
+          <a
+            href="../../site/index.html"
+            class="dash-logo"
+            aria-label="Algamar — página inicial"
+          >
+            <img src="../../shared/assets/LogoBranca.png" alt="Algamar" />
+          </a>
+        </div>
+
+        <nav class="dash-nav" aria-label="Navegação principal">
+          <a href="dashboard.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/dashboard_white.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/dashboard.svg"
+                alt=""
+              />
+            </span>
+            Dashboard
+          </a>
+          <a href="mapa-interativo.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/explore.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/explore_Green.svg"
+                alt=""
+              />
+            </span>
+            Mapa Interativo
+          </a>
+          <a
+            href="previsoes.html"
+            class="dash-nav__link dash-nav__link--active"
+            aria-current="page"
+          >
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/calendar_month_white.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/calendar_month.svg"
+                alt=""
+              />
+            </span>
+            Previsões
+          </a>
+          <a href="historico-ocorrencias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/update.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/update_Green.svg"
+                alt=""
+              />
+            </span>
+            Histórico de Ocorrências
+          </a>
+          <a href="alertas.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/notifications.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/notifications_Green.svg"
+                alt=""
+              />
+            </span>
+            Alertas
+          </a>
+          <a href="dados-ambientais.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/park.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/park_Green.svg"
+                alt=""
+              />
+            </span>
+            Dados Ambientais
+          </a>
+          <a href="relatorios.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/description.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/description_Green.svg"
+                alt=""
+              />
+            </span>
+            Relatórios
+          </a>
+        </nav>
+
+        <div class="dash-sidebar__bottom">
+          <button
+            type="button"
+            class="dash-nav__link dash-nav__link--button"
+            id="logoutBtn"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >logout</span
+            >
+            Sair
+          </button>
+          <a href="configuracoes.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/settings.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/settings_green.svg"
+                alt=""
+              />
+            </span>
+            Configurações
+          </a>
+          <p class="dash-sidebar__warning" id="dashApiWarning" hidden>
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >cloud_off</span
+            >
+            <span id="dashApiWarningText">Não foi possível conectar à API.</span>
+          </p>
+          <p class="dash-version">Versão 0.1</p>
+        </div>
+      </aside>
+
+      <main class="dash-main">
+        <header class="dash-topbar">
+          <button
+            type="button"
+            class="dash-menu-toggle"
+            id="menuToggle"
+            aria-label="Abrir menu"
+            aria-expanded="false"
+            aria-controls="sidebar"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >menu</span
+            >
+          </button>
+          <label class="dash-search">
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >search</span
+            >
+            <input
+              type="search"
+              id="dashSearch"
+              placeholder="Buscar por localidade, região ou tipo de alga..."
+            />
+          </label>
+
+          <div class="dash-topbar__actions">
+            <button
+              type="button"
+              class="dash-icon-btn dash-icon-btn--bell"
+              id="topRefresh"
+              aria-label="Notificações"
+              title="Notificações"
+            >
+              <img
+                class="icon-svg"
+                src="../assets/Icons/notifications.svg"
+                alt=""
+              />
+              <span class="dash-icon-btn__badge" id="alertBadge" hidden>0</span>
+            </button>
+            <div class="dash-user">
+              <div class="dash-user__avatar" id="userAvatar">—</div>
+              <div class="dash-user__info">
+                <p class="dash-user__name" id="userName">—</p>
+                <p class="dash-user__email" id="userEmail">—</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="fc-head">
+          <h1 class="fc-title">Previsão de floração de algas tóxicas</h1>
+          <p class="fc-sub">
+            Modelo preditivo baseado em dados oceanográficos, meteorológicos e
+            históricos
+          </p>
+        </section>
+
+        <section class="fc-filters" aria-label="Filtros da previsão">
+          <label class="fc-field">
+            <span class="fc-field__label">Região</span>
+            <span class="fc-select">
+              <select id="fcRegion">
+                <option value="" selected>Todas</option>
+                <option value="Litoral Norte">Litoral Norte</option>
+                <option value="Baixada Santista">Baixada Santista</option>
+                <option value="Litoral Sul">Litoral Sul</option>
+              </select>
+              <span class="material-symbols-outlined" aria-hidden="true"
+                >expand_more</span
+              >
+            </span>
+          </label>
+          <label class="fc-field">
+            <span class="fc-field__label">Período</span>
+            <span class="fc-select">
+              <select id="fcHorizon">
+                <option value="1">Mês atual</option>
+                <option value="3">Próximos 3 meses</option>
+                <option value="6">Próximos 6 meses</option>
+                <option value="12" selected>Próximos 12 meses</option>
+                <option value="24">Próximos 24 meses</option>
+              </select>
+              <span class="material-symbols-outlined" aria-hidden="true"
+                >expand_more</span
+              >
+            </span>
+          </label>
+          <button type="button" class="fc-refresh" id="fcRefresh">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+              <polyline points="21 3 21 9 15 9"></polyline>
+            </svg>
+            Atualizar os dados
+          </button>
+        </section>
+
+        <section class="fc-top">
+          <div class="fc-mapcard">
+            <div class="fc-map">
+              <div class="map-stage" id="mapStage">
+                <div class="map-canvas" id="mapCanvas">
+                  <img
+                    id="mapOverview"
+                    src="../assets/coast-overview.jpg"
+                    alt="Imagem de satélite do litoral paulista"
+                    draggable="false"
+                  />
+                  <img
+                    id="mapHillshade"
+                    src="../assets/coast-hillshade.jpg"
+                    alt=""
+                    draggable="false"
+                    aria-hidden="true"
+                  />
+                  <svg id="mapBoundary" class="map-boundary"></svg>
+                  <div class="map-labels" id="mapLabels"></div>
+                  <div class="map-hotspots" id="mapHotspots"></div>
+                </div>
+              </div>
+
+              <div class="fc-legend" aria-label="Legenda de probabilidade">
+                <p><span class="dot" style="background: var(--dash-green)"></span>Baixo (abaixo de 35%)</p>
+                <p><span class="dot" style="background: var(--dash-yellow)"></span>Moderado (35% a 59%)</p>
+                <p><span class="dot" style="background: var(--dash-red)"></span>Alto (60% ou mais)</p>
+              </div>
+
+              <p class="map-panel__empty" id="mapEmpty" hidden>
+                Nenhuma previsão retornada pela API para esta região e período.
+              </p>
+              <p class="map-panel__loading" id="mapLoading">
+                Carregando previsões...
+              </p>
+            </div>
+
+            <div class="fc-timeline">
+              <button
+                type="button"
+                class="fc-play"
+                id="fcPlay"
+                aria-label="Reproduzir linha do tempo"
+              >
+                <span
+                  class="material-symbols-outlined"
+                  id="fcPlayIcon"
+                  aria-hidden="true"
+                  >play_arrow</span
+                >
+              </button>
+              <div class="fc-timeline__body">
+                <p class="fc-timeline__info">
+                  <strong id="fcTimelineNow">—</strong>
+                  <span id="fcTimelineCount"></span>
+                </p>
+                <div class="fc-track" id="fcTrack" role="group" aria-label="Período da previsão"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fc-side">
+            <article class="fc-card fc-stat">
+              <div class="fc-donut" id="fcDonut">
+                <svg viewBox="0 0 64 64" aria-hidden="true">
+                  <circle class="fc-donut__track" cx="32" cy="32" r="27"></circle>
+                  <circle class="fc-donut__arc" id="fcDonutArc" cx="32" cy="32" r="27"></circle>
+                </svg>
+                <span id="fcDonutText">—</span>
+              </div>
+              <div class="fc-stat__body">
+                <p class="fc-stat__label fc-stat__label--sm">Probabilidade de floração</p>
+                <p class="fc-stat__big" id="fcProb">—</p>
+                <p class="fc-stat__hint">na região selecionada</p>
+              </div>
+            </article>
+
+            <article class="fc-card fc-stat">
+              <span class="fc-riskicon" id="fcRiskIcon" data-tier="">
+                <span class="material-symbols-outlined" id="fcRiskGlyph" aria-hidden="true">warning</span>
+              </span>
+              <div class="fc-stat__body">
+                <p class="fc-stat__label">Risco da região</p>
+                <p class="fc-stat__risk" id="fcRisk">—</p>
+              </div>
+            </article>
+
+            <article class="fc-card fc-stat">
+              <img class="fc-pin" src="../assets/Icons/LocalBlue.svg" alt="" />
+              <div class="fc-stat__body">
+                <p class="fc-stat__label">Área de risco maior</p>
+                <p class="fc-stat__areas" id="fcAreas">—</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="fc-bottom">
+          <article class="fc-card fc-card--table">
+            <h2 class="fc-card__title">Previsões na região</h2>
+            <div class="fc-table-wrap">
+              <table class="fc-table">
+                <thead>
+                  <tr>
+                    <th>Região</th>
+                    <th>Probabilidade</th>
+                    <th>Nível de risco</th>
+                    <th>Período</th>
+                  </tr>
+                </thead>
+                <tbody id="fcTableBody">
+                  <tr>
+                    <td colspan="4" class="dash-empty">Carregando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <button type="button" class="fc-more" id="fcTableMore" hidden>
+              Visualizar mais
+              <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+            </button>
+          </article>
+
+          <article class="fc-card fc-card--history">
+            <header class="fc-card__head">
+              <div>
+                <h2 class="fc-card__title">Histórico da região</h2>
+                <p class="fc-card__sub" id="fcHistorySub">—</p>
+              </div>
+              <button type="button" class="dash-card__link fc-link" id="fcHistoryLink">
+                Ver histórico completo
+              </button>
+            </header>
+            <div class="fc-kpis">
+              <div>
+                <p class="fc-kpi" id="fcKpiRisk">—</p>
+                <p class="fc-kpi__label">Áreas de alto risco no último mês</p>
+              </div>
+              <div>
+                <p class="fc-kpi" id="fcKpiProb">—</p>
+                <p class="fc-kpi__label">Probabilidade média</p>
+              </div>
+            </div>
+            <div class="fc-history" id="fcHistory"></div>
+          </article>
+
+          <article class="fc-card fc-card--env">
+            <h2 class="fc-card__title">Condições ambientais na região</h2>
+            <div class="fc-env">
+              <div>
+                <img class="icon-svg" src="../assets/Icons/thermometer.svg" alt="" />
+                <span>Temperatura da água<strong id="fcTemp">&mdash;</strong></span>
+              </div>
+              <div>
+                <img class="icon-svg" src="../assets/Icons/air.svg" alt="" />
+                <span>Ventos<strong id="fcWind">&mdash;</strong></span>
+              </div>
+              <div>
+                <img class="icon-svg" src="../assets/Icons/salinity.svg" alt="" />
+                <span>Salinidade<strong id="fcSal">&mdash;</strong></span>
+              </div>
+              <div>
+                <img class="icon-svg" src="../assets/Icons/airwave.svg" alt="" />
+                <span>Correntes<strong id="fcCurrent">&mdash;</strong></span>
+              </div>
+              <div>
+                <img class="icon-svg" src="../assets/Icons/water_ph.svg" alt="" />
+                <span>pH<strong id="fcPh">&mdash;</strong></span>
+              </div>
+              <div>
+                <img class="icon-svg" src="../assets/Icons/Precipitação.svg" alt="" />
+                <span>Precipitação (24h)<strong id="fcPrecip">&mdash;</strong></span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="../js/dash-shell.js"></script>
+    <script src="../js/dashboard-map.js" defer></script>
+    <script src="../js/previsoes.js" defer></script>
+  </body>
+</html>

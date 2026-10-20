@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algamar — Software de previsibilidade de algas tóxicas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../shared/css/base.css" />
+    <link rel="stylesheet" href="css/main.css" />
+  </head>
+  <body>
+    <div class="topbar" id="topbar"></div>
+    <div class="topbar-spacer"></div>
+    <canvas id="plancton" aria-hidden="true"></canvas>
+
+    <header class="header" id="siteHeader">
+      <div class="container header__inner">
+        <a href="#" class="header__logo" aria-label="Algamar — página inicial">
+          <img src="../shared/assets/LogoEscura.png" alt="Algamar" />
+        </a>
+
+        <nav class="nav">
+          <ul class="nav__list">
+            <li>
+              <a href="#hero" class="nav__link nav__link--active"
+                >Página inicial</a
+              >
+            </li>
+            <li>
+              <a href="pages/o-que-preve.html" class="nav__link">O que prevê</a>
+            </li>
+            <li>
+              <a href="pages/como-funciona.html" class="nav__link">Como funciona</a>
+            </li>
+          </ul>
+        </nav>
+
+        <a href="../software/pages/login.html" class="btn btn--primary header__cta">
+          Acessar Software
+          <img class="btn__icon" src="assets/icon-arrow-white.svg" alt="" />
+        </a>
+
+        <button
+          class="hamburger"
+          id="hamburgerBtn"
+          aria-expanded="false"
+          aria-controls="mobileNav"
+          aria-label="Abrir menu de navegação"
+        >
+          <span class="hamburger__bar"></span>
+          <span class="hamburger__bar"></span>
+          <span class="hamburger__bar"></span>
+        </button>
+      </div>
+
+      <div class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav__list">
+          <li>
+            <a href="#hero" class="nav__link nav__link--active"
+              >Página inicial</a
+            >
+          </li>
+          <li><a href="pages/o-que-preve.html" class="nav__link">O que prevê</a></li>
+          <li>
+            <a href="pages/como-funciona.html" class="nav__link">Como funciona</a>
+          </li>
+        </ul>
+        <a href="../software/pages/login.html" class="btn btn--primary">
+          Acessar Software
+          <img class="btn__icon" src="assets/icon-arrow-white.svg" alt="" />
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero container" id="hero">
+        <div class="hero__content">
+          <p class="eyebrow">
+            <span class="eyebrow__line"></span>Projeto Algamar 2026
+          </p>
+          <h1 class="hero__title split-text" data-reveal>
+            Conheça a <span class="text-accent">Algamar.</span><br />
+            Software de previsibilidade<br />
+            de algas tóxicas.
+          </h1>
+          <a href="../software/pages/login.html" class="btn btn--primary btn--hero">
+            Acessar Software
+            <img
+              class="btn__icon"
+              src="assets/icon-arrow-white-lg.svg"
+              alt=""
+            />
+          </a>
+        </div>
+        <div class="hero__graphic">
+          <img
+            src="./assets/ImagemDoLadoDaFrase.png"
+            alt="Ilustração geométrica decorativa"
+          />
+        </div>
+      </section>
+
+      <!-- Litoral / Layers -->
+      <section class="layers container" id="litoral">
+        <p class="eyebrow"><span class="eyebrow__line"></span>Algamar</p>
+        <div class="layers__grid">
+          <div class="layers__content reveal" data-reveal>
+            <h2 class="layers__title split-text" data-reveal>
+              Uma nova forma de<br />observar o litoral.
+            </h2>
+            <p class="layers__text">
+              Nosso objetivo é transformar dados ambientais em informações útil
+              para antecipar eventos de floração e apoiar decisões importantes
+              para o litoral de São Paulo.
+            </p>
+            <a href="pages/como-funciona.html" class="btn btn--outline">
+              Saiba como funciona
+              <img class="btn__icon" src="assets/icon-arrow-dark.svg" alt="" />
+            </a>
+          </div>
+
+          <div class="layers__legend reveal reveal-d1" data-reveal>
+            <ul class="layers__legend-list" id="layersLegendList">
+              <li class="layers__legend-item" data-index="0">
+                <button
+                  type="button"
+                  class="layers__legend-toggle"
+                  aria-expanded="false"
+                >
+                  <span class="layers__dot layers__dot--outline"></span>
+                  <span class="layers__legend-label"
+                    >Condições atmosféricas</span
+                  >
+                </button>
+                <p class="layers__legend-desc">
+                  Dados de temperatura, chuva, vento e radiação solar serão
+                  cruzados com registros de ocorrências para identificar padrões
+                  e possíveis condições de risco para florações de algas tóxicas
+                  no litoral paulista.
+                </p>
+              </li>
+              <li class="layers__legend-item" data-index="1">
+                <button
+                  type="button"
+                  class="layers__legend-toggle"
+                  aria-expanded="false"
+                >
+                  <span class="layers__dot layers__dot--outline"></span>
+                  <span class="layers__legend-label">Oceanografia</span>
+                </button>
+                <p class="layers__legend-desc">
+                  Dados oceanográficos, como correntes, temperatura e
+                  salinidade, serão analisados para compreender as condições do
+                  mar e sua relação com a formação e dispersão das algas.
+                </p>
+              </li>
+              <li class="layers__legend-item" data-index="2">
+                <button
+                  type="button"
+                  class="layers__legend-toggle"
+                  aria-expanded="false"
+                >
+                  <span class="layers__dot layers__dot--outline"></span>
+                  <span class="layers__legend-label">Qualidade da água</span>
+                </button>
+                <p class="layers__legend-desc">
+                  Informações sobre nutrientes, turbidez, oxigênio e outros
+                  indicadores serão utilizadas para avaliar a qualidade da água
+                  e identificar condições favoráveis à proliferação de algas.
+                </p>
+              </li>
+              <li class="layers__legend-item" data-index="3">
+                <button
+                  type="button"
+                  class="layers__legend-toggle"
+                  aria-expanded="false"
+                >
+                  <span class="layers__dot layers__dot--outline"></span>
+                  <span class="layers__legend-label">Modelo preditivo</span>
+                </button>
+                <p class="layers__legend-desc">
+                  O sistema combinará dados ambientais e históricos para
+                  identificar padrões e estimar a possibilidade de ocorrência de
+                  florações de algas tóxicas.
+                </p>
+              </li>
+              <li class="layers__legend-item" data-index="4">
+                <button
+                  type="button"
+                  class="layers__legend-toggle"
+                  aria-expanded="false"
+                >
+                  <span class="layers__dot layers__dot--outline"></span>
+                  <span class="layers__legend-label">Risco de floração</span>
+                </button>
+                <p class="layers__legend-desc">
+                  A partir dos dados analisados, o sistema indicará áreas com
+                  diferentes níveis de risco, auxiliando no monitoramento e na
+                  identificação antecipada de possíveis florações.
+                </p>
+              </li>
+            </ul>
+          </div>
+
+          <div class="layers__visual reveal reveal-d2" data-reveal>
+            <img
+              src="assets/layers-diagram.png"
+              alt="Diagrama isométrico das camadas de dados analisadas pela Algamar"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Problema -->
+      <section class="problem container" id="problema">
+        <p class="eyebrow reveal" data-reveal>
+          <span class="eyebrow__line"></span>O problema
+        </p>
+        <h2 class="problem__heading split-text" data-reveal>
+          Por que nos preocupar ?
+        </h2>
+        <p class="problem__intro reveal reveal-d2" data-reveal>
+          As florações de alga podem alterar o equilíbrio dos ambientes
+          aquáticos, afetar atividades económicas e, em alguns casos, estar
+          associadas á produção de toxinas que representam riscos á saúde humana
+          e animal.
+        </p>
+
+        <div
+          class="problem__cards reveal reveal-d3"
+          id="problemCards"
+          data-reveal
+        >
+          <div class="card card--pos-left">
+            <img
+              class="card__image"
+              src="assets/photo-environmental.png"
+              alt="Vista aérea do litoral mostrando o impacto ambiental das florações de algas"
+            />
+            <div class="card__overlay"></div>
+            <div class="card__body">
+              <p class="card__title">Impacto ambiental</p>
+              <p class="card__text">Texto a definir.</p>
+              <a href="#" class="btn btn--ghost">
+                Ler mais
+                <img
+                  class="btn__icon"
+                  src="assets/icon-arrow-green.svg"
+                  alt=""
+                  style="width: 14px; height: 14px"
+                />
+              </a>
+            </div>
+          </div>
+
+          <div class="card card--pos-center card--tall">
+            <img
+              class="card__image"
+              src="assets/photo-economic.png"
+              alt="Porto e embarcações representando os impactos econômicos das florações de algas"
+            />
+            <div class="card__overlay"></div>
+            <div class="card__body">
+              <p class="card__title">Impactos econômicos</p>
+              <p class="card__text">
+                As florações de algas tóxicas podem causar prejuízos à pesca, ao
+                turismo e à aquicultura. A morte de peixes e a contaminação da
+                água reduzem a atividade pesqueira, enquanto praias interditadas
+                podem afastar turistas e prejudicar negócios locais.
+              </p>
+              <a href="#" class="btn btn--ghost">
+                Ler mais
+                <img
+                  class="btn__icon"
+                  src="assets/icon-arrow-green.svg"
+                  alt=""
+                  style="width: 14px; height: 14px"
+                />
+              </a>
+            </div>
+          </div>
+
+          <div class="card card--pos-right">
+            <img
+              class="card__image"
+              src="assets/photo-health.png"
+              alt="Placa de aviso em praia interditada, representando riscos à saúde"
+            />
+            <div class="card__overlay"></div>
+            <div class="card__body">
+              <p class="card__title">Riscos á saúde</p>
+              <p class="card__text">Texto a definir.</p>
+              <a href="#" class="btn btn--ghost">
+                Ler mais
+                <img
+                  class="btn__icon"
+                  src="assets/icon-arrow-green.svg"
+                  alt=""
+                  style="width: 14px; height: 14px"
+                />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="problem__controls">
+          <button type="button" class="btn btn--nav" id="problemPrev">
+            <img
+              class="btn__icon"
+              src="assets/icon-arrow-prev.svg"
+              alt=""
+              style="transform: rotate(180deg)"
+            />
+            Anterior
+          </button>
+          <div class="problem__dots" id="problemDots">
+            <button
+              type="button"
+              class="problem__dot"
+              aria-label="Slide 1"
+            ></button>
+            <button
+              type="button"
+              class="problem__dot"
+              aria-label="Slide 2"
+            ></button>
+            <button
+              type="button"
+              class="problem__dot"
+              aria-label="Slide 3"
+            ></button>
+          </div>
+          <button type="button" class="btn btn--nav" id="problemNext">
+            Próximo
+            <img class="btn__icon" src="assets/icon-arrow-next.svg" alt="" />
+          </button>
+        </div>
+      </section>
+
+      <!-- Pesquisa -->
+      <section class="research container" id="pesquisa">
+        <p class="eyebrow reveal" data-reveal>
+          <span class="eyebrow__line"></span>A pesquisa
+        </p>
+        <h2 class="research__heading split-text" data-reveal>
+          Testamos se dava para prever.<br />Dava.
+        </h2>
+        <p class="research__intro reveal reveal-d2" data-reveal>
+          O estudo piloto que originou a <strong>ALGAMAR</strong> comparou o
+          risco calculado pelo modelo com as florações efetivamente registradas
+          no litoral paulista, ao longo de um ciclo sazonal completo.
+        </p>
+
+        <div class="research__grid">
+          <div class="study reveal reveal-d3" data-reveal>
+            <div class="study__header">
+              <p class="study__header-label">Desenho do estudo</p>
+            </div>
+            <div class="study__row">
+              <p class="study__label">Titulo</p>
+              <p class="study__desc">
+                Previsão de curto prazo de florações de algas nocivas por
+                integração de dados orbitais e oceanográficos no litoral de São
+                Paulo
+              </p>
+            </div>
+            <div class="study__row">
+              <p class="study__label">Área</p>
+              <p class="study__desc">
+                Litoral Norte, Baixada Santista e Complexo estuarino de
+                Iguape-Cananéia
+              </p>
+            </div>
+            <div class="study__row">
+              <p class="study__label">Periodo</p>
+              <p class="study__desc">
+                12 meses de campo · 8 anos de série histórica para treino
+              </p>
+            </div>
+            <div class="study__row">
+              <p class="study__label">Dados</p>
+              <p class="study__desc">
+                Clorofila-a e temperatura de superfície diárias, cruzadas com
+                registros de ocorrência e balneabilidade
+              </p>
+            </div>
+            <div class="study__row">
+              <p class="study__label">Método</p>
+              <p class="study__desc">
+                Modelo de classificação treinado na série histórica, com
+                projeção de transporte por correntes costeiras
+              </p>
+            </div>
+            <div class="study__row">
+              <p class="study__label">Validação</p>
+              <p class="study__desc">
+                Comparação semanal entre risco previsto e floração observada
+              </p>
+            </div>
+          </div>
+
+          <div class="analysis reveal reveal-d4" data-reveal>
+            <div class="analysis__chart-box">
+              <p class="analysis__caption">
+                Risco previsto × floração observada · 24 semanas
+              </p>
+              <div class="analysis__chart">
+                <div class="analysis__axis">
+                  <span>100</span>
+                  <span>50</span>
+                  <span>0</span>
+                </div>
+                <svg
+                  class="analysis__svg"
+                  id="analysisSvg"
+                  viewBox="0 0 408 92"
+                  preserveAspectRatio="none"
+                  role="img"
+                  aria-label="Gráfico comparando risco previsto pelo modelo e floração observada em campo ao longo de 24 semanas"
+                >
+                  <polyline
+                    class="analysis__line"
+                    points="0,70 34,66 68,58 102,44 136,30 170,18 204,12 238,14 272,24 306,40 340,56 374,66 408,70"
+                    fill="none"
+                    stroke="#0f766e"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <polyline
+                    class="analysis__line"
+                    points="0,74 34,72 68,64 102,50 136,34 170,20 204,16 238,20 272,32 306,46 340,60 374,70 408,76"
+                    fill="none"
+                    stroke="#111111"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <div class="analysis__legend">
+                <span class="analysis__legend-item"
+                  ><span class="analysis__swatch analysis__swatch--teal"></span
+                  >Risco previsto pelo modelo</span
+                >
+                <span class="analysis__legend-item"
+                  ><span class="analysis__swatch analysis__swatch--black"></span
+                  >Floração observada em campo</span
+                >
+              </div>
+            </div>
+
+            <div class="analysis__stats" id="analysisStats">
+              <div class="stat">
+                <p class="stat__value" data-count-to="82" data-suffix="%">0%</p>
+                <p class="stat__label">Acerto na detecção</p>
+              </div>
+              <div class="stat">
+                <p class="stat__value" data-count-to="4.3" data-decimals="1">
+                  0,0
+                </p>
+                <p class="stat__label">Dias de antecedência</p>
+              </div>
+              <div class="stat">
+                <p class="stat__value" data-count-to="9" data-suffix="%">0%</p>
+                <p class="stat__label">Falsos negativos</p>
+              </div>
+            </div>
+
+            <div class="analysis__note">
+              <div class="analysis__note-bar"></div>
+              <p class="analysis__note-text">
+                Resultado de simulação. Os números e o gráfico ilustram o
+                desenho da pesquisa e devem ser trocados pelos dados reais
+                quando o estudo de campo terminar.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sobre nós -->
+      <section class="about" id="sobre">
+        <div class="about__wave" aria-hidden="true">
+          <div class="about__wave-track">
+            <svg
+              class="about__wave-svg"
+              viewBox="0 0 1440 60"
+              preserveAspectRatio="none"
+            >
+              <path
+                class="about__wave-shape"
+                d="M0,30 Q180,0 360,30 Q540,60 720,30 Q900,0 1080,30 Q1260,60 1440,30 L1440,60 L0,60 Z"
+              />
+            </svg>
+            <svg
+              class="about__wave-svg"
+              viewBox="0 0 1440 60"
+              preserveAspectRatio="none"
+            >
+              <path
+                class="about__wave-shape"
+                d="M0,30 Q180,0 360,30 Q540,60 720,30 Q900,0 1080,30 Q1260,60 1440,30 L1440,60 L0,60 Z"
+              />
+            </svg>
+          </div>
+        </div>
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Sobre nós
+          </p>
+          <h2 class="about__heading split-text" data-reveal>
+            Quem está por trás do <span class="text-green">Algamar.</span>
+          </h2>
+          <p class="about__intro reveal reveal-d2" data-reveal>
+            Somos um grupo de estudantes de Análise e Desenvolvimento de
+            Sistemas, e este software foi desenvolvido como parte de um projeto
+            universitário. A iniciativa surgiu a partir de uma proposta do
+            professor, que nos incentivou a desenvolver um projeto inovador,
+            fora do cotidiano acadêmico, explorando a criação de um software com
+            caráter preditivo e aplicação prática.
+          </p>
+
+          <div class="team" data-reveal>
+            <div class="team__card">
+              <div class="team__avatar-row">
+                <div class="team__avatar-wrap">
+                  <img
+                    class="team__avatar"
+                    src="assets/avatar-tulio.svg"
+                    alt="Foto de Tulio Medeiros"
+                  />
+                  <span class="team__initials">TM</span>
+                </div>
+              </div>
+              <p class="team__name">Tulio Medeiros</p>
+              <p class="team__role">Frontend Developer &amp; UX/UI Designer</p>
+              <p class="team__desc">
+                UX, fluxos de navegação e prototipação, Desenvolvimento do
+                frontend e interfaces
+              </p>
+            </div>
+
+            <div class="team__card">
+              <div class="team__avatar-row">
+                <div class="team__avatar-wrap">
+                  <img
+                    class="team__avatar"
+                    src="assets/avatar-placeholder.svg"
+                    alt="Foto de Gabriela Hipólito"
+                  />
+                  <span class="team__initials">GH</span>
+                </div>
+              </div>
+              <p class="team__name">Gabriela Hipólito</p>
+              <p class="team__role">Pesquisadora / Documentação</p>
+              <p class="team__desc">
+                Documentação técnica, científica e institucional, Artigo
+                científico e relatórios
+              </p>
+            </div>
+
+            <div class="team__card">
+              <div class="team__avatar-row">
+                <div class="team__avatar-wrap">
+                  <img
+                    class="team__avatar"
+                    src="assets/avatar-placeholder.svg"
+                    alt="Foto de Igor Henrique"
+                  />
+                  <span class="team__initials">IH</span>
+                </div>
+              </div>
+              <p class="team__name">Igor Henrique</p>
+              <p class="team__role">Software Architects, Machine Learning</p>
+              <p class="team__desc">
+                Arquitetura, infraestrutura, implantação e versões, Mecanismo
+                preditivo e Machine Learning
+              </p>
+            </div>
+
+            <div class="team__card">
+              <div class="team__avatar-row">
+                <div class="team__avatar-wrap">
+                  <img
+                    class="team__avatar"
+                    src="assets/avatar-placeholder.svg"
+                    alt="Foto de João Victor"
+                  />
+                  <span class="team__initials">JV</span>
+                </div>
+              </div>
+              <p class="team__name">João Victor</p>
+              <p class="team__role">Backend Developer / Data Analyst</p>
+              <p class="team__desc">
+                Coleta, tratamento e análise de dados, Banco de dados e
+                governança, Backend, serviços, APIs e integrações
+              </p>
+            </div>
+
+            <div class="team__card">
+              <div class="team__avatar-row">
+                <div class="team__avatar-wrap">
+                  <img
+                    class="team__avatar"
+                    src="assets/avatar-placeholder.svg"
+                    alt="Foto de João Francisco"
+                  />
+                  <span class="team__initials">JF</span>
+                </div>
+              </div>
+              <p class="team__name">João Francisco</p>
+              <p class="team__role">Software Architects, Machine Learning</p>
+              <p class="team__desc">
+                Arquitetura, infraestrutura, implantação e versões, Mecanismo
+                preditivo e Machine Learning
+              </p>
+            </div>
+
+            <div class="team__card">
+              <div class="team__avatar-row">
+                <div class="team__avatar-wrap">
+                  <img
+                    class="team__avatar"
+                    src="assets/avatar-placeholder.svg"
+                    alt="Foto de Tailaine Pereira"
+                  />
+                  <span class="team__initials">TP</span>
+                </div>
+              </div>
+              <p class="team__name">Tailaine Pereira</p>
+              <p class="team__role">
+                QA &amp; Security Analyst / Product Analyst
+              </p>
+              <p class="team__desc">
+                Levantamento e validação de requisitos, Testes, segurança e
+                qualidade
+              </p>
+            </div>
+
+            <div class="team__card team__card--offset">
+              <div class="team__avatar-row">
+                <div class="team__avatar-wrap">
+                  <img
+                    class="team__avatar"
+                    src="assets/avatar-placeholder.svg"
+                    alt="Foto de Joicy Nunes"
+                  />
+                  <span class="team__initials">JN</span>
+                </div>
+              </div>
+              <p class="team__name">Joicy Nunes</p>
+              <p class="team__role">Gestão de Projetos / Pesquisadora</p>
+              <p class="team__desc">
+                Gestão, planejamento, acompanhamento e integração Levantamento
+                bibliográfico e fundamentação teórica
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner reveal" data-reveal>
+        <div class="footer__logo" aria-hidden="true">
+          <img src="../shared/assets/LogoBranca.png" alt="" />
+        </div>
+        <p class="footer__text">
+          Grupo de pesquisa em previsão de florações de algas nocivas no litoral
+          de São Paulo.<br />
+          Os resultados de pesquisa apresentados nesta página são uma simulação
+          para fins de demonstração.<br />
+          Em caso de suspeita de contaminação, procure a vigilância sanitária
+          local.
+        </p>
+      </div>
+    </footer>
+    <div class="footer__bar"></div>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algamar — O que prevê</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+    <link rel="stylesheet" href="../css/main.css" />
+    <link rel="stylesheet" href="../css/o-que-preve.css" />
+  </head>
+  <body>
+    <div class="topbar" id="topbar"></div>
+    <div class="topbar-spacer"></div>
+    <canvas id="plancton" aria-hidden="true"></canvas>
+
+    <header class="header" id="siteHeader">
+      <div class="container header__inner">
+        <a
+          href="../index.html"
+          class="header__logo"
+          aria-label="Algamar — página inicial"
+        >
+          <img src="../../shared/assets/LogoEscura.png" alt="Algamar" />
+        </a>
+
+        <nav class="nav">
+          <ul class="nav__list">
+            <li>
+              <a href="../index.html" class="nav__link">Página inicial</a>
+            </li>
+            <li>
+              <a href="o-que-preve.html" class="nav__link nav__link--active"
+                >O que prevê</a
+              >
+            </li>
+            <li>
+              <a href="como-funciona.html" class="nav__link"
+                >Como funciona</a
+              >
+            </li>
+          </ul>
+        </nav>
+
+        <a href="../../software/pages/login.html" class="btn btn--primary header__cta">
+          Acessar Software
+          <img class="btn__icon" src="../assets/icon-arrow-white.svg" alt="" />
+        </a>
+
+        <button
+          class="hamburger"
+          id="hamburgerBtn"
+          aria-expanded="false"
+          aria-controls="mobileNav"
+          aria-label="Abrir menu de navegação"
+        >
+          <span class="hamburger__bar"></span>
+          <span class="hamburger__bar"></span>
+          <span class="hamburger__bar"></span>
+        </button>
+      </div>
+
+      <div class="mobile-nav" id="mobileNav">
+        <ul class="mobile-nav__list">
+          <li><a href="../index.html" class="nav__link">Página inicial</a></li>
+          <li>
+            <a href="o-que-preve.html" class="nav__link nav__link--active"
+              >O que prevê</a
+            >
+          </li>
+          <li>
+            <a href="como-funciona.html" class="nav__link">Como funciona</a>
+          </li>
+        </ul>
+        <a href="../../software/pages/login.html" class="btn btn--primary">
+          Acessar Software
+          <img class="btn__icon" src="../assets/icon-arrow-white.svg" alt="" />
+        </a>
+      </div>
+    </header>
+
+    <aside class="side-rail" id="sideRail" aria-hidden="true">
+      <span class="side-rail__label" id="railLabel">Início</span>
+      <div class="side-rail__track">
+        <div class="side-rail__fill" id="railFill"></div>
+        <span class="side-rail__marker" id="railMarker"></span>
+      </div>
+      <span class="side-rail__percent" id="railPercent">0%</span>
+    </aside>
+
+    <main>
+      <!-- Hero -->
+      <section
+        class="preve-hero"
+        id="inicio"
+        data-checkpoint="0"
+        data-checkpoint-label="Início"
+      >
+        <div class="container" id="top-page">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>O que o sistema prevê
+          </p>
+          <h1 class="preve-hero__title split-text" data-reveal>
+            Não é a mancha. É a semana antes dela.
+          </h1>
+          <p class="preve-hero__body reveal reveal-d2" data-reveal>
+            O ALGAMAR não tenta enxergar a floração que já está na superfície.
+            Ele calcula a probabilidade de ela se formar, projeta para onde vai
+            ser transportada e antecipa quando os moluscos vão ultrapassar o
+            limite legal de toxina — cada uma dessas três coisas com um gatilho
+            próprio.
+          </p>
+        </div>
+      </section>
+
+      <!-- Três perguntas -->
+      <section
+        class="preve-section"
+        id="cadeia"
+        data-checkpoint="5"
+        data-checkpoint-label="A cadeia"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>A cadeia da previsão
+          </p>
+          <h2 class="preve-heading split-text" data-reveal>
+            Três perguntas, em ordem.
+          </h2>
+          <p class="preve-body reveal reveal-d2" data-reveal>
+            Cada bloco só faz sentido depois que o anterior respondeu. É o que
+            separa a previsão de um simples painel de monitoramento.
+          </p>
+
+          <div class="preve-connector"><i id="connectorFill"></i></div>
+          <div class="preve-questions__grid reveal reveal-d3" data-reveal>
+            <div class="preve-question">
+              <p class="preve-question__label">Pergunta 01</p>
+              <h3 class="preve-question__title">Vai florescer?</h3>
+              <ul class="preve-question__list">
+                <li>
+                  Pressão atmosférica, vento, radiação solar e chuva acumulada
+                </li>
+                <li>
+                  Temperatura, salinidade, pH e oxigênio dissolvido da água
+                </li>
+                <li>Razões estequiométricas de nutrientes N:P, N:Si e P:Si</li>
+                <li>Densidade celular já contada em laboratório</li>
+              </ul>
+            </div>
+            <div class="preve-question">
+              <p class="preve-question__label">Pergunta 02</p>
+              <h3 class="preve-question__title">Para onde vai?</h3>
+              <ul class="preve-question__list">
+                <li>Correntes de maré e influência da Corrente do Brasil</li>
+                <li>
+                  Zonas de convergência, frentes estuarinas e ressurgência
+                </li>
+                <li>Estratificação térmica e salina da coluna de água</li>
+                <li>Migração vertical ativa dos dinoflagelados móveis</li>
+              </ul>
+            </div>
+            <div class="preve-question">
+              <p class="preve-question__label">Pergunta 03</p>
+              <h3 class="preve-question__title">Quando passa do limite?</h3>
+              <ul class="preve-question__list">
+                <li>
+                  Densidade celular projetada contra o limiar de cada espécie
+                </li>
+                <li>Acúmulo de biotoxina no tecido do molusco</li>
+                <li>Tempo de depuração natural por espécie cultivada</li>
+                <li>Data provável de interdição e de desinterdição</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- O achado (dark) -->
+      <section
+        class="preve-section preve-section--ink"
+        id="achado"
+        data-checkpoint="13"
+        data-checkpoint-label="O achado"
+      >
+        <div class="container">
+          <p class="eyebrow eyebrow--on-ink reveal" data-reveal>
+            <span class="eyebrow__line"></span>A cadeia da previsão
+          </p>
+          <h2
+            class="preve-heading preve-heading--on-ink split-text"
+            data-reveal
+          >
+            O céu prevê melhor que o satélite.
+          </h2>
+          <p class="preve-body preve-body--on-ink reveal reveal-d2" data-reveal>
+            A leitura isolada de clorofila-a por satélite se mostrou um mau
+            preditor de floração na costa sul e sudeste do Brasil. Por isso o
+            modelo prioriza os parâmetros meteorológicos locais como gatilho
+            principal — em especial para Dinophysis spp. no outono e no inverno,
+            quando a combinação de alta pressão atmosférica, ventos frios de
+            oeste e sul e baixa radiação antecede o evento.
+          </p>
+
+          <div class="preve-compare reveal reveal-d3" data-reveal>
+            <div class="preve-compare__card preve-compare__card--lead">
+              <p class="preve-compare__tag">Preditor principal</p>
+              <h3 class="preve-compare__title">Meteorologia local</h3>
+              <p class="preve-compare__desc">
+                Alta pressão atmosférica, ventos frios de quadrante oeste e sul,
+                baixa radiação solar, nebulosidade e chuva acumulada — medidos
+                em terra, com dados de reanálise e de estações em tempo real.
+              </p>
+            </div>
+            <p class="preve-compare__vs">em vez de</p>
+            <div class="preve-compare__card preve-compare__card--dim">
+              <p class="preve-compare__tag">Preditor rebaixado</p>
+              <h3 class="preve-compare__title">Clorofila-a isolada</h3>
+              <p class="preve-compare__desc">
+                A concentração de clorofila vista do espaço continua no sistema
+                como contexto, mas perdeu o papel de gatilho: sozinha, ela não
+                anuncia a floração nesta faixa do litoral.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Três escalas -->
+      <section
+        class="preve-section"
+        id="escalas"
+        data-checkpoint="22"
+        data-checkpoint-label="As escalas"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>A cadeia da previsão
+          </p>
+          <h2 class="preve-heading split-text" data-reveal>
+            Três escalas ao mesmo tempo.
+          </h2>
+          <p class="preve-body reveal reveal-d2" data-reveal>
+            A previsão de movimentação da mancha só fecha quando as três escalas
+            espaciais rodam integradas. Uma sozinha erra o destino.
+          </p>
+        </div>
+
+        <div class="preve-scales__grid reveal reveal-d3" data-reveal>
+          <!-- Card 1: Regime regional -->
+          <div class="preve-scale">
+            <div class="preve-scale__diagram">
+              <svg
+                class="preve-scale__art"
+                viewBox="0 0 300 190"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path style="fill: var(--color-mint)" d="M0 0H300V190H0Z" />
+                <path
+                  style="fill: #cfe3df"
+                  d="M0 0H80C68 46 92 92 70 134L58 190H0Z"
+                />
+                <path
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.8;
+                  "
+                  d="M80 0C68 46 92 92 70 134L58 190"
+                />
+                <g
+                  class="preve-flow"
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.6;
+                  "
+                >
+                  <path d="M126 -8C112 48 140 108 120 198" />
+                </g>
+                <g
+                  class="preve-flow preve-flow--b"
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.6;
+                    opacity: 0.6;
+                  "
+                >
+                  <path d="M176 -8C164 50 190 110 170 198" />
+                </g>
+                <g
+                  class="preve-flow preve-flow--c"
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.6;
+                    opacity: 0.4;
+                  "
+                >
+                  <path d="M226 -8C214 52 240 112 220 198" />
+                </g>
+                <g
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.4;
+                    opacity: 0.55;
+                  "
+                >
+                  <path d="M244 34L280 52" />
+                  <path d="M272 44L280 52L270 57" />
+                  <path d="M244 62L280 80" />
+                  <path d="M272 72L280 80L270 85" />
+                </g>
+              </svg>
+              <span class="preve-scale__pill" style="left: 4%; top: 6%"
+                >Costa</span
+              >
+              <span class="preve-scale__pill" style="left: 78%; top: 9%"
+                >≈ 100 km</span
+              >
+              <span class="preve-scale__tag" style="left: 29%; top: 90%"
+                >Corrente do Brasil</span
+              >
+            </div>
+            <div class="preve-scale__text">
+              <p class="preve-scale__eyebrow">Escala larga</p>
+              <h3 class="preve-scale__title">Regime regional</h3>
+              <p class="preve-scale__desc">
+                Ventos regionais, correntes de maré e a influência estacional da
+                Corrente do Brasil definem o pano de fundo do transporte da
+                mancha.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 2: Encontros de água -->
+          <div class="preve-scale">
+            <div class="preve-scale__diagram">
+              <svg
+                class="preve-scale__art"
+                viewBox="0 0 300 190"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path style="fill: var(--color-mint)" d="M0 0H300V190H0Z" />
+                <path style="fill: #cfe3df" d="M0 0H70L44 46H0Z" />
+                <path style="fill: #cfe3df" d="M0 190H70L44 142H0Z" />
+                <path
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.6;
+                  "
+                  d="M70 0L44 46H0"
+                />
+                <path
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.6;
+                  "
+                  d="M70 190L44 142H0"
+                />
+                <path
+                  style="fill: var(--color-teal); opacity: 0.14"
+                  d="M150 6C162 46 138 96 152 148L152 184L146 184L146 6Z"
+                />
+                <path
+                  class="preve-pulse"
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 2;
+                    stroke-dasharray: 7 6;
+                  "
+                  d="M149 4C161 46 137 96 151 186"
+                />
+                <g
+                  class="preve-converge preve-converge--left"
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.5;
+                    opacity: 0.8;
+                  "
+                >
+                  <path d="M56 62H126" />
+                  <path d="M118 57L126 62L118 67" />
+                  <path d="M56 118H126" />
+                  <path d="M118 113L126 118L118 123" />
+                </g>
+                <g
+                  class="preve-converge preve-converge--right"
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.5;
+                    opacity: 0.8;
+                  "
+                >
+                  <path d="M282 84H176" />
+                  <path d="M184 79L176 84L184 89" />
+                  <path d="M282 132H176" />
+                  <path d="M184 127L176 132L184 137" />
+                </g>
+              </svg>
+              <span class="preve-scale__pill" style="left: 6%; top: 9%"
+                >Estuário</span
+              >
+              <span class="preve-scale__tag" style="left: 60%; top: 9%"
+                >Frente</span
+              >
+              <span class="preve-scale__pill" style="left: 80%; top: 9%"
+                >≈ 10 km</span
+              >
+              <span class="preve-scale__tag" style="left: 69%; top: 91%"
+                >Ressurgência</span
+              >
+            </div>
+            <div class="preve-scale__text">
+              <p class="preve-scale__eyebrow">Escala intermediária</p>
+              <h3 class="preve-scale__title">Encontros de água</h3>
+              <p class="preve-scale__desc">
+                Zonas de convergência de massas de água, frentes estuarinas e
+                processos locais de ressurgência concentram ou dispersam a
+                floração.
+              </p>
+            </div>
+          </div>
+
+          <!-- Card 3: Dentro da baía -->
+          <div class="preve-scale">
+            <div class="preve-scale__diagram">
+              <svg
+                class="preve-scale__art"
+                viewBox="0 0 300 190"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <path style="fill: var(--color-mint)" d="M0 26H300V96H0Z" />
+                <path
+                  style="fill: var(--color-teal); opacity: 0.14"
+                  d="M0 96H300V162H0Z"
+                />
+                <path
+                  class="preve-flow"
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.7;
+                  "
+                  d="M-6 26q18-9 36 0t36 0 36 0 36 0 36 0 36 0 36 0 36 0"
+                />
+                <path
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.5;
+                    stroke-dasharray: 6 5;
+                    opacity: 0.8;
+                  "
+                  d="M0 96H300"
+                />
+                <path style="fill: #cfe3df" d="M0 162H300V190H0Z" />
+                <path
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.5;
+                  "
+                  d="M0 162H300"
+                />
+                <path
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1;
+                    opacity: 0.45;
+                    stroke-dasharray: 3 5;
+                  "
+                  d="M150 44V146"
+                />
+                <ellipse
+                  class="preve-cell"
+                  cx="150"
+                  cy="128"
+                  rx="9"
+                  ry="12"
+                  style="fill: var(--color-teal); opacity: 0.9"
+                />
+                <g
+                  style="
+                    fill: none;
+                    stroke: var(--color-teal);
+                    stroke-width: 1.3;
+                    opacity: 0.7;
+                  "
+                >
+                  <path d="M150 40L145 49" />
+                  <path d="M150 40L155 49" />
+                  <path d="M150 150L145 141" />
+                  <path d="M150 150L155 141" />
+                </g>
+              </svg>
+              <span class="preve-scale__pill" style="left: 79%; top: 7%"
+                >≈ 10 m</span
+              >
+              <span class="preve-scale__tag" style="left: 5%; top: 4%"
+                >Superfície</span
+              >
+              <span class="preve-scale__tag" style="left: 6%; top: 42%"
+                >Picnoclina</span
+              >
+              <span class="preve-scale__tag" style="left: 6%; top: 91%"
+                >Fundo</span
+              >
+              <span class="preve-scale__tag" style="left: 60%; top: 56%"
+                >Migração vertical</span
+              >
+            </div>
+            <div class="preve-scale__text">
+              <p class="preve-scale__eyebrow">Escala pequena</p>
+              <h3 class="preve-scale__title">Dentro da baía</h3>
+              <p class="preve-scale__desc">
+                A estratificação térmica e salina da coluna de água em baías e
+                estuários abrigados favorece a migração vertical ativa dos
+                dinoflagelados móveis.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="container">
+          <div class="preve-note reveal reveal-d4" data-reveal>
+            <div class="preve-note__bar"></div>
+            <p class="preve-note__text preve-scales__note">
+              As três rodam de forma integrada: o resultado de cada escala
+              alimenta a seguinte.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- As fases (stepper, travado por scroll) -->
+      <section
+        class="preve-fases-scroll preve-section--mint"
+        id="fases"
+        data-checkpoint="33"
+        data-checkpoint-label="As fases"
+      >
+        <div class="preve-fases-pin">
+          <div class="container">
+            <p class="eyebrow reveal" data-reveal>
+              <span class="eyebrow__line"></span>Saída do sistema
+            </p>
+            <h2 class="preve-heading split-text" data-reveal>
+              A previsão vira uma de três fases.
+            </h2>
+
+            <div
+              class="preve-stepper reveal reveal-d2"
+              data-reveal
+              id="preveStepper"
+            >
+              <div class="preve-stepper__nav">
+                <p class="preve-stepper__digit" id="stepperDigit">1</p>
+                <div class="preve-stepper__rail">
+                  <div
+                    class="preve-stepper__rail-fill"
+                    id="stepperRailFill"
+                    style="height: 17%"
+                  ></div>
+                </div>
+                <div class="preve-stepper__ticks">
+                  <button
+                    type="button"
+                    class="preve-stepper__tick is-active"
+                    data-stage="1"
+                  >
+                    Suspeita
+                  </button>
+                  <button
+                    type="button"
+                    class="preve-stepper__tick"
+                    data-stage="2"
+                  >
+                    Confirmação na água
+                  </button>
+                  <button
+                    type="button"
+                    class="preve-stepper__tick"
+                    data-stage="3"
+                  >
+                    Confirmação na carne
+                  </button>
+                </div>
+              </div>
+
+              <div class="preve-stepper__card">
+                <div class="preve-stepper__content" id="stepperContent">
+                  <p class="preve-stepper__alert" id="stepperAlert">Alerta 1</p>
+                  <h3 class="preve-stepper__title" id="stepperTitle">
+                    Suspeita
+                  </h3>
+                  <div class="preve-stepper__row">
+                    <p class="preve-stepper__row-label">Gatilhos</p>
+                    <p class="preve-stepper__row-text" id="stepperGatilhos">
+                      Manchas atípicas ou espuma abundante na água. Mortandade
+                      anormal de peixes ou invertebrados. Notificação no SUS de
+                      diarreia ou parestesia após consumo recente de moluscos.
+                      Floração ativa reportada no Paraná ou em Santa Catarina.
+                    </p>
+                  </div>
+                  <div class="preve-stepper__row">
+                    <p class="preve-stepper__row-label">Ações</p>
+                    <p class="preve-stepper__row-text" id="stepperAcoes">
+                      Notificação preventiva a maricultores e extratores, ordem
+                      de amostragem de água direcionada e aviso à Vigilância
+                      Sanitária e Epidemiológica para intensificar o rastreio
+                      hospitalar.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Os limiares -->
+      <section
+        class="preve-section"
+        id="limiares"
+        data-checkpoint="60"
+        data-checkpoint-label="Os limiares"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Os números que o sistema vigia
+          </p>
+          <h2 class="preve-heading split-text" data-reveal>
+            Cada espécie tem seu próprio limite.
+          </h2>
+          <p class="preve-body reveal reveal-d2" data-reveal>
+            É contra estes valores que a densidade celular projetada é
+            comparada. Ultrapassou, o Alerta 2 dispara sozinho.
+          </p>
+
+          <div class="preve-thresholds__list reveal reveal-d3" data-reveal>
+            <div class="preve-threshold-row">
+              <div class="preve-threshold-row__top">
+                <span class="preve-threshold-row__species"
+                  >Alexandrium spp.</span
+                >
+                <span class="preve-threshold-row__tag"
+                  >Toxina paralisante · PSP</span
+                >
+                <span class="preve-threshold-row__value">≥ 200 céls/L</span>
+              </div>
+              <div class="preve-threshold-row__bar-track">
+                <div class="preve-threshold-row__bar" style="--w: 8%"></div>
+              </div>
+            </div>
+            <div class="preve-threshold-row">
+              <div class="preve-threshold-row__top">
+                <span class="preve-threshold-row__species"
+                  >Prorocentrum lima</span
+                >
+                <span class="preve-threshold-row__tag"
+                  >Toxina diarreica · DSP</span
+                >
+                <span class="preve-threshold-row__value">≥ 500 céls/L</span>
+              </div>
+              <div class="preve-threshold-row__bar-track">
+                <div class="preve-threshold-row__bar" style="--w: 13%"></div>
+              </div>
+            </div>
+            <div class="preve-threshold-row">
+              <div class="preve-threshold-row__top">
+                <span class="preve-threshold-row__species"
+                  >Dinophysis spp.</span
+                >
+                <span class="preve-threshold-row__tag"
+                  >Toxina diarreica · DSP</span
+                >
+                <span class="preve-threshold-row__value">≥ 1.000 céls/L</span>
+              </div>
+              <div class="preve-threshold-row__bar-track">
+                <div class="preve-threshold-row__bar" style="--w: 17%"></div>
+              </div>
+            </div>
+            <div class="preve-threshold-row">
+              <div class="preve-threshold-row__top">
+                <span class="preve-threshold-row__species"
+                  >Gymnodinium spp.</span
+                >
+                <span class="preve-threshold-row__tag"
+                  >Paralisante e neurotóxica</span
+                >
+                <span class="preve-threshold-row__value"
+                  >≥ 1.000 – 2.000 céls/L</span
+                >
+              </div>
+              <div class="preve-threshold-row__bar-track">
+                <div class="preve-threshold-row__bar" style="--w: 21%"></div>
+              </div>
+            </div>
+            <div class="preve-threshold-row">
+              <div class="preve-threshold-row__top">
+                <span class="preve-threshold-row__species"
+                  >Pseudo-nitzschia spp.</span
+                >
+                <span class="preve-threshold-row__tag"
+                  >Toxina amnésica · ASP</span
+                >
+                <span class="preve-threshold-row__value">≥ 50.000 céls/L</span>
+              </div>
+              <div class="preve-threshold-row__bar-track">
+                <div class="preve-threshold-row__bar" style="--w: 74%"></div>
+              </div>
+            </div>
+            <div class="preve-threshold-row">
+              <div class="preve-threshold-row__top">
+                <span class="preve-threshold-row__species"
+                  >Pseudo-nitzschia · grupo delicatissima</span
+                >
+                <span class="preve-threshold-row__tag"
+                  >Células finas · ASP</span
+                >
+                <span class="preve-threshold-row__value">≥ 500.000 céls/L</span>
+              </div>
+              <div class="preve-threshold-row__bar-track">
+                <div class="preve-threshold-row__bar" style="--w: 100%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preve-note reveal reveal-d4" data-reveal>
+            <div class="preve-note__bar"></div>
+            <p class="preve-note__text preve-thresholds__note">
+              Barras em escala logarítmica — a distância entre o primeiro e o
+              último limite é de 2.500 vezes. Para Gymnodinium, o limite é 1.000
+              céls/L em áreas de cultivo de bivalves e 2.000 céls/L para ostras
+              e outros organismos.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Outras previsões -->
+      <section
+        class="preve-section"
+        id="outras-previsoes"
+        data-checkpoint="78"
+        data-checkpoint-label="Outras previsões"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Os números que o sistema vigia
+          </p>
+          <h2 class="preve-heading split-text" data-reveal>
+            O que mais o modelo antecipa.
+          </h2>
+
+          <div class="preve-extra__grid reveal reveal-d2" data-reveal>
+            <div class="preve-extra-card">
+              <div class="preve-extra-card__stat-zone">
+                <p class="preve-extra-card__stat">0,8 mg/kg</p>
+                <p class="preve-extra-card__tag">Toxinas paralisantes · PSP</p>
+                <p class="preve-extra-card__stat-desc">
+                  Equivalente de saxitoxina por quilo de carne de molusco. Acima
+                  disso, Alerta 3.
+                </p>
+              </div>
+              <div class="preve-extra-card__detail-zone">
+                <p class="preve-scale__eyebrow">Estresse por nutrientes</p>
+                <h3 class="preve-extra-card__title">
+                  Quando a alga decide produzir mais toxina
+                </h3>
+                <p class="preve-extra-card__desc">
+                  O sistema calcula sozinho as razões estequiométricas entre
+                  nitrogênio, fósforo e sílica a partir das concentrações de
+                  nitrito, nitrato, amônia, fosfato e silicato dissolvidos. O
+                  desequilíbrio na razão limitante é o que induz o fitoplâncton
+                  alelopático a reforçar a síntese de toxinas — ou seja, prevê
+                  não só quantas células existem, mas quão venenosas elas tendem
+                  a ficar.
+                </p>
+                <div class="preve-extra-card__mini-list">
+                  <span>N:P — nitrogênio e fósforo</span>
+                  <span>N:Si — nitrogênio e sílica</span>
+                  <span>P:Si — fósforo e sílica</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preve-extra-card">
+              <div class="preve-extra-card__stat-zone">
+                <p class="preve-extra-card__stat">160 µg/kg</p>
+                <p class="preve-extra-card__tag">Toxinas diarreicas · DSP</p>
+                <p class="preve-extra-card__stat-desc">
+                  Equivalente de ácido ocadaico e DTX por quilo de
+                  hepatopâncreas ou carne. Acima disso, Alerta 3.
+                </p>
+              </div>
+              <div class="preve-extra-card__detail-zone">
+                <p class="preve-scale__eyebrow">Plastisfera costeira</p>
+                <h3 class="preve-extra-card__title">
+                  Onde o plástico vira criadouro
+                </h3>
+                <p class="preve-extra-card__desc">
+                  Cruzando dados térmicos regionais com o mapeamento de resíduos
+                  plásticos marinhos, o modelo estima as zonas com alta
+                  adequabilidade para colonização de dinoflagelados bênticos
+                  sobre fragmentos de micro e macroplástico flutuante — espécies
+                  que produzem ciguatoxina e ácido ocadaico.
+                </p>
+                <div class="preve-extra-card__mini-list">
+                  <span>Ostreopsis cf. ovata</span>
+                  <span>Gambierdiscus spp.</span>
+                  <span>Prorocentrum lima</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- A previsão que devolve o sustento -->
+      <section
+        class="preve-section"
+        id="previsao"
+        data-checkpoint="85"
+        data-checkpoint-label="A previsão"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>A previsão que devolve o sustento
+          </p>
+          <h2 class="preve-heading split-text" data-reveal>
+            Prever a volta também é prever.
+          </h2>
+          <p class="preve-body reveal reveal-d2" data-reveal>
+            Interditar é a parte fácil. O modelo também projeta a depuração
+            natural da toxina, para que a área volte a produzir assim que for
+            seguro — e não semanas depois, por precaução.
+          </p>
+
+          <div class="preve-recovery__grid reveal reveal-d3" data-reveal>
+            <div class="preve-recovery-card">
+              <p class="preve-recovery-card__stat">3×</p>
+              <p class="preve-recovery-card__label">Reversão do Alerta 2</p>
+              <p class="preve-recovery-card__desc">
+                Exige laudo comprovando densidade de microalgas abaixo do limite
+                em três análises de água sequenciais.
+              </p>
+            </div>
+            <div class="preve-recovery-card">
+              <p class="preve-recovery-card__stat">2×</p>
+              <p class="preve-recovery-card__label">Reversão do Alerta 3</p>
+              <p class="preve-recovery-card__desc">
+                Exige biotoxina abaixo do limite em dois resultados sequenciais
+                de amostragens de tecido diferentes.
+              </p>
+            </div>
+          </div>
+
+          <div class="preve-recovery-wide reveal reveal-d4" data-reveal>
+            <p class="preve-recovery-card__label">Berbigão sentinela</p>
+            <h3 class="preve-recovery-wide__title">
+              Cada espécie se limpa em um ritmo
+            </h3>
+            <p class="preve-recovery-wide__desc">
+              O algoritmo de depuração aplica tempos diferentes por espécie
+              cultivada. O berbigão Anomalocardia flexuosa tem taxa experimental
+              de detoxificação de cerca de 3% por hora para toxina diarreica —
+              bem mais rápida que a de mexilhões e ostras. Isso permite
+              desinterditar os bancos extrativos de berbigão antes do restante
+              da área, em vez de manter todo mundo parado pelo prazo do
+              organismo mais lento.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- A base -->
+      <section
+        class="preve-section preve-section--mint"
+        id="base"
+        data-checkpoint="95"
+        data-checkpoint-label="A base"
+      >
+        <div class="container">
+          <p class="eyebrow reveal" data-reveal>
+            <span class="eyebrow__line"></span>Saída do sistema
+          </p>
+          <h2 class="preve-heading split-text" data-reveal>
+            De onde vêm estas regras.
+          </h2>
+          <p class="preve-body reveal reveal-d2" data-reveal>
+            A arquitetura foi estruturada sobre dados de ecologia costeira e
+            ecotoxicologia e sobre os fluxos regulatórios já existentes.
+          </p>
+
+          <div class="preve-sources__list reveal reveal-d3" data-reveal>
+            <div class="preve-source-row">
+              <span class="preve-source-row__name"
+                >Plano de Contingência do Estado de São Paulo</span
+              >
+              <span class="preve-source-row__meta"
+                >2021 · fluxo regulatório</span
+              >
+            </div>
+            <div class="preve-source-row">
+              <span class="preve-source-row__name"
+                >Pesquisas meteorológicas da Epagri e do IFSC</span
+              >
+              <span class="preve-source-row__meta"
+                >2023 · gatilhos climáticos</span
+              >
+            </div>
+            <div class="preve-source-row">
+              <span class="preve-source-row__name"
+                >Pesquisas tróficas e de biomarcadores da UFPR</span
+              >
+              <span class="preve-source-row__meta">2021 · ecotoxicologia</span>
+            </div>
+            <div class="preve-source-row">
+              <span class="preve-source-row__name"
+                >Rede de laboratórios de referência RENAQUA e LAQUA</span
+              >
+              <span class="preve-source-row__meta">laudos analíticos</span>
+            </div>
+            <div class="preve-source-row">
+              <span class="preve-source-row__name"
+                >GEDAVE da CDA/SAA e PGA do MAPA</span
+              >
+              <span class="preve-source-row__meta"
+                >rastreabilidade e trânsito</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner reveal" data-reveal>
+        <div class="footer__logo" aria-hidden="true">
+          <img src="../../shared/assets/LogoBranca.png" alt="" />
+        </div>
+        <p class="footer__text">
+          Grupo de pesquisa em previsão de florações de algas nocivas no litoral
+          de São Paulo.<br />
+          Os resultados de pesquisa apresentados nesta página são uma simulação
+          para fins de demonstração.<br />
+          Em caso de suspeita de contaminação, procure a vigilância sanitária
+          local.
+        </p>
+      </div>
+    </footer>
+    <div class="footer__bar"></div>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/o-que-preve.js"></script>
+  </body>
+</html>

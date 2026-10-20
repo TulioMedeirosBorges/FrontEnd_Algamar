@@ -1,0 +1,108 @@
+/* Base comum do site e do software: tokens de design + reset.
+   (Antes vivia no topo de main.css.) */
+/* ==========================================================================
+   Design tokens
+   ========================================================================== */
+:root {
+  /* Colors */
+  --color-green: #379f7a;
+  --color-teal: #0f766e;
+  --color-navy: #1d3c4e;
+  --color-black: #111111;
+  --color-white: #ffffff;
+  --color-gray-500: #999999;
+  --color-gray-400: rgba(135, 135, 135, 0.8);
+  --color-gray-300: #cccccc;
+  --color-gray-border: rgba(204, 204, 204, 0.8);
+  --color-mint: #e8f3f1;
+  --color-placeholder: #d9d9d9;
+  --color-desc: rgba(94, 94, 94, 0.8);
+  --color-border-card: #999999;
+
+  /* Typography */
+  --font-heading: "Bricolage Grotesque", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-body: Arial, Helvetica, sans-serif;
+  --font-ui: "Instrument Sans", sans-serif;
+
+  --fs-h1: 40px;
+  --fs-h2: 34px;
+  --fs-stat: 34px;
+  --fs-body: 17px;
+  --fs-nav: 15px;
+  --fs-eyebrow: 14px;
+  --fs-card-title: 18px;
+  --fs-btn-lg: 18px;
+  --fs-btn-md: 15px;
+  --fs-btn-sm: 14px;
+  --fs-caption: 10px;
+  --fs-small: 11px;
+  --fs-table-desc: 13px;
+  --fs-team-name: 15px;
+  --fs-team-role: 10px;
+  --fs-team-desc: 13px;
+
+  /* Radius */
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 22px;
+
+  /* Layout */
+  --container-max: 1200px;
+  --container-pad: 64px;
+
+  /* Spacing scale */
+  --sp-1: 8px;
+  --sp-2: 14px;
+  --sp-3: 18px;
+  --sp-4: 24px;
+  --sp-5: 28px;
+  --sp-6: 32px;
+  --sp-7: 40px;
+  --sp-8: 48px;
+  --sp-9: 56px;
+  --sp-10: 64px;
+  --sp-11: 80px;
+}
+
+/* ==========================================================================
+   Reset
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-black);
+  background: var(--color-white);
+  -webkit-font-smoothing: antialiased;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+h1,
+h2,
+p {
+  margin: 0;
+}
+button {
+  font: inherit;
+  cursor: pointer;
+}

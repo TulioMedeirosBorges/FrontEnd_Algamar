@@ -1,0 +1,623 @@
+/* ==========================================================================
+   Page-specific tokens
+   ========================================================================== */
+:root {
+  --color-ink: #0f1719;
+  --color-ink-card: #141f22;
+  --color-ink-border: #2b3a3e;
+  --color-teal-light: #5fc9be;
+  --color-mist: #a9bcc0;
+  --color-mist-dim: #abc9c6;
+  --color-slate: #728083;
+  --color-rail-track: #c5dfdc;
+}
+
+/* ==========================================================================
+   Side scroll rail — fixed companion, tracks progress through the page
+   ========================================================================== */
+.side-rail {
+  position: fixed;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.side-rail__track {
+  position: relative;
+  width: 5px;
+  height: 228px;
+  background: var(--color-rail-track);
+  border-radius: 3px;
+}
+.side-rail__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: var(--color-teal);
+  transition: height 0.15s linear;
+}
+.side-rail__marker {
+  position: absolute;
+  left: 50%;
+  top: 0%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-white);
+  border: 1.5px solid var(--color-teal);
+  transform: translate(-50%, -50%);
+}
+.side-rail__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-teal);
+  text-transform: uppercase;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  transition: color 0.2s ease;
+  margin-bottom: var(--sp-1);
+}
+.side-rail__percent {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-teal);
+  margin-top: var(--sp-1);
+}
+@media (max-width: 1180px) {
+  .side-rail {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Shared section rhythm
+   ========================================================================== */
+.como-section {
+  padding-block: var(--sp-11) var(--sp-11);
+}
+.como-section--mint {
+  background: var(--color-mint);
+}
+.como-section--ink {
+  background: var(--color-ink);
+}
+.como-heading {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 48px;
+  line-height: 1.2;
+  color: var(--color-black);
+  margin-bottom: var(--sp-5);
+  max-width: 700px;
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-heading--on-ink {
+  color: var(--color-white);
+}
+.como-body {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.5;
+  text-align: justify;
+  max-width: 727px;
+  margin-bottom: var(--sp-8);
+}
+.como-body--on-ink {
+  color: var(--color-mist);
+  max-width: 657px;
+}
+.eyebrow--on-ink {
+  color: var(--color-teal-light);
+}
+
+/* ==========================================================================
+   Hero
+   ========================================================================== */
+.como-hero {
+  background: var(--color-mint);
+  min-height: 89vh;
+  display: flex;
+  align-items: center;
+}
+/* .container centers itself via margin-inline:auto, which — inside a
+   flex parent — wins over the hero's own alignment. Neutralize it here
+   so the hero content hugs the left edge instead of drifting to the
+   middle (matches o-que-preve.html's hero). */
+.como-hero .container {
+  margin: 0;
+  padding: 0 0 0 5rem;
+}
+.como-hero__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 64px;
+  line-height: 1.2;
+  color: var(--color-black);
+  max-width: 700px;
+  margin-bottom: var(--sp-6);
+  margin-left: 8rem;
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-hero__body {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.5;
+  text-align: justify;
+  max-width: 742px;
+  margin-left: 8rem;
+}
+.como-hero .eyebrow {
+  margin-left: 8rem;
+}
+
+/* ==========================================================================
+   Five modules
+   ========================================================================== */
+.como-modules__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 5px solid var(--color-green);
+  border-inline: 0.5px solid var(--color-gray-500);
+  border-bottom: 0.5px solid var(--color-gray-500);
+}
+.como-module {
+  padding: var(--sp-4) var(--sp-3) var(--sp-6);
+  border-right: 0.5px solid var(--color-gray-300);
+}
+.como-module:last-child {
+  border-right: none;
+}
+.como-module__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.como-module__num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-teal);
+}
+.como-module__phase {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-slate);
+}
+.como-module__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--color-black);
+  margin: 0 0 var(--sp-3);
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-module__desc {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--color-slate);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Four families of variables
+   ========================================================================== */
+.como-families__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+}
+.como-family {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-500);
+  padding: var(--sp-4) var(--sp-4) var(--sp-5);
+}
+.como-family__num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-teal);
+  text-transform: uppercase;
+  margin: 0 0 var(--sp-2);
+}
+.como-family__tag {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--color-black);
+  margin: 0 0 var(--sp-3);
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-family__list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.como-family__list li {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-black);
+  padding-block: var(--sp-2);
+  border-top: 1px solid var(--color-gray-300);
+}
+.como-family__list li:first-child {
+  border-top: none;
+}
+.como-note {
+  max-width: 1026px;
+}
+
+/* ==========================================================================
+   The learning cycle
+   ========================================================================== */
+.como-cycle {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--sp-9);
+  align-items: center;
+  margin-bottom: var(--sp-6);
+}
+.como-cycle__diagram {
+  background: var(--color-mint);
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+.como-cycle__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.como-cycle__flow {
+  animation: como-cycle-flow 3.6s linear infinite;
+}
+@keyframes como-cycle-flow {
+  to {
+    stroke-dashoffset: -38;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .como-cycle__flow {
+    animation: none;
+  }
+}
+.como-cycle__node text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  fill: var(--color-teal);
+  text-transform: uppercase;
+}
+.como-cycle__steps {
+  display: flex;
+  flex-direction: column;
+}
+.como-cycle__step {
+  padding-block: var(--sp-4);
+  border-top: 1px solid var(--color-gray-300);
+}
+.como-cycle__step:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.como-cycle__step-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-teal);
+  text-transform: uppercase;
+  margin: 0 0 var(--sp-2);
+}
+.como-cycle__step-desc {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--color-slate);
+  margin: 0;
+  max-width: 589px;
+}
+.como-fineprint {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-slate);
+  max-width: 1030px;
+  margin: 0;
+}
+
+/* ==========================================================================
+   The model suggests, the rule decides (dark comparison)
+   ========================================================================== */
+.como-decision__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-5);
+  max-width: 1057px;
+}
+.como-decision__card {
+  background: var(--color-ink-card);
+  border: 1px solid var(--color-teal-light);
+  padding: var(--sp-4) var(--sp-5);
+}
+.como-decision__tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-teal-light);
+  text-transform: uppercase;
+  margin: 0 0 var(--sp-4);
+}
+.como-decision__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--color-white);
+  margin: 0 0 var(--sp-3);
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-decision__desc {
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--color-mist);
+  margin: 0 0 var(--sp-4);
+}
+.como-decision__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.como-decision__list li {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: capitalize;
+  color: var(--color-mist);
+  padding-block: var(--sp-2);
+  border-top: 1px solid var(--color-ink-border);
+}
+.como-decision__list li:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ==========================================================================
+   Confusion matrix
+   ========================================================================== */
+.como-matrix {
+  display: grid;
+  grid-template-columns: 180px 1fr 1fr;
+  gap: 1px;
+  background: var(--color-gray-300);
+  max-width: 1057px;
+  margin-bottom: var(--sp-6);
+}
+.como-matrix__corner {
+  background: var(--color-white);
+}
+.como-matrix__colhead,
+.como-matrix__rowhead {
+  background: var(--color-white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+}
+.como-matrix__rowhead {
+  color: var(--color-black);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  text-transform: none;
+  font-size: 16px;
+}
+.como-matrix__cell {
+  background: var(--color-white);
+  padding: var(--sp-4) var(--sp-5);
+}
+.como-matrix__cell--critical {
+  border: 2px solid var(--color-teal);
+}
+.como-matrix__cell-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-teal);
+  text-transform: uppercase;
+  margin: 0 0 var(--sp-2);
+}
+.como-matrix__cell-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--color-black);
+  margin: 0 0 var(--sp-2);
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-matrix__cell-desc {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--color-slate);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Alert delivery — stats + integrations
+   ========================================================================== */
+.como-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-7);
+}
+.como-stat-card {
+  background: var(--color-white);
+  border: 1px solid var(--color-mist-dim);
+  padding: var(--sp-5);
+}
+.como-stat-card__value {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 48px;
+  color: var(--color-teal);
+  margin: 0 0 var(--sp-2);
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-stat-card__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-gray-500);
+  text-transform: uppercase;
+  margin: 0 0 var(--sp-3);
+}
+.como-stat-card__desc {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--color-black);
+  margin: 0;
+}
+
+.como-integrations__list {
+  max-width: 1057px;
+}
+.como-integration-row {
+  display: grid;
+  grid-template-columns: 220px 1fr 100px;
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+  border-top: 1px solid var(--color-gray-300);
+}
+.como-integration-row:first-child {
+  border-top: none;
+}
+.como-integration-row__name {
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--color-black);
+}
+.como-integration-row__desc {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--color-slate);
+}
+.como-integration-row__tag {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-teal);
+  text-transform: uppercase;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Continue (dark CTA)
+   ========================================================================== */
+.como-cta {
+  background: var(--color-ink);
+  padding-block: var(--sp-11);
+}
+.como-cta__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.como-cta__eyebrow {
+  justify-content: center;
+}
+.como-cta__title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 48px;
+  line-height: 1.2;
+  color: var(--color-white);
+  max-width: 700px;
+  margin-bottom: var(--sp-4);
+  font-variation-settings:
+    "opsz" 96,
+    "wdth" 100;
+}
+.como-cta__desc {
+  font-family: var(--font-body);
+  font-size: 18px;
+  color: var(--color-mist);
+  max-width: 560px;
+  margin-bottom: var(--sp-6);
+}
+.como-cta__btn {
+  font-size: var(--fs-card-title);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .como-hero__title,
+  .como-heading,
+  .como-cta__title {
+    font-size: 36px;
+  }
+  .como-hero .container {
+    padding-left: var(--container-pad);
+  }
+  .como-hero__title,
+  .como-hero__body,
+  .como-hero .eyebrow {
+    margin-left: 0;
+  }
+  .como-modules__grid,
+  .como-families__grid,
+  .como-stats__grid {
+    grid-template-columns: 1fr;
+  }
+  .como-module {
+    border-right: none;
+    border-bottom: 0.5px solid var(--color-gray-300);
+  }
+  .como-module:last-child {
+    border-bottom: none;
+  }
+  .como-cycle {
+    grid-template-columns: 1fr;
+  }
+  .como-cycle__diagram {
+    max-width: 280px;
+    margin-inline: auto;
+  }
+  .como-decision__grid,
+  .como-matrix {
+    grid-template-columns: 1fr;
+  }
+  .como-matrix__corner {
+    display: none;
+  }
+  .como-integration-row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
+  .como-integration-row__tag {
+    text-align: left;
+  }
+}

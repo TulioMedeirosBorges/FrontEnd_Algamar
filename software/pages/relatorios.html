@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Algamar — Relatórios</title>
+    <meta
+      name="description"
+      content="Geração de relatórios de ocorrências, condições ambientais e risco de floração de algas."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../shared/css/base.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <script src="../js/api-config.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/user-prefs.js"></script>
+    <script src="../js/notifications.js"></script>
+  </head>
+  <body class="dash-body reports-page">
+    <div class="dash">
+      <div class="dash-sidebar-overlay" id="sidebarOverlay" hidden></div>
+
+      <aside class="dash-sidebar" id="sidebar">
+        <div class="dash-sidebar__top">
+          <a
+            href="../../site/index.html"
+            class="dash-logo"
+            aria-label="Algamar — página inicial"
+          >
+            <img src="../../shared/assets/LogoBranca.png" alt="Algamar" />
+          </a>
+        </div>
+
+        <nav class="dash-nav" aria-label="Navegação principal">
+          <a href="dashboard.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/dashboard_white.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/dashboard.svg"
+                alt=""
+              />
+            </span>
+            Dashboard
+          </a>
+          <a href="mapa-interativo.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/explore.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/explore_Green.svg"
+                alt=""
+              />
+            </span>
+            Mapa Interativo
+          </a>
+          <a href="previsoes.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/calendar_month_white.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/calendar_month.svg"
+                alt=""
+              />
+            </span>
+            Previsões
+          </a>
+          <a href="historico-ocorrencias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/update.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/update_Green.svg"
+                alt=""
+              />
+            </span>
+            Histórico de Ocorrências
+          </a>
+          <a href="alertas.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/notifications.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/notifications_Green.svg"
+                alt=""
+              />
+            </span>
+            Alertas
+          </a>
+          <a href="dados-ambientais.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/park.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/park_Green.svg"
+                alt=""
+              />
+            </span>
+            Dados Ambientais
+          </a>
+          <a
+            href="relatorios.html"
+            class="dash-nav__link dash-nav__link--active"
+            aria-current="page"
+          >
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/description.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/description_Green.svg"
+                alt=""
+              />
+            </span>
+            Relatórios
+          </a>
+        </nav>
+
+        <div class="dash-sidebar__bottom">
+          <button
+            type="button"
+            class="dash-nav__link dash-nav__link--button"
+            id="logoutBtn"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >logout</span
+            >
+            Sair
+          </button>
+          <a href="configuracoes.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/settings.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/settings_green.svg"
+                alt=""
+              />
+            </span>
+            Configurações
+          </a>
+          <p class="dash-sidebar__warning" id="dashApiWarning" hidden>
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >cloud_off</span
+            >
+            <span id="dashApiWarningText">Não foi possível conectar à API.</span>
+          </p>
+          <p class="dash-version">Versão 0.1</p>
+        </div>
+      </aside>
+
+      <main class="dash-main">
+        <header class="dash-topbar">
+          <button
+            type="button"
+            class="dash-menu-toggle"
+            id="menuToggle"
+            aria-label="Abrir menu"
+            aria-expanded="false"
+            aria-controls="sidebar"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >menu</span
+            >
+          </button>
+          <label class="dash-search">
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >search</span
+            >
+            <input
+              type="search"
+              id="dashSearch"
+              placeholder="Buscar por localidade, região ou tipo de alga..."
+            />
+          </label>
+
+          <div class="dash-topbar__actions">
+            <button
+              type="button"
+              class="dash-icon-btn dash-icon-btn--bell"
+              id="topRefresh"
+              aria-label="Notificações"
+              title="Notificações"
+            >
+              <img
+                class="icon-svg"
+                src="../assets/Icons/notifications.svg"
+                alt=""
+              />
+              <span class="dash-icon-btn__badge" id="alertBadge" hidden>0</span>
+            </button>
+            <div class="dash-user">
+              <div class="dash-user__avatar" id="userAvatar">—</div>
+              <div class="dash-user__info">
+                <p class="dash-user__name" id="userName">—</p>
+                <p class="dash-user__email" id="userEmail">—</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section class="rp-head">
+          <h1 class="rp-title">Gerar relatório</h1>
+          <p class="rp-sub">Selecione o tipo de relatório e os filtros desejados.</p>
+        </section>
+
+        <section class="rp-grid">
+          <div class="rp-panel">
+            <h2 class="rp-panel__title">Modelo de relatório</h2>
+            <div class="rp-models" role="radiogroup" aria-label="Modelo de relatório">
+            <label class="rp-model">
+              <input type="radio" name="rpModel" value="ocorrencia" checked />
+              <span class="rp-model__icon"><svg viewBox="0 0 70 70" fill="none" stroke="#379F7A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 24v36a4 4 0 0 0 4 4h38a4 4 0 0 0 4-4V42"></path>
+                <path d="M21 54V40M31 54V30M41 54V44"></path>
+                <path d="M40 30C40 16 49 7 65 6c0 15-8 24-19 25"></path>
+              </svg></span>
+              <span class="rp-model__text">
+                <strong>Relatório de Ocorrência</strong>
+                <span>Dados sobre ocorrências de algas tóxicas no período selecionado</span>
+              </span>
+              <span class="rp-radio" aria-hidden="true"></span>
+            </label>
+            <label class="rp-model">
+              <input type="radio" name="rpModel" value="ambiental" />
+              <span class="rp-model__icon"><img src="../assets/Icons/spa.svg" alt="" /></span>
+              <span class="rp-model__text">
+                <strong>Relatório Ambiental</strong>
+                <span>Condições ambientais e parâmetros da água e do clima</span>
+              </span>
+              <span class="rp-radio" aria-hidden="true"></span>
+            </label>
+            <label class="rp-model">
+              <input type="radio" name="rpModel" value="risco" />
+              <span class="rp-model__icon"><img src="../assets/Icons/experiment.svg" alt="" /></span>
+              <span class="rp-model__text">
+                <strong>Relatório de Risco</strong>
+                <span>Áreas e perigos com maior probabilidade de floração</span>
+              </span>
+              <span class="rp-radio" aria-hidden="true"></span>
+            </label>
+            <label class="rp-model">
+              <input type="radio" name="rpModel" value="executivo" />
+              <span class="rp-model__icon"><img src="../assets/Icons/contract.svg" alt="" /></span>
+              <span class="rp-model__text">
+                <strong>Relatório Executivo</strong>
+                <span>Visão geral para gestão e tomada de decisão</span>
+              </span>
+              <span class="rp-radio" aria-hidden="true"></span>
+            </label>
+            </div>
+          </div>
+
+          <div class="rp-panel">
+            <h2 class="rp-panel__title rp-panel__title--rule">Filtros</h2>
+            <div class="rp-fields">
+            <label class="rp-field">
+              <span class="rp-field__label">Período</span>
+              <span class="fc-select rp-select">
+                <select id="rpPeriod">
+                <option value="1" selected>Últimos 30 dias</option>
+                <option value="3">Últimos 3 meses</option>
+                <option value="6">Últimos 6 meses</option>
+                <option value="12">Últimos 12 meses</option>
+                </select>
+                <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+              </span>
+            </label>
+            <label class="rp-field">
+              <span class="rp-field__label">Região</span>
+              <span class="fc-select rp-select">
+                <select id="rpRegion">
+                <option value="" selected>Todas as regiões</option>
+                <option value="Litoral Norte">Litoral Norte</option>
+                <option value="Baixada Santista">Baixada Santista</option>
+                <option value="Litoral Sul">Litoral Sul</option>
+                </select>
+                <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+              </span>
+            </label>
+            <label class="rp-field">
+              <span class="rp-field__label">Tipo de alga</span>
+              <span class="fc-select rp-select">
+                <select id="rpAlga" disabled title="A API ainda não informa o tipo de alga">
+                <option value="" selected>Todas</option>
+                </select>
+                <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+              </span>
+            </label>
+            <label class="rp-field">
+              <span class="rp-field__label">Formato</span>
+              <span class="fc-select rp-select">
+                <select id="rpFormat">
+                <option value="pdf" selected>PDF (recomendado)</option>
+                <option value="csv">CSV (planilha)</option>
+                </select>
+                <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+              </span>
+            </label>
+            </div>
+            <div class="rp-actions">
+              <button type="button" class="rp-btn" id="rpShare">Compartilhar</button>
+              <button type="button" class="rp-btn" id="rpDownload">
+                <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                Baixar
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div class="rp-toast" id="rpToast" role="status" aria-live="polite" hidden></div>
+      </main>
+    </div>
+
+    <script src="../js/dash-shell.js"></script>
+    <script src="../js/pdf-lite.js"></script>
+    <script src="../js/relatorios.js" defer></script>
+  </body>
+</html>

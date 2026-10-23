@@ -1,0 +1,30 @@
+# Configuração local (cada um tem a sua; o endereço da API do frontend fica em software/js/api-config.js)
+.env
+.env.*
+
+# Ferramentas locais (Claude Code, worktrees, caches)
+.claude/
+
+# Documentos do TCC / de apoio (não fazem parte do software)
+capitulo-*.docx
+capitulo-*.md
+conteudo-site-para-validacao.md
+~$*
+
+# Editores (configuração pessoal de cada um, ex.: porta do Live Server)
+.vscode/
+.idea/
+*.swp
+*~
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporários / dependências
+*.log
+*.tmp
+*.bak
+node_modules/
+__pycache__/

@@ -37,6 +37,7 @@ software/             SOFTWARE (sistema logado)
     api-config.js         endereço da API — o único lugar com a URL
     api-client.js         fetch autenticado + sessão (token no localStorage)
     dash-shell.js         sidebar, topo, checagem de sessão, aviso de API fora
+    page-loader.js        tela de carregamento até a 1ª resposta da API
     notifications.js      menu do sino (prévia das notificações)
     user-prefs.js         foto e preferências guardadas no navegador
     pdf-lite.js           gerador de PDF dos relatórios (sem bibliotecas)
@@ -91,7 +92,13 @@ chama.
   Alertas e notificações saem dos registros região/mês já ocorridos, com a
   severidade tirada da probabilidade (ou do `risk_level`).
 - Campos que a API ainda não fornece (tipo de alga, concentração, vento,
-  correntes, pH, precipitação, clima) aparecem como "—".
+  correntes, pH, precipitação) aparecem como "—".
+- O card "Condições atuais" do dashboard (e do Mapa interativo, que usa o
+  mesmo `dashboard.js`) busca o clima direto no **Open-Meteo** (gratuito, sem
+  chave): temperatura, céu, vento, chuva do dia e corrente marinha. O local
+  segue o filtro de região ("Todas" = Santos) e atualiza a cada 15 min.
+- Ao abrir, as telas com dados mostram uma tela de carregamento até a API
+  responder, em vez de cards vazios.
 - Foto de perfil, preferências e configurações de notificação ficam só **neste
   navegador** (`user-prefs.js`). O envio real de notificações (e-mail/push)
   ainda não existe.

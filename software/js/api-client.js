@@ -86,3 +86,50 @@
 
   window.AlgamarAPI = { apiFetch, getToken, getUser, saveSession, clearSession, goToLogin };
 })();
+
+// Nível de floração: UMA regra para todas as telas. Quem decide é o ML
+// (campo risk_level de /ml/coastal-risks: BAIXO, MODERADO, ALTO, MUITO ALTO;
+// as faixas vêm em summary.niveis). As telas só traduzem o texto para uma
+// chave; a probabilidade só é usada quando o registro não traz risk_level
+// (ou para médias, como a de uma região), com as mesmas faixas do ML.
+(function () {
+  const CORTES = { moderado: 0.24, alto: 0.48, muito_alto: 0.8 }; // = summary.niveis
+  const LABEL = { baixo: "Baixo", moderado: "Moderado", alto: "Alto", muito_alto: "Muito alto" };
+  const COLOR = { baixo: "#00c05d", moderado: "#f5c518", alto: "#f08c28", muito_alto: "#ff383c" };
+
+  function fromProbability(v) {
+    if (typeof v !== "number" || Number.isNaN(v)) return null;
+    if (v >= CORTES.muito_alto) return "muito_alto";
+    if (v >= CORTES.alto) return "alto";
+    if (v >= CORTES.moderado) return "moderado";
+    return "baixo";
+  }
+
+  function fromLevel(level) {
+    const norm = String(level || "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toUpperCase();
+    if (norm.startsWith("MUIT")) return "muito_alto";
+    if (norm.startsWith("ALT")) return "alto";
+    if (norm.startsWith("MED") || norm.startsWith("MOD")) return "moderado";
+    if (norm.startsWith("BAIX")) return "baixo";
+    return null;
+  }
+
+  // Chave do registro: risk_level do ML; sem ele, pela probabilidade.
+  function of(p) {
+    return fromLevel(p && p.risk_level) || fromProbability(p && p.probability) || "baixo";
+  }
+
+  // Atualiza as faixas com as que a API mandou (summary.niveis).
+  function setRanges(niveis) {
+    (niveis || []).forEach((n) => {
+      const k = fromLevel(n.nivel);
+      if (k && k !== "baixo" && typeof n.de === "number") CORTES[k] = n.de;
+    });
+  }
+
+  window.AlgamarRisk = { LEVELS: ["baixo", "moderado", "alto", "muito_alto"], LABEL, COLOR, CORTES,
+    of, fromLevel, fromProbability, setRanges };
+})();

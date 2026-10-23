@@ -1,7 +1,8 @@
 // Gerador de PDF mínimo, sem dependências: A4, fontes padrão Helvetica
 // (regular/negrito, codificação WinAnsi — acentos do português funcionam),
 // retângulos, texto com quebra de linha, KPIs, tabelas com quebra de página
-// e barras horizontais. Serve aos relatórios da tela "Relatórios".
+// barras horizontais, gráfico de linhas e uma imagem JPEG (a logo no topo).
+// Serve aos relatórios da tela "Relatórios".
 window.PdfLite = (function () {
   const PW = 595.28;
   const PH = 841.89;
@@ -101,9 +102,59 @@ window.PdfLite = (function () {
     green: [0, 150, 80],
   };
 
+  // Logo (LogoBranca.png) convertida para JPEG sobre a cor do topo do
+  // relatório — o PDF embute JPEG direto (DCTDecode), sem precisar de
+  // compressor. O PNG tem margem transparente: recorta antes. Fica em cache;
+  // se a imagem falhar (ex.: página aberta via file://), o topo sai só com
+  // texto, como antes.
+  let logoPromise = null;
+  function loadLogo(src) {
+    if (logoPromise) return logoPromise;
+    logoPromise = new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const c = document.createElement("canvas");
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          const g = c.getContext("2d");
+          g.drawImage(img, 0, 0);
+          const px = g.getImageData(0, 0, c.width, c.height).data;
+          let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+          for (let y = 0; y < c.height; y++)
+            for (let x = 0; x < c.width; x++)
+              if (px[(y * c.width + x) * 4 + 3] > 16) {
+                if (x < x0) x0 = x;
+                if (x > x1) x1 = x;
+                if (y < y0) y0 = y;
+                if (y > y1) y1 = y;
+              }
+          if (x1 < 0) return resolve(null);
+          const w = x1 - x0 + 1, h = y1 - y0 + 1;
+          const scale = Math.min(1, 360 / w);
+          const out = document.createElement("canvas");
+          out.width = Math.round(w * scale);
+          out.height = Math.round(h * scale);
+          const o = out.getContext("2d");
+          o.fillStyle = `rgb(${C.brand.join(",")})`;
+          o.fillRect(0, 0, out.width, out.height);
+          o.drawImage(img, x0, y0, w, h, 0, 0, out.width, out.height);
+          const b64 = out.toDataURL("image/jpeg", 0.92).split(",")[1];
+          resolve({ data: atob(b64), w: out.width, h: out.height });
+        } catch (e) {
+          resolve(null);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+    return logoPromise;
+  }
+
   class Doc {
     constructor(meta) {
       this.meta = meta || {};
+      this.logo = this.meta.logo || null;
       this.pages = [];
       this.y = 0;
       this.addPage();
@@ -143,9 +194,17 @@ window.PdfLite = (function () {
     // ---- blocos de layout
     header(title, subtitle, metaLines) {
       this.rect(0, 0, PW, 92, { fill: C.brand });
-      this.text(M, 20, "ALGAMAR", { size: 9, bold: true, color: C.mint });
-      this.text(M, 36, title, { size: 21, bold: true, color: C.white });
-      if (subtitle) this.text(M, 63, subtitle, { size: 10, color: [190, 215, 215] });
+      let tx = M;
+      if (this.logo) {
+        const lh = 54;
+        const lw = (this.logo.w / this.logo.h) * lh;
+        this.ops.push(`q ${num(lw)} 0 0 ${num(lh)} ${num(M)} ${num(PH - 19 - lh)} cm /Im1 Do Q`);
+        tx = M + lw + 18;
+        this.rect(tx - 9, 22, 0.8, 50, { fill: [60, 100, 110] });
+      }
+      this.text(tx, 20, "ALGAMAR", { size: 9, bold: true, color: C.mint });
+      this.text(tx, 36, title, { size: 21, bold: true, color: C.white });
+      if (subtitle) this.text(tx, 63, fit(subtitle, PW - M - tx, 10, false), { size: 10, color: [190, 215, 215] });
       this.y = 108;
       (metaLines || []).forEach(([k, v]) => {
         this.text(M, this.y, k + ":", { size: 9, bold: true, color: C.muted });
@@ -156,7 +215,7 @@ window.PdfLite = (function () {
     }
 
     h2(str) {
-      this.ensure(38);
+      this.ensure(80); // título + o começo do conteúdo, para não sobrar órfão no pé da página
       this.y += 10;
       this.text(M, this.y, str, { size: 13, bold: true, color: C.teal });
       this.y += 19;
@@ -264,6 +323,114 @@ window.PdfLite = (function () {
       this.y += 4;
     }
 
+    // ---- gráficos de linha
+    // opts: labels (eixo X); series: [{ name, color, values (null = sem dado),
+    // bold }]; splitIdx: dali em diante é previsão (fundo destacado + linha
+    // tracejada); yMin/yMax: escala (sem eles, ajusta aos dados; `zero`
+    // força começar em 0); yFmt: rótulo do eixo Y; compact: versão pequena.
+    drawChart(x, yTop, w, H, opts) {
+      const { labels, series, splitIdx, compact } = opts;
+      const fs = compact ? 6.5 : 7.5;
+      const padL = compact ? 28 : 34, padB = compact ? 16 : 20, padT = compact ? 10 : 12;
+      const x0 = x + padL, x1 = x + w - 4;
+      const top = yTop + padT, bottom = yTop + H - padB;
+      const n = labels.length;
+      // Escala "redonda": passo 1/2/2,5/5 × 10^n, ~4 divisões. yMin/yMax
+      // fixam as pontas (ex.: probabilidade 0–100%); `zero` começa em 0.
+      const vals = series.flatMap((s) => s.values.filter((v) => v != null));
+      const dmin = opts.yMin ?? (opts.zero ? Math.min(0, ...vals) : Math.min(...vals));
+      const dmax = opts.yMax ?? Math.max(...vals);
+      const raw = (dmax - dmin) / 4 || Math.abs(dmax) * 0.05 || 1;
+      const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+      const step = opts.yMin != null && opts.yMax != null ? (dmax - dmin) / 4 : [1, 2, 2.5, 5, 10].find((k) => raw / mag <= k) * mag;
+      const lo = opts.yMin ?? Math.floor(dmin / step + 1e-9) * step;
+      const hi = Math.max(opts.yMax ?? Math.ceil(dmax / step - 1e-9) * step, lo + step);
+      const stepDec = (String(+step.toFixed(6)).split(".")[1] || "").length;
+      const yFmt = opts.yFmt || ((v) => v.toLocaleString("pt-BR", { minimumFractionDigits: stepDec, maximumFractionDigits: stepDec }));
+      const X = (i) => (n === 1 ? (x0 + x1) / 2 : x0 + (i * (x1 - x0)) / (n - 1));
+      const Y = (v) => bottom - ((v - lo) / (hi - lo)) * (bottom - top);
+      const P = (yy) => num(PH - yy);
+      const hasSplit = splitIdx != null && splitIdx >= 0 && splitIdx < n;
+
+      if (hasSplit) {
+        const sx = X(splitIdx);
+        this.rect(sx, top, x1 - sx, bottom - top, { fill: [236, 245, 250] });
+        this.ops.push(`q 0.8 w ${rgb(C.teal)} RG [2 2] 0 d ${num(sx)} ${P(top)} m ${num(sx)} ${P(bottom)} l S Q`);
+        this.text(sx + 3, top + 1, compact ? "hoje / previsão" : "previsão", { size: fs, bold: true, color: C.teal });
+      }
+      for (let v = lo, k = 0; v <= hi + step / 2; v += step, k++) {
+        this.hline(x0, x1, Y(v), k === 0 ? C.muted : C.line, k === 0 ? 0.8 : 0.5);
+        this.text(x0 - 4, Y(v) - fs / 2, yFmt(+v.toFixed(10)), { size: fs, color: C.muted, align: "right" });
+      }
+      // Rótulos do eixo X espaçados; o último sempre aparece, então o vizinho
+      // que ficaria colado nele é pulado.
+      const xStep = Math.ceil(n / (compact ? 5 : 10));
+      labels.forEach((l, i) => {
+        const show = i === n - 1 || (i % xStep === 0 && n - 1 - i >= xStep * 0.6);
+        if (show) this.text(X(i), bottom + 5, l, { size: fs - 0.5, color: C.muted, align: "center" });
+      });
+
+      series.forEach((s) => {
+        const lw = s.bold ? 2.2 : compact ? 1.5 : 1.3;
+        const seg = (from, to, dash) => {
+          const pts = [];
+          for (let i = from; i <= to; i++) if (s.values[i] != null) pts.push([X(i), Y(s.values[i])]);
+          if (pts.length < 2) return;
+          this.ops.push(
+            `q ${lw} w ${rgb(s.color)} RG 1 J 1 j ${dash ? "[4 2.5] 0 d " : ""}` +
+              pts.map(([px, py], j) => `${num(px)} ${P(py)} ${j ? "l" : "m"}`).join(" ") +
+              " S Q"
+          );
+        };
+        const split = hasSplit ? splitIdx : n - 1;
+        seg(0, split, false);
+        seg(split, n - 1, true);
+        s.values.forEach((v, i) => {
+          if (v == null) return;
+          const r = s.bold ? 2 : compact ? 1.2 : 1.5;
+          this.rect(X(i) - r, Y(v) - r, r * 2, r * 2, { fill: s.color });
+        });
+      });
+    }
+
+    // Gráfico em largura total, com legenda das séries embaixo.
+    lineChart(opts) {
+      const H = opts.height || 190;
+      const legendRows = Math.ceil(opts.series.length / 3);
+      this.ensure(H + 20 + legendRows * 14);
+      this.drawChart(M, this.y, CW, H, opts);
+      this.y += H;
+      const colW = CW / 3;
+      opts.series.forEach((s, i) => {
+        const lx = M + (i % 3) * colW, ly = this.y + Math.floor(i / 3) * 14;
+        this.rect(lx, ly + 3, 14, s.bold ? 2.4 : 1.6, { fill: s.color });
+        this.text(lx + 20, ly, fit(s.name, colW - 26, 8.5, !!s.bold), { size: 8.5, bold: !!s.bold });
+      });
+      this.y += legendRows * 14 + 10;
+    }
+
+    // Grade de gráficos pequenos (2 por linha). items: [{ title, badge,
+    // chart (opts do drawChart) | empty (texto quando não há dado) }].
+    chartGrid(items, cols = 2) {
+      const gap = 16;
+      const w = (CW - gap * (cols - 1)) / cols;
+      const H = 118;
+      const rowH = 16 + H + 12;
+      for (let i = 0; i < items.length; i += cols) {
+        this.ensure(rowH);
+        items.slice(i, i + cols).forEach((it, j) => {
+          const x = M + j * (w + gap);
+          this.rect(x, this.y, w, rowH - 6, { stroke: C.line, lw: 0.5 });
+          this.text(x + 8, this.y + 6, fit(it.title, w * 0.6, 9, true), { size: 9, bold: true, color: C.brand });
+          if (it.badge) this.text(x + w - 8, this.y + 6.5, fit(it.badge, w * 0.4 - 12, 8, true), { size: 8, bold: true, color: C.teal, align: "right" });
+          if (it.chart) this.drawChart(x + 2, this.y + 16, w - 6, H, Object.assign({ compact: true }, it.chart));
+          else this.text(x + w / 2, this.y + 16 + H / 2 - 4, it.empty || "Sem dados.", { size: 8.5, color: C.muted, align: "center" });
+        });
+        this.y += rowH;
+      }
+      this.y += 4;
+    }
+
     space(n) {
       this.y += n;
     }
@@ -288,7 +455,8 @@ window.PdfLite = (function () {
         const contentId = pageId + 1;
         kids.push(`${pageId} 0 R`);
         const stream = ops.join("\n");
-        objs[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${num(PW)} ${num(PH)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`;
+        const xobj = this.logo ? ` /XObject << /Im1 ${5 + n * 2 + 1} 0 R >>` : "";
+        objs[pageId] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${num(PW)} ${num(PH)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${xobj} >> /Contents ${contentId} 0 R >>`;
         objs[contentId] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`;
       });
       objs[2] = `<< /Type /Pages /Kids [${kids.join(" ")}] /Count ${n} >>`;
@@ -298,16 +466,26 @@ window.PdfLite = (function () {
       const stamp = `D:${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
       objs[infoId] = `<< /Title (${esc(enc(this.meta.title || "Relatório"))}) /Producer (Algamar) /Creator (Algamar) /CreationDate (${stamp}) >>`;
 
+      // Logo: objeto de imagem depois do Info (já referenciado como Im1 nas
+      // páginas). `data` é o JPEG byte a byte numa string "latin1".
+      let lastId = infoId;
+      if (this.logo) {
+        lastId = infoId + 1;
+        objs[lastId] =
+          `<< /Type /XObject /Subtype /Image /Width ${this.logo.w} /Height ${this.logo.h} /ColorSpace /DeviceRGB ` +
+          `/BitsPerComponent 8 /Filter /DCTDecode /Length ${this.logo.data.length} >>\nstream\n${this.logo.data}\nendstream`;
+      }
+
       let pdf = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
       const offsets = [];
-      for (let id = 1; id <= infoId; id++) {
+      for (let id = 1; id <= lastId; id++) {
         offsets[id] = pdf.length;
         pdf += `${id} 0 obj\n${objs[id]}\nendobj\n`;
       }
       const xref = pdf.length;
-      pdf += `xref\n0 ${infoId + 1}\n0000000000 65535 f \n`;
-      for (let id = 1; id <= infoId; id++) pdf += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
-      pdf += `trailer\n<< /Size ${infoId + 1} /Root 1 0 R /Info ${infoId} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+      pdf += `xref\n0 ${lastId + 1}\n0000000000 65535 f \n`;
+      for (let id = 1; id <= lastId; id++) pdf += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+      pdf += `trailer\n<< /Size ${lastId + 1} /Root 1 0 R /Info ${infoId} 0 R >>\nstartxref\n${xref}\n%%EOF`;
 
       const bytes = new Uint8Array(pdf.length);
       for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 0xff;
@@ -315,5 +493,5 @@ window.PdfLite = (function () {
     }
   }
 
-  return { Doc, colors: C, width, _widthTables: { W_REG, W_BOLD } };
+  return { Doc, colors: C, width, loadLogo, _widthTables: { W_REG, W_BOLD } };
 })();

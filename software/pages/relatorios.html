@@ -343,12 +343,33 @@
           </div>
         </section>
 
+        <section class="rp-panel rp-charts" aria-labelledby="rpChartsTitle">
+          <span class="rp-model__icon" aria-hidden="true"><svg viewBox="0 0 70 70" fill="none" stroke="#379F7A" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 60h54"></path>
+            <path d="M12 48l14-16 12 9 20-25"></path>
+            <path d="M44 16h14v14" stroke-dasharray="4 5"></path>
+          </svg></span>
+          <div class="rp-charts__text">
+            <h2 class="rp-panel__title" id="rpChartsTitle">Relatório de gráficos</h2>
+            <p>
+              Floração de algas e parâmetros ambientais (temperatura da água, salinidade,
+              clorofila-a, vento, correntes, chuva e mais), cada um mostrando o que foi
+              medido até hoje e a previsão. Usa a região e o período escolhidos nos filtros.
+            </p>
+          </div>
+          <button type="button" class="rp-btn rp-btn--primary" id="rpCharts">
+            <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+            Gerar relatório de gráficos
+          </button>
+        </section>
+
         <div class="rp-toast" id="rpToast" role="status" aria-live="polite" hidden></div>
       </main>
     </div>
 
     <script src="../js/dash-shell.js"></script>
     <script src="../js/pdf-lite.js"></script>
+    <script src="../js/env-data.js"></script>
     <script src="../js/relatorios.js" defer></script>
   </body>
 </html>

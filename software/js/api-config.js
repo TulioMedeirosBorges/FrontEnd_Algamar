@@ -3,10 +3,11 @@
 // nenhum outro arquivo do front-end deve ter URLs da API embutidas.
 //
 // Desenvolvimento local (front-end e back-end na mesma máquina):
-// window.ALGAMAR_API_BASE = "http://localhost:3000/api";
+// (teste local com o ML: no projeto do ML, rode `python dashboard_local.py`)
+window.ALGAMAR_API_BASE = "http://localhost:3000/api";
 
 // Back-end na rede (Tailscale):
-window.ALGAMAR_API_BASE = "http://100.109.64.40:3000/api";
+// window.ALGAMAR_API_BASE = "http://100.109.64.40:3000/api";
 
 // Acesso remoto (back-end exposto via Cloudflare Quick Tunnel).
 // A URL muda toda vez que o túnel é reiniciado — atualize aqui quando isso acontecer:

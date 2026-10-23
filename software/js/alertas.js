@@ -1,8 +1,8 @@
 // Tela "Central de alertas". Tudo vem de GET /ml/coastal-risks (data[]).
 // A API não tem uma tabela de alertas, então cada REGISTRO região/mês já
 // ocorrido vira um alerta:
-//  - severidade: pela probabilidade (<35% baixo, 35–59% moderado, 60–84% alto,
-//    85% ou mais muito alto); sem probabilidade, cai no risk_level;
+//  - severidade: o risk_level do ML (baixo, moderado, alto, muito alto), o
+//    mesmo de todas as telas (AlgamarRisk, em api-client.js);
 //  - "atual": registro do mês mais recente com dados (no máximo o mês atual);
 //  - "Ativo": alerta atual com severidade acima de baixo; o resto é
 //    "Resolvido". Derivado só de month/year + severidade.
@@ -45,18 +45,7 @@
   const pct = (v) => `${Math.round(v * 100)}%`;
   const fmt1 = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 
-  function severityOf(p) {
-    if (typeof p.probability === "number") {
-      return p.probability >= 0.85 ? "muito_alto" : p.probability >= 0.6 ? "alto" : p.probability >= 0.35 ? "moderado" : "baixo";
-    }
-    const norm = String(p.risk_level || "")
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
-      .toUpperCase();
-    if (norm.startsWith("ALT")) return "alto";
-    if (norm.startsWith("MED")) return "moderado";
-    return "baixo";
-  }
+  const severityOf = (p) => window.AlgamarRisk.of(p);
 
   // ------------------------------------------------------------------
   // Dados
@@ -73,6 +62,7 @@
       state.data = [];
     }
     render();
+    window.PageLoader.done();
   }
 
   // Todos os alertas da janela + o mês "atual" (o mais recente com dados).

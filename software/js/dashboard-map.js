@@ -30,19 +30,16 @@ window.DashboardMap = (function () {
     ["Ubatuba", 2340.7, 113.0],
   ];
 
-  // Categoria exibida no mapa (cor do pino) — 4 vias, igual ao design
-  // original: Pouca indicação / Florações identificadas / Risco de
-  // floração / Previsão de floração. A API só devolve risk_level em 3
-  // níveis (ALTO/MÉDIO/BAIXO); ver categoryOf() abaixo para a derivação.
-  // Mesmas cores oficiais do software (--dash-green/red/yellow/blue em
-  // css/dashboard.css) — os pinos do mapa precisam bater com a legenda e
-  // o resto do painel, que já usam essas variáveis.
-  var CAT_COLOR = { baixa: "#00c05d", identificada: "#ff383c", risco: "#f5c518", previsao: "#0080ff" };
+  // Categoria do ponto (camadas do painel "Camadas de mapa"): Pouca
+  // indicação / Florações identificadas / Risco de floração — ver
+  // categoryOf(). A COR do pino e do halo não vem daqui: segue o nível do
+  // ML (AlgamarRisk em api-client.js), igual à legenda "Intensidade de
+  // floração": baixo verde, moderado amarelo, alto laranja, muito alto
+  // vermelho.
   var CAT_LABEL = {
     baixa: "Pouca indicação",
     identificada: "Florações identificadas",
     risco: "Risco de floração",
-    previsao: "Previsão de floração",
   };
 
   var stage, canvas, ov, hs, boundarySvg, labelsLayer, hotspotsLayer, scaleBarEl, scaleLabelsEl;
@@ -334,67 +331,50 @@ window.DashboardMap = (function () {
     if (boundarySvg) boundarySvg.classList.toggle("on", !!on);
   }
 
+  // Nível do ML (AlgamarRisk, em api-client.js); muito alto entra junto com
+  // alto na categoria "identificada".
   function riskKeyOf(level) {
-    if (!level) return "baixo";
-    var norm = level
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toUpperCase();
-    if (norm.indexOf("ALT") === 0) return "alto";
-    if (norm.indexOf("MED") === 0) return "medio";
-    return "baixo";
+    var k = window.AlgamarRisk.fromLevel(level) || "baixo";
+    return k === "muito_alto" ? "alto" : k === "moderado" ? "medio" : k;
   }
 
-  // Deriva a categoria de exibição (4 vias) a partir do risk_level (3 vias)
-  // que a API realmente devolve, mais uma checagem de data: um registro cujo
-  // mês/ano ainda não chegou é uma PREVISÃO do modelo, não uma leitura já
-  // observada — não é um dado inventado, só uma leitura do que já existe
-  // (point.month/point.year) comparada à data de hoje.
+  // Deriva a categoria (3 vias) a partir do risk_level (4 níveis) da API.
   function categoryOf(point) {
-    var now = new Date();
-    var isFuture =
-      point.year > now.getFullYear() || (point.year === now.getFullYear() && point.month > now.getMonth() + 1);
-    if (isFuture) return "previsao";
     var risk = riskKeyOf(point.risk_level);
     if (risk === "alto") return "identificada";
     if (risk === "medio") return "risco";
     return "baixa";
   }
 
-  // Gradiente de INTENSIDADE (legenda "Baixo/Moderado/Alta/Muito Alta"),
-  // independente da categoria acima — mesma escala do protótipo original,
-  // dirigida por `probability`. Categoria = "o que é"; intensidade = "o
-  // quão forte", por isso pino e halo usam cores diferentes.
-  function valueToColor(t) {
-    var stops = [
-      [0.0, [90, 200, 110]],
-      [0.35, [235, 215, 70]],
-      [0.65, [240, 140, 40]],
-      [1.0, [225, 45, 45]],
-    ];
-    var i = 0;
-    while (i < stops.length - 2 && t > stops[i + 1][0]) i++;
-    var a = stops[i],
-      b = stops[i + 1];
-    var f = (t - a[0]) / (b[0] - a[0] || 1);
-    return [
-      Math.round(a[1][0] + (b[1][0] - a[1][0]) * f),
-      Math.round(a[1][1] + (b[1][1] - a[1][1]) * f),
-      Math.round(a[1][2] + (b[1][2] - a[1][2]) * f),
-    ];
+  function hexToRgb(hex) {
+    var n = parseInt(hex.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
   function rgbStr(c, a) {
     return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")";
   }
 
+  // Atraso estável (por id) para a "respiração" do halo: cada ponto pulsa no
+  // seu próprio ritmo em vez de todos juntos, e não muda a cada refresh.
+  function phaseOf(id) {
+    var h = 0;
+    for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+    return (Math.abs(h) % 4000) / 1000;
+  }
+
+  // Pontos novos entram em cascata (um logo depois do outro); `enterIndex`
+  // volta a zero a cada setPoints().
+  var enterIndex = 0;
+
   function renderPoint(point) {
     if (typeof point.latitude !== "number" || typeof point.longitude !== "number") return;
     var xy = latLonToPixel(point.latitude, point.longitude);
     var cat = categoryOf(point);
-    var pinColor = pinColorFn ? pinColorFn(point) : CAT_COLOR[cat];
+    var level = window.AlgamarRisk.of(point);
+    var pinColor = pinColorFn ? pinColorFn(point) : window.AlgamarRisk.COLOR[level];
     var probability = typeof point.probability === "number" ? point.probability : 0.3;
-    var blobColor = valueToColor(probability);
-    var radiusWorld = 55 + probability * 130;
+    var blobColor = hexToRgb(window.AlgamarRisk.COLOR[level]);
+    var radiusWorld = 28 + probability * 60;
 
     var entry = hotspotEls[point.id];
     if (!entry) {
@@ -405,6 +385,15 @@ window.DashboardMap = (function () {
       var marker = document.createElement("button");
       marker.type = "button";
       marker.className = "map-hotspot__marker";
+      var icon = document.createElement("span");
+      icon.className = "map-hotspot__icon";
+      icon.setAttribute("aria-hidden", "true");
+      marker.appendChild(icon);
+      var tag = document.createElement("span");
+      tag.className = "map-hotspot__tag";
+      marker.appendChild(tag);
+      root.style.setProperty("--enter-delay", Math.min(enterIndex++ * 45, 900) + "ms");
+      blob.style.setProperty("--phase", "-" + phaseOf(String(point.id)) + "s");
       root.appendChild(blob);
       root.appendChild(marker);
       hotspotsLayer.appendChild(root);
@@ -413,30 +402,29 @@ window.DashboardMap = (function () {
         if (dragMoved) return; // clique disparado ao soltar um arraste — ignora
         if (onSelectCb) onSelectCb(point.id, e.clientX, e.clientY);
       });
-      entry = { root: root, blob: blob, marker: marker };
+      entry = { root: root, blob: blob, marker: marker, tag: tag };
       hotspotEls[point.id] = entry;
     }
     entry.root.style.left = xy[0] + "px";
     entry.root.style.top = xy[1] + "px";
     entry.blob.style.width = radiusWorld * 2 + "px";
     entry.blob.style.height = radiusWorld * 2 + "px";
-    entry.blob.style.background =
-      "radial-gradient(circle, " +
-      rgbStr(blobColor, 0.72) +
-      " 0%, " +
-      rgbStr(blobColor, 0.4) +
-      " 45%, " +
-      rgbStr(blobColor, 0) +
-      " 72%)";
-    entry.marker.style.background = pinColor;
-    entry.marker.title = point.region + " — " + (pinLabelFn ? pinLabelFn(point) : CAT_LABEL[cat]);
+    // Cor do halo numa variável (registrada com @property no CSS): ao trocar
+    // o mês na tela de Previsões, a cor desliza em vez de pular.
+    entry.blob.style.setProperty("--blob", rgbStr(blobColor, 1));
+    entry.marker.style.setProperty("--pin", pinColor);
+    entry.marker.title =
+      point.region + " — " + (pinLabelFn ? pinLabelFn(point) : "Nível " + window.AlgamarRisk.LABEL[level].toLowerCase());
+    entry.tag.textContent = point.region || "Ponto monitorado";
     entry.marker.setAttribute("aria-label", "Ver detalhes: " + point.region);
     entry.root.dataset.cat = cat;
+    entry.root.dataset.level = level;
     entry.point = point;
   }
 
   function setPoints(nextPoints) {
     points = nextPoints || [];
+    enterIndex = 0;
     var seen = {};
     points.forEach(function (p) {
       seen[p.id] = true;
@@ -501,6 +489,8 @@ window.DashboardMap = (function () {
       maxX = Math.max.apply(null, xs),
       minY = Math.min.apply(null, ys),
       maxY = Math.max.apply(null, ys);
+    // Folga em PIXELS DE TELA em volta dos pontos: assim nenhum pino fica
+    // embaixo da escala, da legenda ou dos botões que flutuam nas bordas.
     var PAD = 160;
     var s = stageSize();
     if (!s.w || !s.h) return;

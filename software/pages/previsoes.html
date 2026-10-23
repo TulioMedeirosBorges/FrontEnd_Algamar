@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="../css/dashboard.css" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
+    <script src="../js/page-loader.js"></script>
     <script src="../js/user-prefs.js"></script>
     <script src="../js/notifications.js"></script>
   </head>
@@ -185,6 +186,13 @@
       </aside>
 
       <main class="dash-main">
+        <div class="page-loader" id="pageLoader" role="status" aria-live="polite" aria-busy="true">
+          <div class="page-loader__box">
+            <span class="page-loader__spinner" aria-hidden="true"></span>
+            <p class="page-loader__title">Carregando dados do litoral...</p>
+            <p class="page-loader__hint">Consultando a API do Algamar</p>
+          </div>
+        </div>
         <header class="dash-topbar">
           <button
             type="button"
@@ -314,9 +322,10 @@
               </div>
 
               <div class="fc-legend" aria-label="Legenda de probabilidade">
-                <p><span class="dot" style="background: var(--dash-green)"></span>Baixo (abaixo de 35%)</p>
-                <p><span class="dot" style="background: var(--dash-yellow)"></span>Moderado (35% a 59%)</p>
-                <p><span class="dot" style="background: var(--dash-red)"></span>Alto (60% ou mais)</p>
+                <p><span class="dot" style="background: #00c05d"></span>Baixo (abaixo de 24%)</p>
+                <p><span class="dot" style="background: #f5c518"></span>Moderado (24% a 47%)</p>
+                <p><span class="dot" style="background: #f08c28"></span>Alto (48% a 79%)</p>
+                <p><span class="dot" style="background: #ff383c"></span>Muito alto (80% ou mais)</p>
               </div>
 
               <p class="map-panel__empty" id="mapEmpty" hidden>
@@ -407,10 +416,7 @@
                 </tbody>
               </table>
             </div>
-            <button type="button" class="fc-more" id="fcTableMore" hidden>
-              Visualizar mais
-              <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
-            </button>
+            <nav class="fc-pager" id="fcTablePager" aria-label="Páginas da tabela" hidden></nav>
           </article>
 
           <article class="fc-card fc-card--history">
@@ -437,8 +443,11 @@
           </article>
 
           <article class="fc-card fc-card--env">
-            <h2 class="fc-card__title">Condições ambientais na região</h2>
-            <div class="fc-env">
+            <header class="fc-env__head">
+              <h2 class="fc-card__title">Condições ambientais na região</h2>
+              <p class="fc-card__sub" id="fcEnvSub">—</p>
+            </header>
+            <div class="fc-env" id="fcEnv">
               <div>
                 <img class="icon-svg" src="../assets/Icons/thermometer.svg" alt="" />
                 <span>Temperatura da água<strong id="fcTemp">&mdash;</strong></span>
@@ -461,7 +470,7 @@
               </div>
               <div>
                 <img class="icon-svg" src="../assets/Icons/Precipitação.svg" alt="" />
-                <span>Precipitação (24h)<strong id="fcPrecip">&mdash;</strong></span>
+                <span><small id="fcPrecipLabel">Precipitação (24h)</small><strong id="fcPrecip">&mdash;</strong></span>
               </div>
             </div>
           </article>
@@ -471,6 +480,7 @@
 
     <script src="../js/dash-shell.js"></script>
     <script src="../js/dashboard-map.js" defer></script>
+    <script src="../js/env-data.js"></script>
     <script src="../js/previsoes.js" defer></script>
   </body>
 </html>

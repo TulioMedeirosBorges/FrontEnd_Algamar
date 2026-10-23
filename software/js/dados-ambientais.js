@@ -1,105 +1,85 @@
-// Tela "Dados Ambientais". Tudo vem de GET /ml/coastal-risks (data[]).
-// Cada registro da API é uma região num mês com environmental_factors:
-// só existem temperatura (°C), salinidade (PSU) e clorofila-a (mg/m³, que é
-// numericamente igual a µg/L). pH, nutrientes, vento, corrente e precipitação
-// NÃO existem na API: esses cards ficam no lugar com estado vazio, e passam a
-// desenhar sozinhos quando ganharem um `field` em PARAMS (ver abaixo).
-// O eixo X é mensal (a API não tem dados diários): cada ponto do gráfico é a
-// média dos registros da região naquele mês.
+// Tela "Dados Ambientais". Os parâmetros vêm da Open-Meteo (js/env-data.js):
+// série diária com os últimos N dias medidos + a previsão dos próximos dias.
+// A API do Algamar só é consultada para o selo de alertas no topo (previsão
+// de algas); nenhum dado ambiental depende dela.
+// Salinidade, pH, clorofila e nutrientes não têm fonte aberta sem cadastro,
+// por isso não aparecem aqui.
 (function () {
   const S = window.DashShell;
   const $ = (id) => document.getElementById(id);
 
-  // `field`: chave dentro de environmental_factors (null = a API não tem).
+  // `key`: série em EnvData.load().series. `sum`: o selo soma (chuva) em vez
+  // de mostrar o valor de hoje.
   const PARAMS = [
-    { id: "temp", label: "temperatura da água", kind: "area", unit: "°C", stat: "média", dec: 1,
-      series: [{ field: "temperature_celsius", color: "#2f8fe0", fill: "#062a52" }] },
-    { id: "sal", label: "salinidade", kind: "area", unit: "", stat: "média", dec: 1,
-      series: [{ field: "salinity_psu", color: "#3f8f86", fill: "#4aa79d" }] },
-    { id: "ph", label: "pH", kind: "area", unit: "", stat: "média", dec: 1,
-      series: [{ field: null, color: "#a98f1f", fill: "#c9ab2a" }] },
-    { id: "chl", label: "clorofila-a", kind: "area", unit: "", stat: "média", dec: 1,
-      series: [{ field: "chlorophyll_mg_m3", color: "#7a3bb5", fill: "#2a0a45" }] },
-    { id: "nut", label: "nutrientes", kind: "line", unit: "", stat: "média", dec: 1,
-      series: [{ field: null, color: "#1e7bff" }, { field: null, color: "#ff9a1f" }] },
-    { id: "wind", label: "vento", kind: "area", unit: "", stat: "média", dec: 0,
-      series: [{ field: null, color: "#0aa050", fill: "#049a4a" }] },
-    { id: "cur", label: "corrente", kind: "area", unit: "", stat: "média", dec: 1,
-      series: [{ field: null, color: "#ffffff", fill: "#0a4fa8" }] },
-    { id: "rain", label: "precipitação", kind: "bar", unit: " mm", stat: "Total", dec: 1, sum: true,
-      series: [{ field: null, color: "#3aa37a", fill: "#3aa37a" }] },
+    { id: "sst", key: "sst", label: "temperatura da água", kind: "area", unit: "°C", dec: 1, color: "#2f8fe0", fill: "#062a52" },
+    { id: "air", key: "air", label: "temperatura do ar", kind: "area", unit: "°C", dec: 1, color: "#ffb03a", fill: "#4a2c05" },
+    { id: "radiation", key: "radiation", label: "radiação solar", kind: "area", unit: " MJ/m²", dec: 1, color: "#f5c518", fill: "#4a3d06" },
+    { id: "clouds", key: "clouds", label: "nebulosidade", kind: "area", unit: "%", dec: 0, color: "#b8c7cc", fill: "#2c4249", zero: true },
+    { id: "waves", key: "waves", label: "altura das ondas", kind: "area", unit: " m", dec: 1, color: "#5fc9be", fill: "#0d4a48", zero: true },
+    { id: "wind", key: "wind", label: "vento", kind: "area", unit: " km/h", dec: 0, color: "#0aa050", fill: "#04401f", zero: true },
+    { id: "cur", key: "current", label: "corrente", kind: "area", unit: " km/h", dec: 1, color: "#ffffff", fill: "#0a4fa8", zero: true },
+    { id: "rain", key: "rain", label: "precipitação", kind: "bar", unit: " mm", dec: 1, color: "#3aa37a", fill: "#3aa37a", sum: true },
   ];
 
-  // Limites de referência do card "Qualidade da água". São critérios do
-  // front-end (não vêm da API) — ajuste com a equipe de dados se preciso.
-  const QUALITY = [
-    { label: "Clorofila-a", field: "chlorophyll_mg_m3", unit: "µg/L",
-      judge: (v) => (v <= 5 ? "boa" : v <= 10 ? "atencao" : "alerta") },
-    { label: "Temperatura da água", field: "temperature_celsius", unit: "°C",
-      judge: (v) => (v <= 27 ? "boa" : v <= 29 ? "atencao" : "alerta") },
-    { label: "Salinidade", field: "salinity_psu", unit: "PSU",
-      judge: (v) => (v >= 32 && v <= 37 ? "boa" : v >= 30 && v <= 38 ? "atencao" : "alerta") },
+  // Card "Fatores de floração": média (ou soma) dos próximos 7 dias contra
+  // limites simples. São critérios do front-end, não do modelo do Algamar —
+  // água quente, pouco vento (água parada), muita chuva (nutrientes levados
+  // ao mar) e muito sol favorecem floração. Ajuste com a equipe se preciso.
+  const FACTORS = [
+    { label: "Temperatura da água", key: "sst", unit: "°C", dec: 1,
+      judge: (v) => (v < 24 ? "boa" : v < 27 ? "atencao" : "alerta") },
+    { label: "Vento", key: "wind", unit: "km/h", dec: 1,
+      judge: (v) => (v >= 15 ? "boa" : v >= 8 ? "atencao" : "alerta") },
+    { label: "Chuva acumulada", key: "rain", unit: "mm", dec: 0, sum: true,
+      judge: (v) => (v < 30 ? "boa" : v < 80 ? "atencao" : "alerta") },
+    { label: "Radiação solar", key: "radiation", unit: "MJ/m²", dec: 1,
+      judge: (v) => (v < 15 ? "boa" : v < 22 ? "atencao" : "alerta") },
   ];
-  const QUALITY_UI = {
-    boa: { text: "Boa", color: "var(--dash-green)" },
-    atencao: { text: "Atenção", color: "var(--dash-yellow)" },
-    alerta: { text: "Alerta", color: "var(--dash-red)" },
-    sem: { text: "Sem dados", color: "var(--dash-text-muted)" },
+  const FACTOR_UI = {
+    boa: { text: "Desfavorável à floração", icon: "check_circle", color: "var(--dash-green)" },
+    atencao: { text: "Atenção", icon: "warning", color: "var(--dash-yellow)" },
+    alerta: { text: "Favorável à floração", icon: "warning", color: "var(--dash-red)" },
+    sem: { text: "Sem dados", icon: "help", color: "var(--dash-text-muted)" },
   };
 
-  const now = new Date();
-  const nowIdx = now.getFullYear() * 12 + now.getMonth();
-  const state = { data: [], region: "", period: 6, search: "" };
+  const state = { env: null, region: "", period: 14, error: false };
 
-  const periodIndex = (p) => (p.year && p.month ? p.year * 12 + (p.month - 1) : nowIdx);
-  const slotLabel = (idx) => `${String((idx % 12) + 1).padStart(2, "0")}/${String(Math.floor(idx / 12)).slice(-2)}`;
   const nfmt = (v, d) => v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
   const mean = (list) => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
+  const sum = (list) => list.reduce((a, b) => a + b, 0);
 
   // ------------------------------------------------------------------
   // Dados
   // ------------------------------------------------------------------
   async function load() {
+    loadAlertBadge();
+    try {
+      state.env = await window.EnvData.load({ region: state.region, pastDays: state.period, forecastDays: 16 });
+      state.error = false;
+    } catch (err) {
+      state.env = null;
+      state.error = true;
+    }
+    render();
+    window.PageLoader.done();
+  }
+
+  // Único uso da API do Algamar nesta tela: quantas áreas estão em risco alto.
+  async function loadAlertBadge() {
     try {
       const res = await window.AlgamarAPI.apiFetch("/ml/coastal-risks", {
         params: { region: state.region || undefined },
       });
-      state.data = res.data || [];
       S.hideApiWarning();
+      S.setAlertBadge((res.data || []).filter((p) => /^ALT/i.test(String(p.risk_level || ""))).length);
     } catch (err) {
       if (err.status !== 401) S.showApiWarning(err);
-      state.data = [];
     }
-    S.setAlertBadge(state.data.filter((p) => /^ALT/i.test(String(p.risk_level || ""))).length);
-    render();
-  }
-
-  // Meses da janela (termina no último mês já ocorrido com registro) e, por
-  // mês, a média de cada parâmetro entre os registros da região.
-  function slotsFor(fields) {
-    const term = state.search.toLowerCase();
-    const past = state.data.filter(
-      (p) => periodIndex(p) <= nowIdx && (!term || (p.region || "").toLowerCase().includes(term))
-    );
-    const end = past.length ? past.reduce((m, p) => Math.max(m, periodIndex(p)), 0) : nowIdx;
-    const start = end - state.period + 1;
-    const labels = [];
-    for (let idx = start; idx <= end; idx++) labels.push(slotLabel(idx));
-    const values = {};
-    fields.forEach((field) => {
-      const buckets = labels.map(() => []);
-      past.forEach((p) => {
-        const v = p.environmental_factors && p.environmental_factors[field];
-        const i = periodIndex(p) - start;
-        if (typeof v === "number" && i >= 0 && i < buckets.length) buckets[i].push(v);
-      });
-      values[field] = buckets.map((b) => (b.length ? mean(b) : null));
-    });
-    return { labels, values };
   }
 
   // ------------------------------------------------------------------
-  // Gráfico SVG (linha, área ou barras) sem biblioteca
+  // Gráfico SVG (área ou barras) sem biblioteca. Até `todayIdx` é medido
+  // (linha cheia); depois é previsão (tracejado, preenchimento mais fraco).
   // ------------------------------------------------------------------
   function niceScale(min, max, zero) {
     if (zero) min = Math.min(0, min);
@@ -120,102 +100,120 @@
     return { lo, hi, ticks, dec };
   }
 
-  function chartSvg(param, labels, seriesValues) {
-    const W = 320, H = 168, pl = 40, pr = 18, pt = 14, pb = 26;
+  function chartSvg(param, labels, vals, todayIdx) {
+    const W = 320, H = 168, pl = 40, pr = 18, pt = 16, pb = 26;
     const plotW = W - pl - pr, plotH = H - pt - pb;
-    const all = seriesValues.flat().filter((v) => v != null);
-    const sc = niceScale(Math.min(...all), Math.max(...all), param.kind === "bar");
+    const all = vals.filter((v) => v != null);
+    const sc = niceScale(Math.min(...all), Math.max(...all), param.kind === "bar" || param.zero);
     const n = labels.length;
-    // Linha/área: pontos de ponta a ponta; barras: no centro de cada mês.
     const x =
       param.kind === "bar"
         ? (i) => pl + ((i + 0.5) * plotW) / n
         : (i) => (n === 1 ? pl + plotW / 2 : pl + (i * plotW) / (n - 1));
     const y = (v) => pt + ((sc.hi - v) / (sc.hi - sc.lo)) * plotH;
     const base = y(sc.lo);
+    const tip = (i, v) => `<title>${labels[i]}${i > todayIdx ? " (previsão)" : i === todayIdx ? " (hoje)" : ""}: ${nfmt(v, param.dec)}${param.unit}</title>`;
 
     const grid = sc.ticks
       .map((t) => `<line x1="${pl}" x2="${W - pr}" y1="${y(t)}" y2="${y(t)}" stroke="#177a66" stroke-width="1.2"/>
         <text x="${pl - 7}" y="${y(t) + 4}" text-anchor="end" font-size="12" font-weight="600" fill="#fff">${nfmt(t, sc.dec)}</text>`)
       .join("");
 
-    const step = Math.ceil(n / 7);
+    const step = Math.ceil(n / 6);
     const xl = labels
       .map((l, i) => (i % step === 0 ? `<text x="${x(i)}" y="${H - 9}" text-anchor="middle" font-size="9" fill="#fff">${l}</text>` : ""))
       .join("");
 
-    let marks = "";
-    param.series.forEach((s, si) => {
-      const vals = seriesValues[si];
-      const pts = vals.map((v, i) => (v == null ? null : [x(i), y(v), v, i])).filter(Boolean);
-      if (!pts.length) return;
-      if (param.kind === "bar") {
-        const bw = Math.min(30, (plotW / n) * 0.62);
-        marks += pts
-          .map(([px, py, v, i]) => `<rect x="${px - bw / 2}" y="${py}" width="${bw}" height="${base - py}" fill="${s.fill}"><title>${labels[i]}: ${nfmt(v, param.dec)}${param.unit}</title></rect>`)
-          .join("");
-        return;
-      }
-      if (param.kind === "area" && pts.length > 1) {
-        const poly = pts.map(([px, py]) => `${px},${py}`).join(" ");
-        marks += `<polygon points="${poly} ${pts[pts.length - 1][0]},${base} ${pts[0][0]},${base}" fill="${s.fill}" fill-opacity="${param.id === "temp" ? 1 : 0.92}"/>`;
-      }
-      marks += `<polyline points="${pts.map(([px, py]) => `${px},${py}`).join(" ")}" fill="none" stroke="${s.color}" stroke-width="1.6" stroke-linejoin="round"/>`;
-      marks += pts
-        .map(([px, py, v, i]) => `<circle cx="${px}" cy="${py}" r="2.6" fill="${s.color}"><title>${labels[i]}: ${nfmt(v, param.dec)}${param.unit}</title></circle>`)
-        .join("");
-    });
+    // Faixa da previsão + linha "hoje".
+    let today = "";
+    if (todayIdx >= 0) {
+      const tx = x(todayIdx);
+      today = `<rect x="${tx}" y="${pt}" width="${W - pr - tx}" height="${plotH}" fill="#ffffff" fill-opacity="0.04"/>
+        <line x1="${tx}" x2="${tx}" y1="${pt - 4}" y2="${base}" stroke="#7fe3d0" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="${tx}" y="${pt - 6}" text-anchor="middle" font-size="9" font-weight="700" fill="#7fe3d0">hoje</text>`;
+    }
 
-    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de ${param.label}">${grid}${marks}${xl}</svg>`;
+    const pts = vals.map((v, i) => (v == null ? null : [x(i), y(v), v, i])).filter(Boolean);
+    let marks = "";
+    if (param.kind === "bar") {
+      const bw = Math.min(14, (plotW / n) * 0.62);
+      marks = pts
+        .map(([px, py, v, i]) => `<rect x="${px - bw / 2}" y="${py}" width="${bw}" height="${base - py}" rx="1.5" fill="${param.fill}" fill-opacity="${i > todayIdx ? 0.45 : 1}">${tip(i, v)}</rect>`)
+        .join("");
+    } else {
+      const past = pts.filter((p) => p[3] <= todayIdx);
+      const fut = pts.filter((p) => p[3] >= todayIdx);
+      const line = (list) => list.map(([px, py]) => `${px},${py}`).join(" ");
+      const area = (list, op) =>
+        list.length > 1
+          ? `<polygon points="${line(list)} ${list[list.length - 1][0]},${base} ${list[0][0]},${base}" fill="${param.fill}" fill-opacity="${op}"/>`
+          : "";
+      marks += area(past, 0.95) + area(fut, 0.45);
+      if (past.length > 1) marks += `<polyline points="${line(past)}" fill="none" stroke="${param.color}" stroke-width="1.8" stroke-linejoin="round"/>`;
+      if (fut.length > 1) marks += `<polyline points="${line(fut)}" fill="none" stroke="${param.color}" stroke-width="1.8" stroke-dasharray="4 3" stroke-linejoin="round"/>`;
+      marks += pts
+        .map(([px, py, v, i]) => `<circle cx="${px}" cy="${py}" r="${i === todayIdx ? 3.6 : 7}" fill="${i === todayIdx ? param.color : "transparent"}"${i === todayIdx ? ' stroke="#fff" stroke-width="1.2"' : ""}>${tip(i, v)}</circle>`)
+        .join("");
+    }
+
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de ${param.label}">${grid}${today}${marks}${xl}</svg>`;
   }
 
   // ------------------------------------------------------------------
   // Renderização
   // ------------------------------------------------------------------
   function render() {
-    const fields = [...new Set(PARAMS.flatMap((p) => p.series.map((s) => s.field)).filter(Boolean))];
-    const { labels, values } = slotsFor(fields);
+    const env = state.env;
+    $("evSub").textContent = env
+      ? `Dados diários e previsão · ${env.places} · Open-Meteo`
+      : "Dados diários e previsão · Open-Meteo";
 
     PARAMS.forEach((param) => {
       const card = $(`ev-${param.id}`);
-      const seriesValues = param.series.map((s) => (s.field ? values[s.field] : labels.map(() => null)));
-      const flat = seriesValues.flat().filter((v) => v != null);
       const avgEl = card.querySelector("[data-avg]");
       const chartEl = card.querySelector("[data-chart]");
-
-      if (!flat.length) {
-        avgEl.textContent = `${param.stat.toLowerCase() === "total" ? "Total" : "média"} —`;
-        chartEl.innerHTML = param.series.every((s) => !s.field)
-          ? `<p class="ev-empty">Sem dados de ${param.label} na API ainda.</p>`
-          : `<p class="ev-empty">Sem dados no período.</p>`;
+      const vals = env ? env.series[param.key] : [];
+      if (!env || !vals.some((v) => v != null)) {
+        avgEl.textContent = "";
+        chartEl.innerHTML = `<p class="ev-empty">${state.error ? "Não foi possível consultar a Open-Meteo." : "Sem dados no período."}</p>`;
         return;
       }
-      const stat = param.sum ? flat.reduce((a, b) => a + b, 0) : mean(flat);
-      avgEl.textContent = `${param.stat} ${nfmt(stat, param.dec)}${param.unit}`;
-      chartEl.innerHTML = chartSvg(param, labels, seriesValues);
+      // Corta os dias finais sem previsão (ex.: correntes só vão até ~6 dias).
+      let last = vals.length - 1;
+      while (last > 0 && vals[last] == null) last--;
+      const labels = env.dates.slice(0, last + 1).map(window.EnvData.dayLabel);
+      const shown = vals.slice(0, last + 1);
+
+      const todayVal = shown[env.todayIdx];
+      if (param.sum) {
+        const next7 = shown.slice(env.todayIdx, env.todayIdx + 7).filter((v) => v != null);
+        avgEl.textContent = next7.length ? `próx. 7 dias ${nfmt(sum(next7), param.dec)}${param.unit}` : "";
+      } else {
+        avgEl.textContent = todayVal != null ? `hoje ${nfmt(todayVal, param.dec)}${param.unit}` : "";
+      }
+      chartEl.innerHTML = chartSvg(param, labels, shown, env.todayIdx);
     });
 
-    renderQuality(values, fields);
+    renderFactors();
   }
 
-  function renderQuality(values) {
-    const rows = QUALITY.map((q) => {
-      const series = (values[q.field] || []).filter((v) => v != null);
-      const latest = series.length ? series[series.length - 1] : null;
-      const level = latest == null ? "sem" : q.judge(latest);
-      const tip = latest == null ? "Sem dados no período" : `${nfmt(latest, 1)} ${q.unit} (mês mais recente)`;
-      return { name: q.label, level, tip };
+  function renderFactors() {
+    const env = state.env;
+    const rows = FACTORS.map((f) => {
+      const next = env ? env.series[f.key].slice(env.todayIdx, env.todayIdx + 7).filter((v) => v != null) : [];
+      const value = next.length ? (f.sum ? sum(next) : mean(next)) : null;
+      const level = value == null ? "sem" : f.judge(value);
+      const detail = value == null ? "sem previsão" : `${f.sum ? "" : "média "}${nfmt(value, f.dec)} ${f.unit}`;
+      return { name: f.label, level, detail };
     });
-    // pH e nutrientes (o design os usa aqui) não existem na API.
-    rows.push({ name: "pH e nutrientes", level: "sem", tip: "A API ainda não informa pH nem nutrientes" });
 
     $("evQuality").innerHTML = rows
       .map((r) => {
-        const ui = QUALITY_UI[r.level];
+        const ui = FACTOR_UI[r.level];
         return `
-        <li title="${S.escapeHtml(r.tip)}">
-          <span class="material-symbols-outlined" style="color:${ui.color}" aria-hidden="true">warning</span>
-          <span><strong>${ui.text}</strong> (${S.escapeHtml(r.name)})</span>
+        <li>
+          <span class="material-symbols-outlined" style="color:${ui.color}" aria-hidden="true">${ui.icon}</span>
+          <span><strong>${S.escapeHtml(r.name)}</strong> · ${S.escapeHtml(r.detail)}<br /><small style="color:${ui.color}">${ui.text}</small></span>
         </li>`;
       })
       .join("");
@@ -231,17 +229,13 @@
     });
     $("evPeriod").addEventListener("change", (e) => {
       state.period = Number(e.target.value);
-      render();
+      load();
     });
     $("evRefresh").addEventListener("click", (e) => {
       const btn = e.currentTarget;
       btn.classList.add("spin");
       setTimeout(() => btn.classList.remove("spin"), 500);
       load();
-    });
-    $("dashSearch").addEventListener("input", (e) => {
-      state.search = e.target.value.trim();
-      render();
     });
   }
 

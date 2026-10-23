@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="../css/dashboard.css" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
+    <script src="../js/page-loader.js"></script>
     <script src="../js/user-prefs.js"></script>
     <script src="../js/notifications.js"></script>
   </head>
@@ -185,6 +186,13 @@
       </aside>
 
       <main class="dash-main">
+        <div class="page-loader" id="pageLoader" role="status" aria-live="polite" aria-busy="true">
+          <div class="page-loader__box">
+            <span class="page-loader__spinner" aria-hidden="true"></span>
+            <p class="page-loader__title">Carregando dados do litoral...</p>
+            <p class="page-loader__hint">Consultando a API do Algamar</p>
+          </div>
+        </div>
         <header class="dash-topbar">
           <button
             type="button"
@@ -251,9 +259,9 @@
             <span class="fc-field__label">Período</span>
             <span class="fc-select">
               <select id="evPeriod">
-                <option value="3">Últimos 3 meses</option>
-                <option value="6" selected>Últimos 6 meses</option>
-                <option value="12">Últimos 12 meses</option>
+                <option value="7">Últimos 7 dias + previsão</option>
+                <option value="14" selected>Últimos 14 dias + previsão</option>
+                <option value="30">Últimos 30 dias + previsão</option>
               </select>
               <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
             </span>
@@ -275,44 +283,47 @@
           </button>
         </section>
 
-        <h1 class="ev-title">Parâmetros ambientais</h1>
+        <div class="ev-titlebar">
+          <h1 class="ev-title">Parâmetros ambientais</h1>
+          <p class="ev-sub" id="evSub">Dados diários e previsão · Open-Meteo</p>
+          <ul class="ev-key" aria-label="Legenda dos gráficos">
+            <li><span class="ev-key__solid"></span>Medido</li>
+            <li><span class="ev-key__dash"></span>Previsão</li>
+          </ul>
+        </div>
 
         <section class="ev-grid" aria-label="Gráficos dos parâmetros">
-          <article class="ev-card" id="ev-temp">
+          <article class="ev-card" id="ev-sst">
             <header class="ev-card__head">
-              <h3>Temperatura da água</h3>
+              <h3>Temperatura da água (°C)</h3>
               <span class="ev-avg" data-avg></span>
             </header>
             <div class="ev-chart" data-chart></div>
           </article>
-          <article class="ev-card" id="ev-sal">
+          <article class="ev-card" id="ev-air">
             <header class="ev-card__head">
-              <h3>Salinidade (PSU)</h3>
+              <h3>Temperatura do ar (°C)</h3>
               <span class="ev-avg" data-avg></span>
             </header>
             <div class="ev-chart" data-chart></div>
           </article>
-          <article class="ev-card" id="ev-ph">
+          <article class="ev-card" id="ev-radiation">
             <header class="ev-card__head">
-              <h3>pH</h3>
+              <h3>Radiação solar (MJ/m²)</h3>
               <span class="ev-avg" data-avg></span>
             </header>
             <div class="ev-chart" data-chart></div>
           </article>
-          <article class="ev-card" id="ev-chl">
+          <article class="ev-card" id="ev-clouds">
             <header class="ev-card__head">
-              <h3>Clorofila-a (µg/L)</h3>
+              <h3>Nebulosidade (%)</h3>
               <span class="ev-avg" data-avg></span>
             </header>
             <div class="ev-chart" data-chart></div>
           </article>
-          <article class="ev-card" id="ev-nut">
+          <article class="ev-card" id="ev-waves">
             <header class="ev-card__head">
-              <h3>Nutrientes (µmol/L)</h3>
-              <ul class="ev-legend" aria-label="Legenda">
-                <li><span style="background: #1e7bff"></span>Nitrato</li>
-                <li><span style="background: #ff9a1f"></span>Fósforo</li>
-              </ul>
+              <h3>Altura das ondas (m)</h3>
               <span class="ev-avg" data-avg></span>
             </header>
             <div class="ev-chart" data-chart></div>
@@ -326,7 +337,7 @@
           </article>
           <article class="ev-card" id="ev-cur">
             <header class="ev-card__head">
-              <h3>Corrente (nó)</h3>
+              <h3>Corrente (km/h)</h3>
               <span class="ev-avg" data-avg></span>
             </header>
             <div class="ev-chart" data-chart></div>
@@ -340,7 +351,8 @@
           </article>
 
           <article class="ev-card ev-card--quality" id="ev-quality">
-            <h3>Qualidade da água</h3>
+            <h3>Fatores de floração</h3>
+            <p class="ev-quality__hint">Previsão para os próximos 7 dias</p>
             <ul class="ev-quality" id="evQuality">
               <li class="dash-empty">Carregando...</li>
             </ul>
@@ -350,6 +362,7 @@
     </div>
 
     <script src="../js/dash-shell.js"></script>
+    <script src="../js/env-data.js"></script>
     <script src="../js/dados-ambientais.js" defer></script>
   </body>
 </html>

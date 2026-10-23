@@ -697,31 +697,202 @@ body.dash-body {
   letter-spacing: 0.01em;
 }
 
+/* ---- Pontos de floração ----
+   O `transform` do marcador é escrito pelo dashboard-map.js (contra-escala
+   do zoom), então as animações usam a propriedade `scale` (que se soma ao
+   transform) e os pseudo-elementos ::before/::after (anéis de pulso).
+   --pin = cor do nível do ML; data-level no .map-hotspot define o ritmo. */
 .map-hotspot {
   position: absolute;
+  animation: hotspot-fade 0.5s ease-out backwards;
+  animation-delay: var(--enter-delay, 0ms);
+}
+@property --pin {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #00c05d;
+}
+@property --blob {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
 }
 .map-hotspot__blob {
   position: absolute;
   border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--blob) 45%, transparent) 0%,
+    color-mix(in srgb, var(--blob) 20%, transparent) 40%,
+    transparent 65%
+  );
+  transition:
+    --blob 0.7s ease,
+    width 0.7s ease,
+    height 0.7s ease;
   transform: translate(-50%, -50%);
   mix-blend-mode: screen;
-  filter: blur(3px);
+  filter: blur(1px);
   pointer-events: none;
+  animation: hotspot-breathe 4s ease-in-out infinite;
+  animation-delay: var(--phase, 0s);
 }
 .map-hotspot__marker {
+  --pin: var(--dash-green);
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  border: 1.5px solid #04252b;
-  box-shadow: 0 0 6px 1px rgba(0, 0, 0, 0.55);
-  cursor: pointer;
   padding: 0;
+  display: grid;
+  place-items: center;
+  border: 2px solid #fff;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(0, 0, 0, 0.18)),
+    var(--pin);
+  box-shadow:
+    0 0 0 1px rgba(4, 37, 43, 0.55),
+    0 0 6px var(--pin),
+    0 2px 5px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  animation: hotspot-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: var(--enter-delay, 0ms);
+  transition:
+    scale 0.18s ease,
+    --pin 0.7s ease;
+}
+.map-hotspot__marker::before,
+.map-hotspot__marker::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--pin);
+  opacity: 0;
+  pointer-events: none;
+}
+/* Pulso conforme o nível do ML (data-level): quanto maior o risco, mais
+   rápido. Muito alto: pulso duplo — chama a atenção. */
+[data-level="muito_alto"] > .map-hotspot__marker::before,
+[data-level="muito_alto"] > .map-hotspot__marker::after {
+  animation: hotspot-ring 1.6s ease-out infinite;
+}
+[data-level="muito_alto"] > .map-hotspot__marker::after {
+  animation-delay: 0.8s;
+}
+[data-level="alto"] > .map-hotspot__marker::before {
+  animation: hotspot-ring 2.2s ease-out infinite;
+}
+[data-level="moderado"] > .map-hotspot__marker::before {
+  animation: hotspot-ring 3.2s ease-out infinite;
+}
+/* Baixo: sem pulso, só o brilho do pino. */
+
+.map-hotspot__marker:hover,
+.map-hotspot__marker:focus-visible {
+  scale: 1.18;
+  outline: none;
+  z-index: 2;
 }
 .map-hotspot__marker--active {
-  outline: 2px solid white;
-  outline-offset: 2px;
+  scale: 1.2;
+  z-index: 3;
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.3),
+    0 0 10px 1px var(--pin),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.map-hotspot .map-hotspot__marker--active::before {
+  animation: hotspot-ring 1.6s ease-out infinite;
+  border-color: #fff;
+}
+.map-hotspot:hover,
+.map-hotspot:has(.map-hotspot__marker--active) {
+  z-index: 5;
+}
+
+/* Ícone de alga (assets/Icons/AlgaGrey.svg) usado como máscara: o desenho
+   fica branco sobre a cor do pino, seja qual for a categoria. */
+.map-hotspot__icon {
+  width: 10px;
+  height: 16px;
+  background: #fff;
+  -webkit-mask: url("../assets/Icons/AlgaGrey.svg") center / contain no-repeat;
+  mask: url("../assets/Icons/AlgaGrey.svg") center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+/* Etiqueta com o nome do local: aparece no hover e no ponto selecionado. */
+.map-hotspot__tag {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  translate: -4px -50%;
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--map-panel-bg, rgba(10, 44, 55, 0.9));
+  border: 1px solid var(--pin);
+  color: #fff;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    translate 0.18s ease;
+}
+.map-hotspot__marker:hover .map-hotspot__tag,
+.map-hotspot__marker:focus-visible .map-hotspot__tag,
+.map-hotspot__marker--active .map-hotspot__tag {
+  opacity: 1;
+  translate: 0 -50%;
+}
+
+@keyframes hotspot-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes hotspot-pop {
+  from {
+    scale: 0;
+  }
+}
+@keyframes hotspot-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.3);
+  }
+}
+@keyframes hotspot-breathe {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.9);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-hotspot,
+  .map-hotspot__blob,
+  .map-hotspot__marker,
+  .map-hotspot__marker::before,
+  .map-hotspot__marker::after {
+    animation: none !important;
+  }
 }
 
 .map-panel__empty,
@@ -741,6 +912,7 @@ body.dash-body {
 /* Portado do artifact "Litoral Paulista" — mesmas classes/estilo, só que
    alimentado pelos dados reais da API em vez do banco do artifact. */
 .map-panel .panel,
+.map-status,
 .layerspanel,
 .legend,
 .scalebar,
@@ -763,6 +935,83 @@ body.dash-body {
 .map-boundary.on {
   display: block;
 }
+
+/* ---- Aviso do dia (embaixo do mapa, entre a escala e a legenda) ---- */
+.map-status {
+  position: absolute;
+  bottom: 16px;
+  left: 214px;
+  right: 182px;
+  z-index: 9;
+  width: fit-content;
+  max-width: 460px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  color: var(--map-ink);
+  pointer-events: none;
+}
+.map-status__dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--map-ink-dim);
+}
+.map-status--alto .map-status__dot {
+  background: var(--dash-red);
+  box-shadow: 0 0 8px var(--dash-red);
+}
+.map-status--medio .map-status__dot {
+  background: var(--dash-yellow);
+  box-shadow: 0 0 8px var(--dash-yellow);
+}
+.map-status--baixo .map-status__dot {
+  background: var(--dash-green);
+  box-shadow: 0 0 8px var(--dash-green);
+}
+.map-status--alto {
+  border-color: rgba(255, 56, 60, 0.6);
+}
+.map-status__day {
+  margin: 0 0 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--map-accent);
+  letter-spacing: 0.02em;
+}
+.map-status__msg {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.map-status__meta {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: var(--map-ink-dim);
+}
+@media (max-width: 1180px) {
+  /* Pouco espaço entre a escala e a legenda: o aviso sobe para logo acima
+     da escala, ao lado da legenda. */
+  .map-status {
+    bottom: 64px;
+    left: 16px;
+    margin: 0;
+  }
+}
+@media (max-width: 640px) {
+  .map-status {
+    bottom: 168px; /* acima da legenda */
+    right: 16px;
+    width: auto;
+    max-width: none;
+  }
+}
+
 
 /* ---- Camadas de mapa + Filtros (canto superior esquerdo) ---- */
 .layerspanel {
@@ -1421,6 +1670,15 @@ body.dash-body {
   align-items: center;
   justify-content: space-between;
 }
+/* Local dos dados do card (o ponto selecionado no mapa ou a região). */
+.dash-card__place {
+  font-size: 11px;
+  color: var(--dash-mint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
 .dash-card__header h2 {
   margin: 0;
   font-family: var(--font-ui);
@@ -1834,19 +2092,6 @@ body.dash-body {
 }
 .map-page .map-panel {
   border-radius: 28px;
-}
-.map-page .map-hotspot__marker,
-.forecast-page .map-hotspot__marker {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #fff;
-}
-.map-page .map-hotspot__marker--active,
-.forecast-page .map-hotspot__marker--active {
-  outline: none;
-  box-shadow:
-    0 0 0 6px rgba(255, 255, 255, 0.28),
-    0 0 10px 2px rgba(0, 0, 0, 0.5);
 }
 
 .occ-panel--map {
@@ -2282,6 +2527,28 @@ body.dash-body {
   transition: left 0.6s ease;
   pointer-events: none;
 }
+.fc-track.is-playing .fc-track__line span,
+.fc-track.is-playing .fc-track__thumb {
+  transition: none;
+}
+.fc-track.is-playing .fc-track__thumb {
+  box-shadow: 0 0 0 2px var(--dash-mint), 0 0 0 7px rgba(127, 227, 208, 0.18), 0 0 18px rgba(127, 227, 208, 0.7);
+}
+.fc-timeline__info strong.is-forecast {
+  color: #9fd8ff;
+}
+.fc-play.is-playing {
+  border-color: var(--dash-mint);
+  animation: fc-play-pulse 1.8s ease-out infinite;
+}
+@keyframes fc-play-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(127, 227, 208, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(127, 227, 208, 0);
+  }
+}
 .fc-step {
   position: absolute;
   top: 0;
@@ -2481,31 +2748,56 @@ body.dash-body {
   min-height: 0;
   overflow-y: auto;
 }
-.fc-more {
+/* Paginação da tabela "Previsões na região" (‹ 1 2 3 ›) */
+.fc-pager {
   align-self: center;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 2px;
-  margin-top: -4px;
-  padding: 4px 12px;
-  border: 1px solid var(--dash-card-border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--dash-mint);
-  font-family: var(--font-ui);
-  font-size: 11.5px;
-  font-weight: 500;
-  cursor: pointer;
+  gap: 4px;
+  margin-top: 2px;
 }
-.fc-more[hidden] {
+.fc-pager[hidden] {
   display: none;
 }
-.fc-more:hover {
-  border-color: var(--dash-mint);
-  background: rgba(127, 227, 208, 0.08);
+.fc-pager button {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--dash-card-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dash-text-faint);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
-.fc-more .material-symbols-outlined {
-  font-size: 17px;
+.fc-pager button:hover:not(:disabled) {
+  border-color: var(--dash-mint);
+  color: var(--dash-mint);
+}
+.fc-pager button.is-active {
+  background: var(--dash-border-color-btn);
+  border-color: var(--dash-border-color-btn);
+  color: #fff;
+}
+.fc-pager button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.fc-pager .material-symbols-outlined {
+  font-size: 18px;
+}
+.fc-pager__gap {
+  padding: 0 2px;
+  color: var(--dash-text-muted);
+  font-size: 12px;
+}
+.fc-row-pad td {
+  border-color: transparent !important;
 }
 .fc-table {
   width: 100%;
@@ -2623,6 +2915,26 @@ body.dash-body {
   color: var(--dash-mint);
 }
 
+.fc-env__head .fc-card__sub {
+  margin-top: 2px;
+}
+/* Valor que acabou de mudar (linha do tempo andando): entra deslizando. */
+.fc-env strong.is-changing,
+.fc-timeline__info strong.is-changing {
+  animation: fc-value-in 0.45s ease;
+}
+@keyframes fc-value-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.fc-env.is-forecast strong {
+  color: #9fd8ff; /* mês de previsão: valores em azul claro */
+}
+.fc-env small {
+  font-size: inherit;
+}
 .fc-env {
   flex: 1;
   display: grid;
@@ -3522,8 +3834,47 @@ body.dash-body {
   color: var(--dash-mint);
   white-space: nowrap;
 }
-#ev-nut .ev-avg {
-  display: none; /* o design só mostra a legenda Nitrato/Fósforo */
+.ev-titlebar {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.ev-sub {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 12px;
+  color: var(--dash-text-muted);
+}
+.ev-key {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  color: var(--dash-text-faint);
+}
+.ev-key li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ev-key__solid,
+.ev-key__dash {
+  width: 18px;
+  border-top: 2px solid var(--dash-mint);
+}
+.ev-key__dash {
+  border-top-style: dashed;
+}
+.ev-quality__hint {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--dash-text-muted);
+}
+.ev-quality small {
+  font-size: 11px;
 }
 .ev-legend {
   display: flex;
@@ -3633,6 +3984,11 @@ body.dash-body {
   gap: 18px;
   align-items: stretch;
   min-height: calc(100dvh - 232px); /* painéis descem até o rodapé, como no design */
+}
+/* Com o painel "Relatório de gráficos" embaixo, a grade encolhe a altura
+   dele para os dois caberem na tela. */
+.rp-grid:has(~ .rp-charts) {
+  min-height: calc(100dvh - 232px - 150px);
 }
 .rp-panel {
   display: flex;
@@ -3763,6 +4119,40 @@ body.dash-body {
 .rp-select select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+.rp-panel.rp-charts {
+  flex-direction: row;
+  align-items: center;
+  gap: 22px;
+  margin-top: 18px;
+}
+.rp-charts .rp-model__icon {
+  flex: none;
+}
+.rp-charts__text {
+  flex: 1;
+  min-width: 0;
+}
+.rp-charts__text p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--dash-text-muted);
+}
+.rp-btn.rp-btn--primary {
+  flex: none;
+  background: var(--dash-border-color-btn);
+  color: #fff;
+}
+.rp-btn.rp-btn--primary:hover:not(:disabled) {
+  background: #2f8a69;
+  color: #fff;
+}
+@media (max-width: 720px) {
+  .rp-panel.rp-charts {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 .rp-actions {
   display: flex;
@@ -4216,4 +4606,136 @@ body.dash-body {
   .st-photo {
     width: auto;
   }
+}
+
+/* ==========================================================================
+   Tela de carregamento (js/page-loader.js)
+   Cobre o conteúdo abaixo da barra do topo até a primeira resposta da API,
+   para não mostrar cards e gráficos vazios enquanto os dados chegam.
+   ========================================================================== */
+.page-loader {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: min(28vh, 220px);
+  background: var(--dash-bg);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+.page-loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+.page-loader__box {
+  position: sticky;
+  top: 30vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.page-loader__spinner {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid var(--dash-card-border);
+  border-top-color: var(--dash-mint);
+  animation: page-loader-spin 0.9s linear infinite;
+}
+.page-loader__title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+}
+.page-loader__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dash-text-muted);
+}
+@keyframes page-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-loader__spinner {
+    animation-duration: 2.4s;
+  }
+  .page-loader {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------
+   4 níveis de floração (baixo · moderado · alto · muito alto), os mesmos
+   do ML e de todas as telas (AlgamarRisk em js/api-client.js). Mesmas cores
+   da Central de alertas e da legenda de intensidade do mapa:
+   verde · amarelo · laranja · vermelho. "medio" é o moderado.
+   ------------------------------------------------------------------ */
+:root {
+  --dash-orange: #f08c28;
+}
+.map-status--alto .map-status__dot {
+  background: var(--dash-orange);
+  box-shadow: 0 0 8px var(--dash-orange);
+}
+.map-status--alto {
+  border-color: rgba(240, 140, 40, 0.6);
+}
+.map-status--muito_alto .map-status__dot {
+  background: var(--dash-red);
+  box-shadow: 0 0 8px var(--dash-red);
+}
+.map-status--muito_alto {
+  border-color: rgba(255, 56, 60, 0.6);
+}
+.occ-severity--alto {
+  background: rgba(240, 140, 40, 0.16);
+  color: var(--dash-orange);
+}
+.occ-severity--muito_alto {
+  background: rgba(255, 56, 60, 0.16);
+  color: var(--dash-red);
+}
+.occ-bar--alto {
+  background: var(--dash-orange);
+}
+.occ-bar--muito_alto {
+  background: var(--dash-red);
+}
+.predictions-table__risk--alto {
+  background: rgba(240, 140, 40, 0.16);
+  color: var(--dash-orange);
+}
+.predictions-table__risk--muito_alto {
+  background: rgba(255, 56, 60, 0.16);
+  color: var(--dash-red);
+}
+.alert-item__icon--alto {
+  background: rgba(240, 140, 40, 0.18);
+  color: var(--dash-orange);
+}
+.alert-item__icon--muito_alto {
+  background: rgba(255, 56, 60, 0.18);
+  color: var(--dash-red);
+}
+.occ-panel--map .occ-severity--alto {
+  background: var(--dash-orange);
+  color: #04252b;
+}
+.occ-panel--map .occ-severity--muito_alto {
+  background: var(--dash-red);
+  color: #fff;
+}
+.occ-panel--map .occ-severity--muito_alto::before {
+  content: "↑↑ ";
 }

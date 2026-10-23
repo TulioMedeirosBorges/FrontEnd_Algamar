@@ -12,13 +12,16 @@
   const $ = (id) => document.getElementById(id);
 
   const PAGE_SIZE = 6;
+  // Os 4 níveis do ML (AlgamarRisk, em api-client.js); "medio" = moderado.
+  const AR = window.AlgamarRisk;
   const RISKS = {
-    alto: { label: "Alto", color: "#ff383c" },
-    medio: { label: "Moderado", color: "#f5c518" },
-    baixo: { label: "Baixo", color: "#00c05d" },
+    muito_alto: { label: AR.LABEL.muito_alto, color: AR.COLOR.muito_alto },
+    alto: { label: AR.LABEL.alto, color: AR.COLOR.alto },
+    medio: { label: AR.LABEL.moderado, color: AR.COLOR.moderado },
+    baixo: { label: AR.LABEL.baixo, color: AR.COLOR.baixo },
   };
   // Ordem do empilhamento (de baixo para cima) e da legenda do donut.
-  const RISK_ORDER = ["alto", "medio", "baixo"];
+  const RISK_ORDER = ["muito_alto", "alto", "medio", "baixo"];
 
   const now = new Date();
   const nowIdx = now.getFullYear() * 12 + now.getMonth();
@@ -38,18 +41,10 @@
   const pct = (v) => `${Math.round(v * 100)}%`;
   const nf = (n) => n.toLocaleString("pt-BR");
 
+  // Nível do ML (risk_level); sem ele, pela probabilidade com as faixas do ML.
   function riskOf(p) {
-    const norm = String(p.risk_level || "")
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
-      .toUpperCase();
-    if (norm.startsWith("ALT")) return "alto";
-    if (norm.startsWith("MED")) return "medio";
-    if (norm.startsWith("BAIX")) return "baixo";
-    if (typeof p.probability === "number") {
-      return p.probability >= 0.6 ? "alto" : p.probability >= 0.35 ? "medio" : "baixo";
-    }
-    return "baixo";
+    const k = AR.of(p);
+    return k === "moderado" ? "medio" : k;
   }
   const statusOf = (p) =>
     periodIndex(p) === nowIdx && riskOf(p) !== "baixo" ? "ativo" : "resolvida";
@@ -68,9 +63,10 @@
       if (err.status !== 401) S.showApiWarning(err);
       state.data = [];
     }
-    S.setAlertBadge(state.data.filter((p) => riskOf(p) === "alto").length);
+    S.setAlertBadge(state.data.filter((p) => ["alto", "muito_alto"].includes(riskOf(p))).length);
     state.page = 1;
     render();
+    window.PageLoader.done();
   }
 
   // Janela de meses: termina no último mês com registro (no máximo o mês
@@ -137,7 +133,7 @@
       return;
     }
     const slots = [];
-    for (let idx = start; idx <= end; idx++) slots.push({ idx, alto: 0, medio: 0, baixo: 0, total: 0 });
+    for (let idx = start; idx <= end; idx++) slots.push({ idx, muito_alto: 0, alto: 0, medio: 0, baixo: 0, total: 0 });
     rows.forEach((p) => {
       const slot = slots[periodIndex(p) - start];
       slot[riskOf(p)]++;
@@ -174,7 +170,7 @@
   }
 
   function renderDonut(rows) {
-    const counts = { alto: 0, medio: 0, baixo: 0 };
+    const counts = { muito_alto: 0, alto: 0, medio: 0, baixo: 0 };
     rows.forEach((p) => counts[riskOf(p)]++);
     const total = rows.length;
 

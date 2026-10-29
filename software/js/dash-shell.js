@@ -59,17 +59,11 @@ window.DashShell = (function () {
     });
   }
 
-  // Sino do topo: número de áreas em alto risco (some quando é zero).
-  function setAlertBadge(count) {
-    var badge = $("alertBadge");
-    // Preferência "Alertas de risco de floração" (Configurações) desliga o contador.
-    if (window.UserPrefs && !window.UserPrefs.get("notifRisk")) count = 0;
-    if (count > 0) {
-      badge.textContent = count > 99 ? "99+" : String(count);
-      badge.hidden = false;
-    } else {
-      badge.hidden = true;
-    }
+  // O contador do sino agora vem das notificações de Condições Propícias
+  // (js/notifications.js). As telas ainda chamam isto (ex.: ao mudar a
+  // preferência em Configurações); o número que mandam é ignorado.
+  function setAlertBadge() {
+    if (window.NotifMenu) window.NotifMenu.applyBadge();
   }
 
   // Sair, gaveta lateral (celular) e o menu de notificações do sino.

@@ -7,6 +7,11 @@
 // clorofila). Não há tipo de alga, concentração, dia exato nem pH/vento/etc.
 // Por isso "Últimos 30 dias" = o mês mais recente com dados, e os relatórios
 // avisam o que a API não informa.
+//
+// O "Relatório de Condições Propícias" usa GET /ml/condicoes-propicias (os
+// mesmos dados da tela Condições Propícias, via js/condicoes-data.js): por
+// município e espécie tóxica, o mês mais recente (observado) e os 3 seguintes
+// (previstos). Ali o filtro de período não se aplica e o de tipo de alga vale.
 (function () {
   const S = window.DashShell;
   const P = window.PdfLite;
@@ -297,7 +302,7 @@
     };
   }
 
-  function buildExecutivo(f, prep) {
+  function buildExecutivo(f, prep, cond) {
     const list = prep.inWin;
     const counts = zeros();
     list.forEach((p) => counts[levelOf(p)]++);
@@ -351,8 +356,11 @@
           paragraph: `Médias do período: temperatura da água ${t == null ? "—" : num1(t) + " °C"}, salinidade ${s == null ? "—" : num1(s) + " PSU"}, clorofila-a ${c == null ? "—" : num1(c) + " µg/L"}.`,
         },
         { title: "Perspectiva", paragraph: outlook },
+        condicoesExecutivo(cond),
       ],
-      note: NOTE_NO_ALGA,
+      note:
+        "A probabilidade de floração (API de risco) não informa espécie nem concentração (cel/L). " +
+        "As espécies citadas vêm do índice de condições propícias, não de contagem de células.",
       summary: `${list.length} ocorrência(s), ${active} ativa(s)${top ? "; maior risco em " + top.region : ""}.`,
     };
   }
@@ -529,11 +537,292 @@
     };
   }
 
+  // ------------------------------------------------------------------
+  // Relatório de Condições Propícias (GET /ml/condicoes-propicias)
+  // ------------------------------------------------------------------
+  const C = window.CondicoesData;
+  const num2 = (v) => (typeof v === "number" ? v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—");
+  const sinal1 = (v) => (typeof v === "number" ? (v > 0 ? "+" : "") + num1(v) : "—");
+  const ordemDe = (r) => C.nivelDe(r && r.nivel).ordem;
+  const monthOf = (ym) => C.mesLabel(ym, true);
+  const nivelCell = (r, comIndice) => {
+    const n = C.nivelDe(r && r.nivel);
+    return { text: comIndice && r && typeof r.indice === "number" ? `${n.short} (${num2(r.indice)})` : n.label, color: n.rgb, bold: true };
+  };
+  const AVISO_COND = "Condições propícias não significam floração: a espécie precisa estar presente.";
+  const NOTE_COND =
+    "Índice de condições da literatura (0 a 1), não é probabilidade de floração: abaixo de 0,4 desfavorável, " +
+    "de 0,4 a 0,7 parcialmente propício, 0,7 ou mais propício. " +
+    "Mês de referência observado (Copernicus); meses seguintes previstos. " +
+    "Regras: fichas das espécies (Mafra Jr. et al. 2024 e 2026, Montagna et al. 2024, Méndez et al. 2012).";
+
+  const TOP_DETALHE = 8; // casos detalhados condição a condição
+
+  function prepCondicoes(cond, especie, search) {
+    const term = (search || "").toLowerCase();
+    const regs = cond.data.filter(
+      (m) => (!especie || m.especie === especie) && (!term || m.municipio.toLowerCase().includes(term))
+    );
+    const especies = (especie ? [especie] : cond.especies).filter((e) => regs.some((m) => m.especie === e));
+    const m0 = regs[0];
+    return { regs, especies, meses: m0 ? [m0.agora, ...m0.proximos].map((r) => r.mes) : [] };
+  }
+
+  function contarNiveis(list) {
+    const c = { "propício": 0, "parcialmente propício": 0, "desfavorável": 0 };
+    list.forEach((r) => r && c[r.nivel] != null && c[r.nivel]++);
+    return c;
+  }
+
+  // Uma frase por espécie: agora e no próximo mês. Também vai para o Executivo.
+  function leituraCondicoes(cp) {
+    return cp.especies.map((e) => {
+      const rs = cp.regs.filter((m) => m.especie === e);
+      const tox = rs[0] && rs[0].toxina ? `, toxina ${rs[0].toxina}` : "";
+      const now = contarNiveis(rs.map((m) => m.agora));
+      const prox = contarNiveis(rs.map((m) => m.proximos[0]));
+      const onde = rs.filter((m) => m.agora.nivel === "propício").map((m) => m.municipio);
+      const mes1 = cp.meses[1] ? monthOf(cp.meses[1]) : "o próximo mês";
+      return (
+        `${e}${tox}: propício em ${now["propício"]} de ${rs.length} município(s)` +
+        (onde.length ? ` (${onde.slice(0, 5).join(", ")}${onde.length > 5 ? "…" : ""})` : "") +
+        `, parcialmente propício em ${now["parcialmente propício"]}. ` +
+        `Para ${mes1}, previsão de ${prox["propício"]} propício(s) e ${prox["parcialmente propício"]} parcial(is).`
+      );
+    });
+  }
+
+  function buildCondicoes(f, cond) {
+    const cp = prepCondicoes(cond, f.especie, state.search);
+    const { regs, meses } = cp;
+    const agora = contarNiveis(regs.map((m) => m.agora));
+    const prox = contarNiveis(regs.map((m) => m.proximos[0]));
+    const munProp = new Set(regs.filter((m) => m.agora.nivel === "propício").map((m) => m.municipio));
+    const ranking = regs.filter((m) => typeof m.agora.indice === "number").sort((a, b) => b.agora.indice - a.agora.indice);
+    const top = ranking[0];
+    const mesRef = meses[0] ? C.mesLabel(meses[0]) : "—";
+    const mes1 = meses[1] ? monthOf(meses[1]) : "+1 mês";
+    const horizonte = meses.length > 1 ? `${monthOf(meses[1])} a ${monthOf(meses[meses.length - 1])} (previsto)` : "—";
+
+    const sections = [
+      {
+        title: "Leitura rápida",
+        paragraph: regs.length ? leituraCondicoes(cp).join(" ") : "Sem dados de condições propícias para os filtros selecionados.",
+      },
+      {
+        title: `Situação por espécie — ${mesRef}`,
+        table: {
+          cols: [
+            { title: "Espécie", w: 2.2 },
+            { title: "Toxina", w: 1.4 },
+            { title: "Propício", w: 0.9, align: "right" },
+            { title: "Parcial", w: 0.9, align: "right" },
+            { title: "Desfavorável", w: 1.3, align: "right" },
+            { title: "Índice médio", w: 1.3, align: "right" },
+            { title: `Prop. em ${mes1}`, w: 1.7, align: "right" },
+          ],
+          rows: cp.especies.map((e) => {
+            const rs = regs.filter((m) => m.especie === e);
+            const c = contarNiveis(rs.map((m) => m.agora));
+            const c1 = contarNiveis(rs.map((m) => m.proximos[0]));
+            const med = mean(rs.map((m) => m.agora.indice).filter((v) => typeof v === "number"));
+            return [
+              { text: e, bold: true },
+              (rs[0] && rs[0].toxina) || "—",
+              { text: String(c["propício"]), color: C.NIVEIS["propício"].rgb, bold: true },
+              String(c["parcialmente propício"]),
+              String(c["desfavorável"]),
+              num2(med),
+              String(c1["propício"]),
+            ];
+          }),
+        },
+      },
+    ];
+
+    if (ranking.length) {
+      sections.push({
+        title: "Maiores índices agora",
+        bars: ranking.slice(0, 10).map((m) => ({
+          label: f.especie ? m.municipio : `${m.municipio} · ${m.especie}`,
+          value: m.agora.indice,
+          text: `${num2(m.agora.indice)} · ${C.nivelDe(m.agora.nivel).short}`,
+          color: C.nivelDe(m.agora.nivel).rgb,
+        })),
+        barMax: 1,
+      });
+    }
+
+    cp.especies.forEach((e) => {
+      const rs = regs
+        .filter((m) => m.especie === e)
+        .sort((a, b) => ordemDe(b.agora) - ordemDe(a.agora) || (b.agora.indice ?? -1) - (a.agora.indice ?? -1));
+      sections.push({
+        title: `Evolução por município — ${e}`,
+        table: {
+          cols: [
+            { title: "Município", w: 2.2 },
+            ...meses.map((ym, i) => ({ title: `${monthOf(ym)} ${i === 0 ? "(obs.)" : "(prev.)"}`, w: 1.5 })),
+          ],
+          rows: rs.map((m) => [m.municipio, ...[m.agora, ...m.proximos].map((r) => nivelCell(r, true))]),
+        },
+      });
+    });
+
+    // Condições de cada espécie onde o mar já está propício ou parcial agora
+    // (os de maior índice, para o relatório não virar uma lista sem fim).
+    // A tabela do PDF não quebra linha: uma condição por linha.
+    const condRows = [];
+    const favoraveis = ranking.filter((m) => ordemDe(m.agora) >= 1);
+    favoraveis
+      .slice(0, TOP_DETALHE)
+      .forEach((m) =>
+        Object.entries(m.agora.condicoes || {}).forEach(([nome, ok], i) =>
+          condRows.push([
+            i === 0 ? m.municipio : "",
+            i === 0 ? m.especie : "",
+            nome,
+            ok === true
+              ? { text: "Atendida", color: C.NIVEIS["propício"].rgb, bold: true }
+              : ok === false
+              ? { text: "Não atendida", color: P.colors.muted }
+              : { text: "Sem dado", color: P.colors.muted },
+          ])
+        )
+      );
+    sections.push(
+      condRows.length
+        ? {
+            title: `Condições atendidas — ${mesRef}`,
+            paragraph:
+              favoraveis.length > TOP_DETALHE
+                ? `Os ${TOP_DETALHE} casos de maior índice entre ${favoraveis.length} município × espécie propícios ou parciais.`
+                : "Todos os casos propícios ou parciais.",
+            table: {
+              cols: [
+                { title: "Município", w: 1.6 },
+                { title: "Espécie", w: 1.4 },
+                { title: "Condição da espécie", w: 4 },
+                { title: "Situação", w: 1.2 },
+              ],
+              rows: condRows,
+            },
+          }
+        : { title: "Condições atendidas", paragraph: `Nenhum município com condições propícias ou parciais em ${mesRef}.` }
+    );
+
+    // Próximo mês: onde a previsão é propícia/parcial e a chance de cada condição.
+    const prevRows = [];
+    regs
+      .filter((m) => ordemDe(m.proximos[0]) >= 1)
+      .sort((a, b) => (b.proximos[0].indice ?? -1) - (a.proximos[0].indice ?? -1))
+      .slice(0, TOP_DETALHE)
+      .forEach((m) => {
+        const r = m.proximos[0];
+        const chances = Object.entries(r.prob_condicoes || {});
+        // "moderada: temperatura e salinidade persistem…" -> "moderada"
+        const head = [m.municipio, m.especie, nivelCell(r, true), (r.confianca || "—").split(":")[0]];
+        if (!chances.length) prevRows.push([...head, "—", "—"]);
+        chances.forEach(([nome, pr], i) => prevRows.push([...(i === 0 ? head : ["", "", "", ""]), nome, pct(pr)]));
+      });
+    sections.push(
+      prevRows.length
+        ? {
+            title: `Previsão para ${meses[1] ? C.mesLabel(meses[1]) : "o próximo mês"} — chance de cada condição`,
+            table: {
+              cols: [
+                { title: "Município", w: 1.4 },
+                { title: "Espécie", w: 1.7 },
+                { title: "Nível previsto", w: 1.5 },
+                { title: "Confiança", w: 1 },
+                { title: "Condição", w: 3.3 },
+                { title: "Chance", w: 0.8, align: "right" },
+              ],
+              rows: prevRows,
+            },
+          }
+        : { title: "Previsão do próximo mês", paragraph: "Nenhum município com previsão propícia ou parcial no próximo mês." }
+    );
+
+    const mar = [...new Map(regs.filter((m) => m.ambiente_agora).map((m) => [m.municipio, m])).values()].sort((a, b) =>
+      a.municipio.localeCompare(b.municipio, "pt-BR")
+    );
+    if (mar.length) {
+      sections.push({
+        title: "Como está o mar agora (Copernicus)",
+        table: {
+          cols: [
+            { title: "Município", w: 2 },
+            { title: "Mês", w: 1 },
+            { title: "Temp. °C (anom.)", w: 1.8, align: "right" },
+            { title: "Sal. PSU (anom.)", w: 1.8, align: "right" },
+            { title: "Mistura", w: 1.3, align: "right" },
+            { title: "Vento N-S", w: 1.4, align: "right" },
+          ],
+          rows: mar.map((m) => {
+            const a = m.ambiente_agora;
+            return [
+              m.municipio,
+              monthOf(a.mes),
+              `${num1(a.temperatura_c)} (${sinal1(a.anomalia_temperatura_c)})`,
+              `${num1(a.salinidade_psu)} (${sinal1(a.anomalia_salinidade_psu)})`,
+              typeof a.camada_mistura_m === "number" ? `${Math.round(a.camada_mistura_m)} m` : "—",
+              typeof a.vento_norte_m_s === "number"
+                ? `${num1(Math.abs(a.vento_norte_m_s))} m/s ${a.vento_norte_m_s > 0 ? "de sul" : "de norte"}`
+                : "—",
+            ];
+          }),
+        },
+      });
+    }
+
+    return {
+      title: "Relatório de Condições Propícias",
+      subtitle: "O mar está do jeito que cada espécie de alga tóxica gosta?",
+      meta: [
+        ["Referência", `${mesRef} (observado)`],
+        ["Horizonte", horizonte],
+        ["Região", f.regionLabel],
+        ["Espécie", f.especie || "Todas"],
+        ["Gerado em", stamp()],
+        ["Fonte", "API Algamar — GET /ml/condicoes-propicias (dados Copernicus)"],
+      ],
+      kpis: [
+        { label: "Propício agora", value: String(agora["propício"]), hint: `${agora["parcialmente propício"]} parcial · ${agora["desfavorável"]} desfavorável`, color: C.NIVEIS["propício"].rgb },
+        { label: "Municípios propícios", value: String(munProp.size), hint: `de ${new Set(regs.map((m) => m.municipio)).size} município(s)` },
+        { label: "Maior índice agora", value: top ? num2(top.agora.indice) : "—", hint: top ? `${top.especie} em ${top.municipio}` : "", color: top ? C.nivelDe(top.agora.nivel).rgb : null },
+        { label: `Propício em ${mes1}`, value: String(prox["propício"]), hint: `previsto · ${prox["parcialmente propício"]} parcial` },
+      ],
+      sections,
+      note: `${cond.aviso || AVISO_COND} ${NOTE_COND}`,
+      summary: regs.length
+        ? `${mesRef}: ${agora["propício"]} combinação(ões) município × espécie propícia(s) em ${munProp.size} município(s)` +
+          (top ? `; maior índice ${num2(top.agora.indice)} (${top.especie}, ${top.municipio}).` : ".")
+        : "Sem dados de condições propícias para os filtros.",
+    };
+  }
+
+  // Executivo: resumo das condições propícias para espécies tóxicas.
+  function condicoesExecutivo(cond) {
+    const title = "Condições propícias para algas tóxicas";
+    if (!cond) return { title, paragraph: "Não foi possível consultar as condições propícias (GET /ml/condicoes-propicias)." };
+    const cp = prepCondicoes(cond, "", state.search);
+    if (!cp.regs.length) return { title, paragraph: "Sem dados de condições propícias para os filtros selecionados." };
+    return {
+      title,
+      paragraph:
+        `${C.mesLabel(cp.meses[0])} (observado): ` +
+        leituraCondicoes(cp).join(" ") +
+        ` Índice da literatura, não probabilidade. ${AVISO_COND}`,
+    };
+  }
+
   const BUILDERS = {
     ocorrencia: { build: buildOcorrencia, file: "ocorrencia" },
     ambiental: { build: buildAmbiental, file: "ambiental" },
     risco: { build: buildRisco, file: "risco" },
     executivo: { build: buildExecutivo, file: "executivo" },
+    condicoes: { build: buildCondicoes, file: "condicoes-propicias" },
   };
 
   // ------------------------------------------------------------------
@@ -606,6 +895,7 @@
       region: $("rpRegion").value,
       regionLabel: sel("rpRegion"),
       format: $("rpFormat").value,
+      especie: $("rpAlga").value,
     };
   }
 
@@ -618,9 +908,18 @@
 
   async function generate() {
     const f = filters();
-    const data = await fetchData(f.region);
-    const prep = prepare(data, f.months, state.search);
-    const model = BUILDERS[f.model].build(f, prep);
+    if (!BUILDERS[f.model]) throw new Error("Modelo de relatório desconhecido. Recarregue a página (Ctrl+F5).");
+    let model;
+    if (f.model === "condicoes") {
+      model = buildCondicoes(f, await C.load(f.region));
+    } else {
+      // O Executivo também resume as condições propícias (se a rota falhar, segue sem).
+      const [data, cond] = await Promise.all([
+        fetchData(f.region),
+        f.model === "executivo" ? C.load(f.region).catch(() => null) : null,
+      ]);
+      model = BUILDERS[f.model].build(f, prepare(data, f.months, state.search), cond);
+    }
     const ext = f.format === "csv" ? "csv" : "pdf";
     const blob = ext === "csv" ? toCsv(model) : toPdf(model, await P.loadLogo(LOGO_SRC));
     const name = `algamar-relatorio-${BUILDERS[f.model].file}-${now.toISOString().slice(0, 10)}.${ext}`;
@@ -659,6 +958,16 @@
     if (err && err.status === 401) return "Sessão expirada.";
     if (err && err.status === 0) return "Sem conexão com a API — não foi possível gerar o relatório.";
     return (err && err.message) || "Não foi possível gerar o relatório.";
+  }
+
+  // No relatório de condições o período é fixo (mês recente + 3 previstos) e o
+  // tipo de alga vale; nos outros é o contrário (a API de risco não traz espécie).
+  function syncFiltros() {
+    const cond = filters().model === "condicoes";
+    $("rpPeriod").disabled = cond;
+    $("rpPeriod").title = cond ? "O relatório de condições usa o mês mais recente e os 3 seguintes" : "";
+    $("rpAlga").disabled = !cond || $("rpAlga").options.length < 2;
+    $("rpAlga").title = cond ? "" : "Disponível no Relatório de Condições Propícias";
   }
 
   async function onCharts() {
@@ -741,6 +1050,26 @@
     $("rpCharts").addEventListener("click", onCharts);
     $("dashSearch").addEventListener("input", (e) => (state.search = e.target.value.trim()));
     P.loadLogo(LOGO_SRC); // já deixa a logo pronta para o primeiro PDF
+
+    // Vindo da tela Condições Propícias: ?modelo=condicoes já marca o modelo.
+    const modelo = new URLSearchParams(window.location.search).get("modelo");
+    const radio = modelo && document.querySelector(`input[name="rpModel"][value="${CSS.escape(modelo)}"]`);
+    if (radio) radio.checked = true;
+    document.querySelectorAll('input[name="rpModel"]').forEach((r) => r.addEventListener("change", syncFiltros));
+    syncFiltros();
+    C.load("")
+      .then((cond) => {
+        $("rpAlga").innerHTML =
+          `<option value="" selected>Todas</option>` +
+          cond.especies
+            .map((e) => {
+              const tox = C.siglaToxina((cond.data.find((m) => m.especie === e) || {}).toxina);
+              return `<option value="${S.escapeHtml(e)}">${S.escapeHtml(e)}${tox ? ` (${S.escapeHtml(tox)})` : ""}</option>`;
+            })
+            .join("");
+        syncFiltros();
+      })
+      .catch(() => {});
 
     // Só para o sino do topo (áreas em nível alto), como nas outras telas.
     fetchData("")

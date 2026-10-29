@@ -21,6 +21,8 @@ window.ALGAMAR_API_BASE = "http://localhost:3000/api";
 //   GET    /health            disponibilidade da API e do banco
 //   GET    /ml/coastal-risks  mapa, riscos, indicadores e tendências (Bearer)
 //                             filtros: ?region=&risk_level=&month=
+//   GET    /ml/condicoes-propicias  condições propícias por espécie (índice da literatura) (Bearer)
+//                             filtros: ?especie=&region=
 // /predict, /marine-data e /predictions são internas do backend: não chamar.
 
 window.ALGAMAR_TOKEN_KEY = "algamar_token";

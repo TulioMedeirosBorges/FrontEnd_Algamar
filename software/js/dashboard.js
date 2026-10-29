@@ -12,12 +12,15 @@
     filters: { region: "", risk_level: "", month: "" },
     searchTerm: "",
     // 3 categorias exibidas no mapa (ver categoryOf em dashboard-map.js):
-    // pouca indicação / florações identificadas / risco.
+    // risco baixo / alto ou muito alto / moderado (ou, no modo "Algas
+    // tóxicas", desfavorável / propício / parcial).
     layers: { baixa: true, identificada: true, risco: true },
     onlyInterest: false,
     showAllPredictions: false,
-    showAllAlerts: false,
     envTab: "agua",
+    colorBy: "risco", // cor dos pinos: "risco" (ML) ou "tox" (condições propícias)
+    cond: null, // GET /ml/condicoes-propicias (todas as regiões); null = carregando
+    condErro: false,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -48,16 +51,11 @@
     baixo: "../assets/Icons/NivelDeRiscoBaixo.svg",
   };
 
-  // Nível que predomina no litoral: usa summary.general_status quando a API
-  // manda um nível reconhecível (alto/médio/baixo); se não, pega o nível
-  // mais frequente entre os pontos (empate fica com o mais grave). Sem
-  // dado nenhum, devolve null.
-  function currentRiskKey(summary, points) {
-    const status = summary && summary.general_status;
-    if (typeof status === "string") {
-      const norm = status.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase();
-      if (/^(MUIT|ALT|MED|MOD|BAIX)/.test(norm)) return riskKey(status);
-    }
+  // Nível que predomina no litoral no mês mostrado: o mais frequente entre
+  // os pontos do mapa (empate fica com o mais grave). Não usa o
+  // summary.general_status da API, que vale só para o mês-alvo do modelo e
+  // não acompanha o filtro de mês. Sem dado nenhum, devolve null.
+  function currentRiskKey(points) {
     if (!points.length) return null;
     const counts = { muito_alto: 0, alto: 0, medio: 0, baixo: 0 };
     points.forEach((p) => counts[riskKey(p.risk_level)]++);
@@ -172,6 +170,30 @@
     return list.filter((p) => idx(p) == null || idx(p) === pick);
   }
 
+  // Só o mês atual e os próximos 3 (o horizonte das condições propícias):
+  // meses que já passaram não aparecem em nenhum lugar do dashboard/mapa
+  // (mapa, filtro, previsões, alertas).
+  const MONTHS_AHEAD = 3;
+  const periodIdx = (p) => (p.year && p.month ? p.year * 12 + (p.month - 1) : null);
+  const NOW_IDX = new Date().getFullYear() * 12 + new Date().getMonth();
+  const inWindow = (p) => periodIdx(p) == null || (periodIdx(p) >= NOW_IDX && periodIdx(p) <= NOW_IDX + MONTHS_AHEAD);
+  const ymOf = (idx) => `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
+  const idxOfYm = (ym) => {
+    const [y, m] = ym.split("-").map(Number);
+    return y * 12 + (m - 1);
+  };
+  const monthLabel = (idx) => `${MONTH_NAMES[idx % 12]}/${Math.floor(idx / 12)}`;
+
+  // Mês mostrado no mapa/cards: o do filtro ("AAAA-MM") ou o atual.
+  const selectedYm = () => state.filters.month || ymOf(NOW_IDX);
+
+  // Filtro "Mês" = "AAAA-MM"; vazio = mês atual (currentPeriod).
+  function monthData(list) {
+    if (!state.filters.month) return currentPeriod(list);
+    const [y, m] = state.filters.month.split("-").map(Number);
+    return list.filter((p) => p.year === y && p.month === m);
+  }
+
   async function loadCoastalRisks() {
     $("mapLoading").hidden = false;
     $("mapEmpty").hidden = true;
@@ -180,15 +202,14 @@
       const params = {
         region: state.filters.region || undefined,
         risk_level: state.filters.risk_level || undefined,
-        month: state.filters.month || undefined,
       };
       const res = await window.AlgamarAPI.apiFetch("/ml/coastal-risks", { params });
 
       state.summary = res.summary || null;
       window.AlgamarRisk.setRanges(state.summary && state.summary.niveis);
       state.trends = res.trends || [];
-      state.data = (res.data || []).map(normalizePoint);
-      state.mapData = currentPeriod(state.data);
+      state.data = (res.data || []).map(normalizePoint).filter(inWindow);
+      state.mapData = monthData(state.data);
 
       state.loadError = false;
       hideApiWarning();
@@ -197,12 +218,15 @@
       renderPredictions();
       renderEnvTab();
       renderAlerts();
+      renderTimeline();
       // Só na primeira carga: enquadra o mapa no ponto selecionado. Nos
       // refreshes seguintes não mexe, para não tirar o usuário de onde está.
       if (!state.focusedOnce && occList.length) {
         state.focusedOnce = true;
         // Vindo da Central de alertas: ?ponto=ID abre aquele ponto no painel.
-        const wanted = new URLSearchParams(window.location.search).get("ponto");
+        // Vindo de Condições Propícias: ?municipio=Nome abre o ponto do município.
+        const qs = new URLSearchParams(window.location.search);
+        const wanted = qs.get("ponto") || pointIdOfMunicipio(qs.get("municipio"));
         if (wanted) showOccByPointId(wanted);
         focusActivePoint();
       }
@@ -228,56 +252,104 @@
     return Math.round(((curr - prev) / prev) * 100);
   }
 
+  // Cards do topo. Todos seguem o MÊS mostrado no mapa (filtro "Mês") e a
+  // mesma unidade do mapa (municípios):
+  //  - municípios monitorados (e quantos pontos de satélite há por trás);
+  //  - alertas de algas tóxicas = Condições Propícias, a mesma conta do sino;
+  //  - risco alto de floração e nível predominante = modelo de risco (ML).
+  const field = (name) => document.querySelector(`[data-field="${name}"]`);
+
   function renderSummary() {
     const s = state.summary || {};
-    // "em alerta" = alto ou muito alto
+    const mes = monthLabel(idxOfYm(selectedYm()));
     const altoCount = state.mapData.filter((p) => ["alto", "muito_alto"].includes(riskKey(p.risk_level))).length;
     const medioCount = state.mapData.filter((p) => riskKey(p.risk_level) === "medio").length;
 
-    document.querySelector('[data-field="total_identified"]').textContent = s.total_monitored ?? "—";
-    document.querySelector('[data-field="alert_areas"]').textContent = s.high_risk_count ?? altoCount;
-    document.querySelector('[data-field="risk_areas"]').textContent = medioCount;
-    const levelKey = currentRiskKey(s, state.mapData);
-    document.querySelector('[data-field="general_status"]').textContent =
-      s.general_status ?? (levelKey ? riskLabel(levelKey) : "—");
+    const municipios = new Set(state.mapData.map((p) => p.region)).size;
+    field("total_identified").textContent = municipios || "—";
+    if (field("total_hint"))
+      field("total_hint").textContent = s.total_monitored
+        ? `${s.total_monitored.toLocaleString("pt-BR")} pontos de satélite no litoral`
+        : "municípios do litoral";
+    field("risk_areas").textContent = altoCount;
+    if (field("risk_hint")) field("risk_hint").textContent = `${medioCount} com risco moderado · ${mes}`;
+
+    const levelKey = currentRiskKey(state.mapData);
+    field("general_status").textContent = levelKey ? riskLabel(levelKey) : "—";
+    if (field("level_hint")) field("level_hint").textContent = `na maior parte do litoral · ${mes}`;
     const levelIcon = $("riskLevelIcon");
     levelIcon.src = levelKey ? RISK_LEVEL_ICONS[levelKey] : "../assets/Icons/shield.svg";
     levelIcon.alt = levelKey ? `Nível de risco ${riskLabel(levelKey).toLowerCase()}` : "";
 
-    // Único indicador com histórico mensal real disponível (trends[].high_risk_points)
-    // — por isso é o único card com uma % de variação; os outros mostram texto
-    // descritivo em vez de inventar uma porcentagem sem dado por trás.
-    const sortedTrends = [...state.trends].sort((a, b) => a.year - b.year || a.month - b.month);
-    const last = sortedTrends[sortedTrends.length - 1];
-    const prev = sortedTrends[sortedTrends.length - 2];
-    const pct = last && prev ? trendPct(last.high_risk_points, prev.high_risk_points) : null;
-    const trendEl = document.querySelector('[data-field="alert_areas_trend"]');
-    // Na página do mapa a variação vira um selo ao lado do número (mais
-    // alertas = vermelho, menos = verde); no dashboard continua dentro do texto.
-    const trendChip = document.querySelector('[data-trend="alert_areas"]');
-    if (trendChip) {
-      trendChip.hidden = pct == null;
-      if (pct != null) {
-        trendChip.textContent = `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct)}%`;
-        trendChip.className = `stat-trend stat-trend--${pct >= 0 ? "up" : "down"}`;
-      }
-      trendEl.textContent = pct == null ? "sem histórico suficiente" : "em relação ao mês anterior";
-    } else {
-      trendEl.textContent =
-        pct == null
-          ? "sem histórico suficiente"
-          : `${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct)}% em relação ao mês anterior`;
-    }
-
+    renderCondSummary();
     renderMapStatus(levelKey, altoCount, medioCount);
+  }
 
-    const badge = $("alertBadge");
-    const wantsBadge = !window.UserPrefs || window.UserPrefs.get("notifRisk");
-    if (altoCount > 0 && wantsBadge) {
-      badge.textContent = altoCount > 99 ? "99+" : String(altoCount);
-      badge.hidden = false;
+  // Registro (de uma espécie) de Condições Propícias para o mês "AAAA-MM":
+  // o observado (agora) ou um dos previstos (proximos).
+  const condDoMes = (m, ym) => [m.agora, ...(m.proximos || [])].find((r) => r && r.mes === ym) || null;
+  const condRegiao = (list) => list.filter((m) => !state.filters.region || m.macro_region === state.filters.region);
+
+  function contaCond(regs) {
+    const C = window.CondicoesData;
+    let prop = 0, parc = 0;
+    regs.forEach((r) => {
+      const k = r && C.nivelDe(r.nivel).key;
+      if (k === "propicio") prop++;
+      else if (k === "parcial") parc++;
+    });
+    return { prop, parc, total: prop + parc };
+  }
+
+  // Card "Alertas de algas tóxicas": município × espécie propício ou
+  // parcialmente propício no mês mostrado (no mês atual = número do sino).
+  // A variação compara com o mês anterior — do histórico, se ele já passou.
+  let condSumSeq = 0;
+  async function renderCondSummary() {
+    const C = window.CondicoesData;
+    const valueEl = field("alert_areas");
+    const hintEl = field("alert_areas_trend");
+    const chip = document.querySelector('[data-trend="alert_areas"]');
+    if (!state.cond) {
+      valueEl.textContent = "…";
+      hintEl.textContent = "carregando condições propícias";
+      if (chip) chip.hidden = true;
+      return;
+    }
+    const seq = ++condSumSeq;
+    const ym = selectedYm();
+    const atual = contaCond(condRegiao(state.cond.data).map((m) => condDoMes(m, ym)));
+    valueEl.textContent = atual.total;
+    const breakdown = `${atual.prop} ${atual.prop === 1 ? "propício" : "propícios"} · ${atual.parc} ${atual.parc === 1 ? "parcial" : "parciais"}`;
+    hintEl.textContent = breakdown;
+    if (chip) chip.hidden = true;
+
+    const prevYm = ymOf(idxOfYm(ym) - 1);
+    let anterior = null;
+    if (idxOfYm(prevYm) >= NOW_IDX) {
+      anterior = contaCond(condRegiao(state.cond.data).map((m) => condDoMes(m, prevYm)));
     } else {
-      badge.hidden = true;
+      try {
+        const hist = await C.historico({ meses: 12 });
+        if (seq !== condSumSeq) return;
+        const rows = condRegiao(hist.data).filter((r) => r.mes === prevYm);
+        if (rows.length) anterior = contaCond(rows);
+      } catch (err) {
+        return;
+      }
+    }
+    const pct = anterior ? trendPct(atual.total, anterior.total) : null;
+    if (pct == null) return;
+    // Na página do mapa a variação vira um selo ao lado do número (mais
+    // alertas = vermelho, menos = verde); no dashboard fica dentro do texto.
+    const seta = pct === 0 ? "= 0%" : `${pct > 0 ? "▲" : "▼"} ${Math.abs(pct)}%`;
+    if (chip) {
+      chip.hidden = false;
+      chip.textContent = seta;
+      chip.className = `stat-trend${pct ? ` stat-trend--${pct > 0 ? "up" : "down"}` : ""}`;
+      chip.title = `${anterior.total} no mês anterior`;
+    } else {
+      hintEl.textContent = `${breakdown} · ${seta} vs. mês anterior`;
     }
   }
 
@@ -315,17 +387,21 @@
     }
 
     const parts = [STATUS_MSG[levelKey]];
-    if (altoCount) parts.push(`${altoCount} ${altoCount === 1 ? "área" : "áreas"} em alerta`);
-    if (medioCount) parts.push(`${medioCount} com risco`);
+    if (altoCount) parts.push(`${altoCount} ${altoCount === 1 ? "município" : "municípios"} com risco alto`);
+    if (medioCount) parts.push(`${medioCount} com risco moderado`);
     $("mapStatusMsg").textContent = parts.join(" · ");
 
     const ref = state.mapData.find((p) => p.year && p.month);
     const now = new Date();
-    const isCurrent = ref && ref.year === now.getFullYear() && ref.month === now.getMonth() + 1;
     const time = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-    $("mapStatusMeta").textContent = ref && !isCurrent
-      ? `Últimos dados disponíveis: ${MONTH_NAMES[ref.month - 1].toLowerCase()}/${ref.year} · atualizado às ${time}`
-      : `Atualizado às ${time}`;
+    const refIdx = ref ? periodIdx(ref) : NOW_IDX;
+    const refTxt = `${MONTH_NAMES[refIdx % 12].toLowerCase()}/${Math.floor(refIdx / 12)}`;
+    $("mapStatusMeta").textContent =
+      refIdx > NOW_IDX
+        ? `Previsão para ${refTxt} · atualizado às ${time}`
+        : refIdx < NOW_IDX
+          ? `Últimos dados disponíveis: ${refTxt} · atualizado às ${time}`
+          : `Atualizado às ${time}`;
     $("mapStatusMeta").hidden = false;
   }
 
@@ -453,18 +529,25 @@
     renderEnvTab();
   }
 
-  let weatherSeq = 0;
-  async function loadWeather() {
-    const seq = ++weatherSeq; // ignora respostas de um local anterior
-    const place = currentPlace();
-    const common = { timezone: "America/Sao_Paulo" };
+  // Valores "agora" (tempo + mar) de um local, numa consulta só à Open-Meteo.
+  // O card "Condições atuais", o painel da ocorrência e o card "Dados
+  // ambientais" leem daqui, então vento, chuva e corrente batem nos três.
+  // A chuva é sempre a soma do dia de hoje (precipitation_sum).
+  const NOW_CACHE_MS = WEATHER_REFRESH_MS;
+  const nowCache = new Map(); // "land|sea" -> { at, promise }
 
-    const [forecast, marine] = await Promise.allSettled([
+  function fetchNow(place) {
+    const key = `${place.land.join(",")}|${place.sea.join(",")}`;
+    const hit = nowCache.get(key);
+    if (hit && Date.now() - hit.at < NOW_CACHE_MS) return hit.promise;
+
+    const common = { timezone: "America/Sao_Paulo" };
+    const promise = Promise.allSettled([
       fetchJson(WEATHER_FORECAST_URL, {
         ...common,
         latitude: place.land[0],
         longitude: place.land[1],
-        current: "temperature_2m,weather_code,is_day,wind_speed_10m",
+        current: "temperature_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m",
         daily: "precipitation_sum",
         forecast_days: 1,
       }),
@@ -473,32 +556,62 @@
         latitude: place.sea[0],
         longitude: place.sea[1],
         cell_selection: "sea",
-        current: "ocean_current_velocity",
+        current: "sea_surface_temperature,ocean_current_velocity,ocean_current_direction",
       }),
-    ]);
+    ]).then(([forecast, marine]) => {
+      const f = forecast.status === "fulfilled" ? forecast.value : {};
+      const m = marine.status === "fulfilled" ? marine.value.current || {} : {};
+      return {
+        okForecast: !!f.current,
+        temp: f.current?.temperature_2m,
+        weatherCode: f.current?.weather_code,
+        isDay: f.current?.is_day,
+        windSpeed: f.current?.wind_speed_10m,
+        windDir: f.current?.wind_direction_10m,
+        rainToday: f.daily?.precipitation_sum?.[0],
+        sst: m.sea_surface_temperature,
+        currentSpeed: m.ocean_current_velocity,
+        currentDir: m.ocean_current_direction,
+        ok: !!f.current || marine.status === "fulfilled",
+      };
+    });
+    nowCache.set(key, { at: Date.now(), promise });
+    promise.then((d) => !d.ok && nowCache.delete(key));
+    return promise;
+  }
+
+  // Atualização periódica / botão "Atualizar": descarta o cache e redesenha
+  // os três lugares que mostram os valores "agora".
+  function refreshNow() {
+    nowCache.clear();
+    loadWeather();
+    if (occList[occIndex]) renderOccEnv(occList[occIndex]);
+    renderEnvTab();
+  }
+
+  let weatherSeq = 0;
+  async function loadWeather() {
+    const seq = ++weatherSeq; // ignora respostas de um local anterior
+    const place = currentPlace();
+    const now = await fetchNow(place);
     if (seq !== weatherSeq) return;
 
-    if (forecast.status !== "fulfilled" || !forecast.value.current) {
+    if (!now.okForecast) {
       renderWeatherUnavailable(place.name);
       return;
     }
-    const cur = forecast.value.current;
-    const [skyKey, skyLabel] = skyFromWmo(cur.weather_code);
-    const period = cur.is_day === 0 || (cur.is_day == null && isNightNow()) ? "noite" : "dia";
+    const [skyKey, skyLabel] = skyFromWmo(now.weatherCode);
+    const period = now.isDay === 0 || (now.isDay == null && isNightNow()) ? "noite" : "dia";
     $("weatherIcon").src = weatherIconPath(WEATHER_SKY_ICONS[skyKey][period]);
     $("weatherIcon").alt = skyLabel;
-    $("weatherTemp").textContent = `${fmtNumber(cur.temperature_2m, 0)} °C`;
+    $("weatherTemp").textContent = `${fmtNumber(now.temp, 0)} °C`;
     $("weatherSky").textContent = `${skyLabel} · ${place.name}`;
-    setWeatherMini("weatherWind", `${fmtNumber(cur.wind_speed_10m, 0)} km/h`, "Vento");
-
-    const rain = forecast.value.daily?.precipitation_sum?.[0];
-    setWeatherMini("weatherRain", typeof rain === "number" ? `${fmtNumber(rain, 1)} mm` : "—", "Chuva hoje");
-
-    const current = marine.status === "fulfilled" ? marine.value.current?.ocean_current_velocity : null;
+    setWeatherMini("weatherWind", typeof now.windSpeed === "number" ? `${fmtNumber(now.windSpeed, 0)} km/h` : "—", "Vento agora");
+    setWeatherMini("weatherRain", typeof now.rainToday === "number" ? `${fmtNumber(now.rainToday, 1)} mm` : "—", "Chuva hoje");
     setWeatherMini(
       "weatherCurrent",
-      typeof current === "number" ? `${fmtNumber(current, 1)} km/h` : "—",
-      "Corrente marinha"
+      typeof now.currentSpeed === "number" ? `${fmtNumber(now.currentSpeed, 1)} km/h` : "—",
+      "Corrente marinha agora"
     );
   }
 
@@ -507,8 +620,53 @@
   // satélite, blobs) mora em dashboard-map.js; aqui só decidimos QUAIS
   // pontos aparecem.
   // ------------------------------------------------------------------
+  // "Colorir por" (painel Camadas de mapa): "risco" = modelo de risco de
+  // floração (ML); "tox" = Condições Propícias — cada município pinta com o
+  // maior nível entre as espécies tóxicas no mês mostrado. As 3 camadas
+  // seguem o modo: baixo/desfavorável, moderado/parcial, alto/propício.
+  const COLOR_MODES = {
+    risco: {
+      legend: "Risco de floração (previsão)",
+      rows: [["#00c05d", "Baixo"], ["#f5c518", "Moderado"], ["#f08c28", "Alto"], ["#ff383c", "Muito alto"]],
+      layers: { baixa: ["Risco baixo", "var(--map-baixa)"], risco: ["Risco moderado", "var(--map-risco)"], identificada: ["Risco alto ou muito alto", "var(--map-identificada)"] },
+      onlyInterest: "Mostrar só risco moderado ou maior",
+    },
+    tox: {
+      legend: "Algas tóxicas (condições)",
+      rows: [["#00c05d", "Desfavorável"], ["#f5c518", "Parcialmente propício"], ["#f08c28", "Propício"]],
+      layers: { baixa: ["Desfavorável", "#00c05d"], risco: ["Parcialmente propício", "#f5c518"], identificada: ["Propício", "#f08c28"] },
+      onlyInterest: "Mostrar só parcial ou propício",
+    },
+  };
+
+  // Condições do município do ponto no mês mostrado: a espécie de maior índice.
+  function toxDoPonto(p) {
+    const C = window.CondicoesData;
+    if (!state.cond || !C) return null;
+    const ym = selectedYm();
+    let best = null;
+    C.doPonto(state.cond.data, p).forEach((m) => {
+      const r = condDoMes(m, ym);
+      if (r && typeof r.indice === "number" && (!best || r.indice > best.r.indice)) best = { m, r };
+    });
+    return best;
+  }
+
+  // Ponto como o mapa o desenha: no modo "tox", risk_level/probability vêm
+  // do nível/índice das condições (o motor do mapa pinta halo e camada por eles).
+  function viewPoint(p) {
+    if (state.colorBy !== "tox" || p._orig) return p;
+    const best = toxDoPonto(p);
+    const n = window.CondicoesData.nivelDe(best && best.r.nivel);
+    return { ...p, _tox: best, _orig: p, risk_level: n.risk, probability: best ? best.r.indice : 0 };
+  }
+
+  function categoryOf(p) {
+    return window.DashboardMap.categoryOf(viewPoint(p));
+  }
+
   function pointVisible(p) {
-    const cat = window.DashboardMap.categoryOf(p);
+    const cat = categoryOf(p);
     if (!state.layers[cat]) return false;
     if (state.onlyInterest && !(cat === "identificada" || cat === "risco")) return false;
     if (state.searchTerm) {
@@ -517,8 +675,70 @@
     return true;
   }
 
+  function applyColorMode() {
+    const mode = COLOR_MODES[state.colorBy];
+    const C = window.CondicoesData;
+    window.DashboardMap.setStyle(
+      state.colorBy === "tox"
+        ? {
+            pinColor: (p) => C.nivelDe(p._tox && p._tox.r.nivel).color,
+            pinLabel: (p) => (p._tox ? `${C.nivelDe(p._tox.r.nivel).label} para ${p._tox.m.especie}` : "sem dado de condições"),
+          }
+        : null
+    );
+    const legend = document.querySelector(".map-panel .legend");
+    if (legend) {
+      legend.innerHTML =
+        `<p class="legend-title">${escapeHtml(mode.legend)}</p>` +
+        mode.rows
+          .map(([c, l]) => `<div class="legend-row"><span class="dot" style="background:${c}"></span><span class="lbl">${escapeHtml(l)}</span></div>`)
+          .join("");
+    }
+    [["layerBaixa", "baixa"], ["layerRisco", "risco"], ["layerIdentificada", "identificada"]].forEach(([id, key]) => {
+      const row = $(id) && $(id).closest(".lp-row");
+      if (!row) return;
+      row.querySelector(".lp-name").textContent = mode.layers[key][0];
+      row.querySelector(".lp-dot").style.background = mode.layers[key][1];
+    });
+    const oi = document.querySelector(".lp-toggle-label");
+    if (oi) oi.textContent = mode.onlyInterest;
+    document.querySelectorAll("[data-color-by]").forEach((b) => {
+      const on = b.dataset.colorBy === state.colorBy;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+  }
+
+  // Cartão de dica ao passar o mouse num pino: risco (ML) + algas tóxicas.
+  function pinTooltip(vp) {
+    const C = window.CondicoesData;
+    const p = vp._orig || vp;
+    const best = vp._tox || toxDoPonto(p);
+    const regs = state.cond ? C.doPonto(state.cond.data, p) : [];
+    const ym = selectedYm();
+    const fav = regs.filter((m) => {
+      const r = condDoMes(m, ym);
+      return r && C.nivelDe(r.nivel).ordem >= 1;
+    });
+    const tox = best
+      ? `<span class="map-tip__chip" style="--c:${C.nivelDe(best.r.nivel).color}">${escapeHtml(C.nivelDe(best.r.nivel).short)}</span>
+         ${fav.length ? `${fav.length} de ${regs.length} espécies` : "nenhuma espécie favorecida"}`
+      : "—";
+    return `
+      <p class="map-tip__title">${escapeHtml(p.region || "Ponto monitorado")}</p>
+      <p class="map-tip__sub">${escapeHtml(periodLabel(p))}${p.tipo === "previsao" ? " · previsão" : ""}</p>
+      <dl>
+        <dt>Risco de floração</dt>
+        <dd><span class="map-tip__chip" style="--c:${window.AlgamarRisk.COLOR[window.AlgamarRisk.of(p)]}">${escapeHtml(riskLabel(p.risk_level))}</span>
+          ${typeof p.probability === "number" ? `${Math.round(p.probability * 100)}%` : ""}</dd>
+        <dt>Algas tóxicas</dt>
+        <dd>${tox}</dd>
+      </dl>
+      <p class="map-tip__hint">Clique para detalhes · duplo clique aproxima</p>`;
+  }
+
   function renderMarkers() {
-    window.DashboardMap.setPoints(state.mapData);
+    window.DashboardMap.setPoints(state.mapData.map(viewPoint));
     window.DashboardMap.applyFilter(pointVisible);
     $("mapEmpty").hidden = state.mapData.length > 0 || state.loadError;
     $("mapEmpty").textContent = "Nenhum ponto retornado pela API para os filtros atuais.";
@@ -535,17 +755,19 @@
   let occList = [];
   let occIndex = 0;
 
+  // Os meses mostrados são todos previsão do modelo de risco: nada aqui é
+  // floração "identificada" (observada) — por isso os rótulos falam em risco.
   const OCC_BADGE_LABEL = {
-    identificada: "Floração identificada",
-    risco: "Risco de floração",
+    identificada: "Risco alto de floração",
+    risco: "Risco moderado de floração",
     previsao: "Previsão de floração",
-    baixa: "Pouca indicação",
+    baixa: "Risco baixo de floração",
   };
   const OCC_TITLE_PREFIX = {
-    identificada: "Floração em",
-    risco: "Risco de floração em",
+    identificada: "Risco alto em",
+    risco: "Risco moderado em",
     previsao: "Previsão de floração em",
-    baixa: "Pouca indicação em",
+    baixa: "Risco baixo em",
   };
   // Glifo do círculo grande ao lado do selo (só existe na página do mapa).
   const OCC_ICON_GLYPH = { identificada: "warning", risco: "warning", previsao: "schedule", baixa: "check_circle" };
@@ -562,10 +784,15 @@
   };
 
   function refreshOccList() {
+    // Troca de mês/camada: o painel continua no mesmo município, se ele
+    // ainda estiver visível.
+    const antes = occList[occIndex];
     occList = state.mapData
       .filter(pointVisible)
       .sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0));
-    if (occIndex >= occList.length) occIndex = 0;
+    const mesmo = antes ? occList.findIndex((p) => p.region === antes.region) : -1;
+    if (mesmo >= 0) occIndex = mesmo;
+    else if (occIndex >= occList.length) occIndex = 0;
     renderOccPanel();
   }
 
@@ -576,15 +803,18 @@
     if (p) window.DashboardMap.panTo(p.latitude, p.longitude);
   }
 
+  function pointIdOfMunicipio(nome) {
+    if (!nome || !window.CondicoesData) return null;
+    const n = window.CondicoesData.norm(nome);
+    const hit = (list) => list.find((p) => window.CondicoesData.norm(p.region) === n);
+    const p = hit(occList) || hit(state.mapData) || hit(state.data);
+    return p ? p.id : null;
+  }
+
   function showOccByPointId(id) {
-    // Ponto de outro mês (ex.: alerta antigo): o mapa passa a mostrar aquele mês.
+    // Ponto de outro mês (ex.: link antigo): o mapa passa a mostrar aquele mês.
     const alvo = state.data.find((p) => p.id === id);
-    if (alvo && !state.mapData.includes(alvo)) {
-      state.mapData = state.data.filter((p) => p.year === alvo.year && p.month === alvo.month);
-      window.DashboardMap.setPoints(state.mapData);
-      window.DashboardMap.applyFilter(pointVisible);
-      occList = state.mapData.filter(pointVisible).sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0));
-    }
+    if (alvo && !state.mapData.includes(alvo)) setMonth(ymOf(periodIdx(alvo)));
     const idx = occList.findIndex((p) => p.id === id);
     if (idx === -1) return;
     occIndex = idx;
@@ -639,21 +869,98 @@
     $("occTitle").textContent = `${OCC_TITLE_PREFIX[cat]} ${p.region || "ponto monitorado"}`;
     $("occSeverity").textContent = OCC_SEVERITY_LABEL[riskK] || "—";
     $("occSeverity").className = `occ-severity occ-severity--${riskK}`;
-    $("occThumb").src = OCC_THUMB[riskK] || OCC_THUMB.baixo;
+    if ($("occThumb")) $("occThumb").src = OCC_THUMB[riskK] || OCC_THUMB.baixo;
 
     $("occLocation").textContent = p.region ? `${p.region} - SP` : "Localização não informada";
     $("occCoords").textContent =
       p.latitude != null && p.longitude != null ? `${p.latitude}, ${p.longitude}` : "—";
     $("occDate").textContent = periodLabel(p);
 
-    // Espécie/toxicidade/concentração não existem na API ainda — "—" em vez
-    // de inventar um número que pareceria um dado real de segurança.
-    $("occSpecies").textContent = "—";
-    $("occTox").textContent = "";
+    // Concentração não existe na API ainda — "—" em vez de inventar um número
+    // que pareceria um dado real de segurança. As espécies vêm de Condições Propícias.
     $("occConcentration").textContent = "—";
 
+    renderOccCond(p);
     renderOccEnv(p);
-    renderOccHistory();
+    renderOccHistory(p);
+  }
+
+  // ------------------------------------------------------------------
+  // Condições propícias do município do ponto (mesmos dados da tela
+  // "Condições Propícias"): que espécies tóxicas o mar está favorecendo
+  // agora e no mês seguinte. É índice da literatura, não probabilidade.
+  // ------------------------------------------------------------------
+  async function loadCondicoes() {
+    try {
+      state.cond = await window.CondicoesData.load("");
+      state.condErro = false;
+    } catch (err) {
+      state.cond = { data: [], especies: [] };
+      state.condErro = true;
+    }
+    renderOccCond(occList[occIndex]);
+    renderCondSummary();
+    renderAlerts();
+    if (state.colorBy === "tox") renderMarkers();
+  }
+
+  function condChip(r) {
+    const n = window.CondicoesData.nivelDe(r && r.nivel);
+    const idx = r && typeof r.indice === "number" ? ` · índice ${fmtNumber(r.indice, 2)}` : "";
+    return `<span class="cp-chip" style="--cp:${n.color}" title="${escapeHtml(n.label + idx)}">${escapeHtml(n.short)}</span>`;
+  }
+
+  function renderOccCond(p) {
+    const C = window.CondicoesData;
+    const sub = $("occCondSub");
+    const list = $("occCondList");
+    const link = $("occCondLink");
+    if (!p || !window.CondicoesData) return;
+    if (!state.cond) {
+      $("occSpecies").textContent = "…";
+      if (sub) sub.textContent = "Carregando condições...";
+      if (list) list.innerHTML = "";
+      return;
+    }
+    const regs = C.doPonto(state.cond.data, p);
+    // A tela do Mapa Interativo reaproveita este arquivo sem o bloco da lista.
+    if (link) link.href = C.url(regs[0] && regs[0].municipio, regs[0] && regs[0].especie);
+    if (!regs.length) {
+      $("occSpecies").textContent = "—";
+      $("occTox").textContent = "";
+      if (sub)
+        sub.textContent = state.condErro
+          ? "Não foi possível carregar as condições propícias."
+          : "Sem dados de condições propícias para este local.";
+      if (list) list.innerHTML = "";
+      return;
+    }
+
+    const favorecidas = regs.filter((m) => C.nivelDe(m.agora.nivel).ordem >= 1);
+    $("occSpecies").textContent = favorecidas.length
+      ? favorecidas.map((m) => `${m.especie} (${C.nivelDe(m.agora.nivel).short.toLowerCase()})`).join(", ")
+      : "nenhuma no momento";
+    const toxinas = [...new Set(favorecidas.map((m) => C.siglaToxina(m.toxina)).filter(Boolean))];
+    $("occTox").textContent = toxinas.join(" · ");
+
+    if (!list) return;
+    const m0 = regs[0];
+    const prox = m0.proximos[0];
+    sub.textContent = `${m0.municipio} · ${C.mesLabel(m0.agora.mes)} (observado)${prox ? ` → ${C.mesLabel(prox.mes, true)} (previsto)` : ""}`;
+    list.innerHTML = regs
+      .map((m) => {
+        const tox = C.siglaToxina(m.toxina);
+        const r1 = m.proximos[0];
+        return `
+          <li>
+            <a href="${escapeHtml(C.url(m.municipio, m.especie))}">
+              <span class="occ-cond__esp">${escapeHtml(m.especie)}${tox ? ` <small>${escapeHtml(tox)}</small>` : ""}</span>
+              ${condChip(m.agora)}
+              ${r1 ? `<span class="occ-cond__seta" aria-hidden="true">→</span>${condChip(r1)}` : ""}
+            </a>
+          </li>`;
+      })
+      .join("");
   }
 
   // ------------------------------------------------------------------
@@ -667,49 +974,11 @@
   // Algamar (environmental_factors) quando ela mandar, senão "—". Se a
   // Open-Meteo falhar, a temperatura cai para o valor da API do Algamar.
   // ------------------------------------------------------------------
-  const ENV_CACHE_MS = 15 * 60 * 1000;
-  const envCache = new Map(); // "lat,lon" -> { at, data }
   let envSeq = 0;
 
   const COMPASS = ["N", "NE", "L", "SE", "S", "SO", "O", "NO"];
   function compass(deg) {
     return typeof deg === "number" ? COMPASS[Math.round(deg / 45) % 8] : "";
-  }
-
-  async function fetchPointEnv(lat, lon) {
-    const key = `${lat.toFixed(2)},${lon.toFixed(2)}`;
-    const hit = envCache.get(key);
-    if (hit && Date.now() - hit.at < ENV_CACHE_MS) return hit.data;
-
-    const common = { latitude: lat, longitude: lon, timezone: "America/Sao_Paulo" };
-    const [marine, forecast] = await Promise.allSettled([
-      fetchJson(WEATHER_MARINE_URL, {
-        ...common,
-        cell_selection: "sea",
-        current: "sea_surface_temperature,ocean_current_velocity,ocean_current_direction",
-      }),
-      fetchJson(WEATHER_FORECAST_URL, {
-        ...common,
-        current: "wind_speed_10m,wind_direction_10m",
-        hourly: "precipitation",
-        past_hours: 24,
-        forecast_hours: 0,
-      }),
-    ]);
-    const m = marine.status === "fulfilled" ? marine.value.current || {} : {};
-    const f = forecast.status === "fulfilled" ? forecast.value : {};
-    const rain = f.hourly?.precipitation?.filter((v) => typeof v === "number");
-    const data = {
-      sst: m.sea_surface_temperature,
-      currentSpeed: m.ocean_current_velocity,
-      currentDir: m.ocean_current_direction,
-      windSpeed: f.current?.wind_speed_10m,
-      windDir: f.current?.wind_direction_10m,
-      rain24h: rain && rain.length ? rain.reduce((a, b) => a + b, 0) : undefined,
-      ok: marine.status === "fulfilled" || forecast.status === "fulfilled",
-    };
-    if (data.ok) envCache.set(key, { at: Date.now(), data });
-    return data;
   }
 
   function setEnv(id, text, title) {
@@ -733,7 +1002,7 @@
     }
 
     ["occTemp", "occWind", "occCurrent", "occPrecip"].forEach((id) => setEnv(id, "…", "Carregando"));
-    const env = await fetchPointEnv(p.latitude, p.longitude);
+    const env = await fetchNow(placeFromPoint(p));
     if (seq !== envSeq) return;
 
     const src = "Open-Meteo · agora";
@@ -747,38 +1016,59 @@
       typeof env.currentSpeed === "number" ? `${fmtNumber(env.currentSpeed, 1)} km/h ${compass(env.currentDir)}`.trim() : "—",
       env.currentDir != null ? `Indo para ${Math.round(env.currentDir)}° · ${src}` : src);
     setEnv("occPrecip",
-      typeof env.rain24h === "number" ? `${fmtNumber(env.rain24h, 1)} mm` : "—",
-      `Soma das últimas 24 h · ${src}`);
+      typeof env.rainToday === "number" ? `${fmtNumber(env.rainToday, 1)} mm` : "—",
+      `Soma do dia de hoje · ${src}`);
   }
 
   // Só os últimos HISTORY_MONTHS meses cabem no painel; a série inteira
   // fica na tela "Histórico de Ocorrências" (link "ver histórico completo").
   const HISTORY_MONTHS = 12;
 
-  function renderOccHistory() {
+  // Histórico das condições propícias do município do ponto: em cada mês,
+  // o maior índice entre as espécies tóxicas (altura da barra) e o nível dele.
+  const HIST_TIER = { propicio: "alto", parcial: "medio", desfavoravel: "baixo", sem: "baixo" };
+  let histSeq = 0;
+  let histMunicipio = "";
+
+  async function renderOccHistory(p) {
     const el = $("occHistoryChart");
-    const sorted = [...state.trends]
-      .sort((a, b) => a.year - b.year || a.month - b.month)
-      .slice(-HISTORY_MONTHS);
-    if (!sorted.length) {
-      el.innerHTML = `<p class="dash-empty">Sem histórico suficiente ainda.</p>`;
+    const C = window.CondicoesData;
+    const seq = ++histSeq;
+    let rows = [];
+    try {
+      const [cond, hist] = await Promise.all([C.load(""), C.historico({ meses: HISTORY_MONTHS })]);
+      if (seq !== histSeq) return;
+      const lista = C.doPonto(cond.data, p);
+      histMunicipio = lista.length ? lista[0].municipio : "";
+      rows = hist.data.filter((r) => r.municipio === histMunicipio);
+    } catch (err) {
+      if (seq !== histSeq) return;
+      histMunicipio = "";
+    }
+    if (!rows.length) {
+      el.innerHTML = `<p class="dash-empty">Sem histórico de condições para este local.</p>`;
       return;
     }
-    const max = Math.max(...sorted.map((t) => t.high_risk_points || 0), 1);
+    const byMonth = new Map();
+    rows.forEach((r) => {
+      const cur = byMonth.get(r.mes);
+      if (!cur || r.indice > cur.indice) byMonth.set(r.mes, r);
+    });
+    const sorted = [...byMonth.values()].sort((a, b) => a.mes.localeCompare(b.mes)).slice(-HISTORY_MONTHS);
     const bars = sorted
-      .map((t) => {
-        const h = Math.max(6, ((t.high_risk_points || 0) / max) * 100);
-        const tier = riskTierFromProbability(t.avg_probability);
-        const label = `${String(t.month).padStart(2, "0")}/${t.year}: ${t.high_risk_points ?? 0} área(s) de alto risco`;
-        return `<span class="occ-bar occ-bar--${tier}" style="height:${h}%" title="${escapeHtml(label)}"></span>`;
+      .map((r) => {
+        const n = C.nivelDe(r.nivel);
+        const h = Math.max(6, r.indice * 100);
+        const label = `${C.mesLabel(r.mes, true)}: ${n.label} para ${r.especie} (índice ${fmtNumber(r.indice, 2)})`;
+        return `<span class="occ-bar occ-bar--${HIST_TIER[n.key]}" style="height:${h}%" title="${escapeHtml(label)}"></span>`;
       })
       .join("");
     // Até 4 rótulos de data espalhados sob as barras (primeiro e último sempre).
     const n = sorted.length;
     const labelCount = Math.min(n, 4);
     const labels = Array.from({ length: labelCount }, (_, i) => {
-      const t = sorted[labelCount === 1 ? 0 : Math.round((i * (n - 1)) / (labelCount - 1))];
-      return `<span>${String(t.month).padStart(2, "0")}/${String(t.year).slice(-2)}</span>`;
+      const r = sorted[labelCount === 1 ? 0 : Math.round((i * (n - 1)) / (labelCount - 1))];
+      return `<span>${r.mes.slice(5)}/${r.mes.slice(2, 4)}</span>`;
     }).join("");
     el.innerHTML = `
       <div class="occ-bars">${bars}</div>
@@ -791,11 +1081,19 @@
   function renderPredictions() {
     const tbody = $("predictionsBody");
     if (!tbody) return; // página do mapa não tem a tabela
-    const sorted = [...state.data].sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0));
+    // Só os próximos meses (previsão): nada do mês atual nem de meses passados.
+    // Ordem: mês mais próximo primeiro; dentro do mês, maior probabilidade.
+    const now = new Date();
+    const nowIdx = now.getFullYear() * 12 + now.getMonth();
+    const idx = (p) => (p.year && p.month ? p.year * 12 + (p.month - 1) : null);
+    const sorted = state.data
+      .filter((p) => idx(p) != null && idx(p) > nowIdx)
+      .sort((a, b) => idx(a) - idx(b) || (b.probability ?? 0) - (a.probability ?? 0));
     const rows = state.showAllPredictions ? sorted : sorted.slice(0, 5);
+    $("togglePredictions").hidden = sorted.length <= 5;
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="4" class="dash-empty">Sem dados.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" class="dash-empty">Sem previsões para os próximos meses.</td></tr>`;
       return;
     }
 
@@ -811,7 +1109,7 @@
             ${riskLabel(p.risk_level)}
           </span>
         </td>
-        <td>${escapeHtml(periodLabel(p))}</td>
+        <td>${escapeHtml(`${MONTH_NAMES[p.month - 1].slice(0, 3)}/${String(p.year).slice(-2)}`)}</td>
       </tr>`
       )
       .join("");
@@ -828,7 +1126,7 @@
   const ENV_TABS = {
     agua: [
       { key: "sst", label: "Temp. da água", color: "var(--dash-blue)", unit: "°C", dec: 1 },
-      { key: "current", label: "Corrente", color: "var(--dash-mint)", unit: " km/h", dec: 1 },
+      { key: "current", now: "currentSpeed", label: "Corrente", color: "var(--dash-mint)", unit: " km/h", dec: 1 },
       { key: "waves", label: "Ondas (máx.)", color: "#5fc9be", unit: " m", dec: 1 },
     ],
     ar: [
@@ -837,7 +1135,7 @@
       { key: "clouds", label: "Nebulosidade", color: "#b8c7cc", unit: "%", dec: 0 },
     ],
     ventos: [
-      { key: "wind", label: "Vento médio", color: "var(--dash-green)", unit: " km/h", dec: 0 },
+      { key: "wind", now: "windSpeed", label: "Vento (média diária)", color: "var(--dash-green)", unit: " km/h", dec: 0 },
       { key: "windMax", label: "Rajada máx.", color: "var(--dash-yellow)", unit: " km/h", dec: 0 },
     ],
     precipitacao: [
@@ -887,14 +1185,17 @@
     });
 
     const seq = ++envTabSeq;
-    let env;
+    const place = currentPlace();
+    let env, now;
     try {
-      env = await window.EnvData.load({
-        region: state.filters.region,
-        place: selectedPlace,
-        pastDays: ENV_PAST_DAYS,
-        forecastDays: ENV_NEXT_DAYS + 1,
-      });
+      [env, now] = await Promise.all([
+        window.EnvData.load({
+          place,
+          pastDays: ENV_PAST_DAYS,
+          forecastDays: ENV_NEXT_DAYS + 1,
+        }),
+        fetchNow(place),
+      ]);
     } catch (err) {
       if (seq === envTabSeq) el.innerHTML = `<p class="dash-empty">Não foi possível consultar a Open-Meteo.</p>`;
       return;
@@ -911,9 +1212,14 @@
         if (!vals.some((v) => v != null) || env.todayIdx < 0 || env.todayIdx > last) return "";
         const today = vals[env.todayIdx];
         const next = vals.slice(env.todayIdx + 1).filter((v) => v != null);
+        // Vento e corrente: o mesmo valor "agora" do card do topo (o gráfico
+        // continua sendo a média de cada dia).
+        const nowVal = s.now ? now[s.now] : null;
         const head = s.bars
           ? `próx. ${next.length} dias: ${fmtNumber(next.reduce((a, b) => a + b, 0), s.dec)}${s.unit}`
-          : `hoje ${today != null ? fmtNumber(today, s.dec) + s.unit : "—"}`;
+          : typeof nowVal === "number"
+            ? `agora ${fmtNumber(nowVal, s.dec)}${s.unit}`
+            : `hoje ${today != null ? fmtNumber(today, s.dec) + s.unit : "—"}`;
         return `
         <div class="trend-chart">
           <div class="trend-chart__head">
@@ -933,58 +1239,137 @@
   }
 
   // ------------------------------------------------------------------
-  // Alertas — derivados dos pontos de maior probabilidade/risco
+  // Alertas — de Condições Propícias (mesma fonte do sino e da Central de
+  // alertas): município × espécie tóxica propício ou parcialmente propício
+  // no mês mostrado, do maior índice para o menor. Respeita a região.
   // ------------------------------------------------------------------
   function renderAlerts() {
     const list = $("alertsList");
     if (!list) return; // página do mapa não tem a lista
-    const sorted = [...state.data].sort((a, b) => (b.probability ?? 0) - (a.probability ?? 0));
-    const rows = state.showAllAlerts ? sorted : sorted.slice(0, 5);
+    const C = window.CondicoesData;
+    if (!state.cond) {
+      list.innerHTML = `<li class="dash-empty">Carregando...</li>`;
+      return;
+    }
+    const ym = selectedYm();
+    const rows = condRegiao(state.cond.data)
+      .map((m) => ({ m, r: condDoMes(m, ym) }))
+      .filter(({ r }) => r && C.nivelDe(r.nivel).ordem >= 1)
+      .sort((a, b) => C.nivelDe(b.r.nivel).ordem - C.nivelDe(a.r.nivel).ordem || b.r.indice - a.r.indice)
+      .slice(0, 5);
 
     if (!rows.length) {
-      list.innerHTML = `<li class="dash-empty">Sem alertas.</li>`;
-      $("toggleAlerts").textContent = "Ver todos";
+      list.innerHTML = `<li class="dash-empty">${state.condErro ? "Não foi possível carregar as condições propícias." : `Sem alertas para ${C.mesLabel(ym)}.`}</li>`;
       return;
     }
 
-    const icon = { muito_alto: "warning", alto: "warning", medio: "warning", baixo: "eco" };
-    const text = {
-      muito_alto: (p) => `Risco muito alto — ${p.region}`,
-      alto: (p) => `Risco alto — ${p.region}`,
-      medio: (p) => `Risco moderado — ${p.region}`,
-      baixo: (p) => `Risco baixo — ${p.region}`,
-    };
-
     list.innerHTML = rows
-      .map((p) => {
-        const key = riskKey(p.risk_level);
+      .map(({ m, r }) => {
+        const n = C.nivelDe(r.nivel);
+        const tox = C.siglaToxina(m.toxina);
         return `
         <li class="alert-item">
-          <span class="alert-item__icon alert-item__icon--${key}">
-            <span class="material-symbols-outlined" aria-hidden="true">${icon[key]}</span>
+          <span class="alert-item__icon alert-item__icon--${n.key}">
+            <span class="material-symbols-outlined" aria-hidden="true">warning</span>
           </span>
           <div>
-            <p class="alert-item__text">${escapeHtml(text[key](p))}</p>
-            <p class="alert-item__date">${escapeHtml(periodLabel(p))}</p>
+            <p class="alert-item__text"><a href="${escapeHtml(C.url(m.municipio, m.especie))}">${escapeHtml(`${m.municipio} — ${m.especie}${tox ? ` (${tox})` : ""}`)}</a></p>
+            <p class="alert-item__date">${escapeHtml(`${n.label} · ${C.mesLabel(r.mes, true)}${r.tipo === "previsto" ? " (previsto)" : ""} · índice ${fmtNumber(r.indice, 2)}`)}</p>
           </div>
         </li>`;
       })
       .join("");
-
-    $("toggleAlerts").textContent = state.showAllAlerts ? "Ver menos" : "Ver todos";
   }
 
   // ------------------------------------------------------------------
   // Filtros / mês
   // ------------------------------------------------------------------
+  // Mês atual (opção vazia) + os MONTHS_AHEAD seguintes.
   function populateMonthFilter() {
     const select = $("filterMonth");
-    MONTH_NAMES.forEach((name, i) => {
+    select.innerHTML = "";
+    for (let i = 0; i <= MONTHS_AHEAD; i++) {
+      const idx = NOW_IDX + i;
       const opt = document.createElement("option");
-      opt.value = String(i + 1);
-      opt.textContent = name;
+      opt.value = i === 0 ? "" : ymOf(idx);
+      opt.textContent = i === 0 ? `${monthLabel(idx)} (atual)` : monthLabel(idx);
       select.appendChild(opt);
+    }
+  }
+
+  // Troca o mês mostrado sem consultar a API de novo (o mês é filtrado
+  // aqui): mapa, cards, alertas e painel acompanham. "" = mês atual.
+  function setMonth(ym) {
+    const value = !ym || idxOfYm(ym) === NOW_IDX ? "" : ym;
+    state.filters.month = value;
+    $("filterMonth").value = value;
+    state.mapData = monthData(state.data);
+    renderSummary();
+    renderMarkers();
+    renderAlerts();
+    renderTimeline();
+  }
+
+  // Linha do tempo sobre o mapa (só na página do mapa): um botão por mês
+  // e um "play" que percorre os meses sozinho.
+  let playTimer = null;
+  const PLAY_MS = 1800;
+
+  function renderTimeline() {
+    const el = $("mapTimeline");
+    if (!el) return;
+    const sel = idxOfYm(selectedYm());
+    el.querySelectorAll("[data-ym]").forEach((b) => {
+      const on = idxOfYm(b.dataset.ym) === sel;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-pressed", String(on));
     });
+  }
+
+  function buildTimeline() {
+    const el = $("mapTimeline");
+    if (!el) return;
+    const meses = Array.from({ length: MONTHS_AHEAD + 1 }, (_, i) => NOW_IDX + i);
+    el.innerHTML =
+      `<button type="button" class="mt-play" id="mapPlay" aria-label="Animar os meses" title="Animar os meses">
+        <span class="material-symbols-outlined" aria-hidden="true">play_arrow</span>
+      </button>` +
+      meses
+        .map(
+          (idx, i) => `<button type="button" class="mt-mes" data-ym="${ymOf(idx)}" aria-pressed="false">
+            <strong>${MONTH_NAMES[idx % 12].slice(0, 3)}/${String(Math.floor(idx / 12)).slice(-2)}</strong>
+            <small>${i === 0 ? "agora" : `+${i} ${i === 1 ? "mês" : "meses"}`}</small>
+          </button>`
+        )
+        .join("");
+    el.querySelectorAll("[data-ym]").forEach((b) =>
+      b.addEventListener("click", () => {
+        stopPlay();
+        setMonth(b.dataset.ym);
+      })
+    );
+    $("mapPlay").addEventListener("click", () => (playTimer ? stopPlay() : startPlay()));
+    renderTimeline();
+  }
+
+  function startPlay() {
+    const step = () => {
+      const next = idxOfYm(selectedYm()) + 1;
+      setMonth(ymOf(next > NOW_IDX + MONTHS_AHEAD ? NOW_IDX : next));
+    };
+    step();
+    playTimer = setInterval(step, PLAY_MS);
+    $("mapPlay").classList.add("is-playing");
+    $("mapPlay").querySelector(".material-symbols-outlined").textContent = "pause";
+    $("mapPlay").setAttribute("aria-label", "Pausar");
+  }
+  function stopPlay() {
+    if (!playTimer) return;
+    clearInterval(playTimer);
+    playTimer = null;
+    $("mapPlay").classList.remove("is-playing");
+    $("mapPlay").querySelector(".material-symbols-outlined").textContent = "play_arrow";
+    $("mapPlay").setAttribute("aria-label", "Animar os meses");
   }
 
   // ------------------------------------------------------------------
@@ -1034,7 +1419,7 @@
     window.NotifMenu.init(() => {
       loadHealth();
       loadCoastalRisks();
-      loadWeather();
+      refreshNow();
     });
     $("mapRefresh").addEventListener("click", (e) => {
       const btn = e.currentTarget;
@@ -1057,6 +1442,48 @@
       state.filters = { region: "", risk_level: "", month: "" };
       loadCoastalRisks();
       loadWeather();
+    });
+
+    // "Colorir por": risco de floração (ML) × algas tóxicas (condições)
+    document.querySelectorAll("[data-color-by]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        if (state.colorBy === btn.dataset.colorBy) return;
+        state.colorBy = btn.dataset.colorBy;
+        applyColorMode();
+        renderMarkers();
+      })
+    );
+
+    // Zoom (só na página do mapa)
+    $("mapZoomIn")?.addEventListener("click", () => window.DashboardMap.zoomBy(1.6));
+    $("mapZoomOut")?.addEventListener("click", () => window.DashboardMap.zoomBy(1 / 1.6));
+    $("mapZoomReset")?.addEventListener("click", () => window.DashboardMap.resetView());
+
+    // Teclado na página do mapa: ← → percorrem os pontos, + − dão zoom,
+    // 0 volta ao litoral inteiro. Ignora quando o foco está num campo.
+    if (document.body.classList.contains("map-page")) {
+      document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, select, textarea")) return;
+        const acoes = {
+          ArrowLeft: () => $("occPrev").click(),
+          ArrowRight: () => $("occNext").click(),
+          "+": () => window.DashboardMap.zoomBy(1.6),
+          "=": () => window.DashboardMap.zoomBy(1.6),
+          "-": () => window.DashboardMap.zoomBy(1 / 1.6),
+          0: () => window.DashboardMap.resetView(),
+        };
+        if (!acoes[e.key]) return;
+        e.preventDefault();
+        acoes[e.key]();
+      });
+    }
+
+    // "Ver detalhes completos": as condições propícias do município do ponto.
+    $("occDetailsBtn")?.addEventListener("click", () => {
+      const p = occList[occIndex];
+      const C = window.CondicoesData;
+      const regs = p && state.cond ? C.doPonto(state.cond.data, p) : [];
+      window.location.href = C.url(regs[0] ? regs[0].municipio : p && p.region);
     });
 
     [
@@ -1083,7 +1510,9 @@
     });
 
     $("occHistoryLink").addEventListener("click", () => {
-      window.location.href = "historico-ocorrencias.html";
+      window.location.href = histMunicipio
+        ? `historico-ocorrencias.html?municipio=${encodeURIComponent(histMunicipio)}`
+        : "historico-ocorrencias.html";
     });
 
     // Painel de ocorrência: setas para percorrer os pontos visíveis
@@ -1112,10 +1541,6 @@
       state.showAllPredictions = !state.showAllPredictions;
       renderPredictions();
     });
-    $("toggleAlerts")?.addEventListener("click", () => {
-      state.showAllAlerts = !state.showAllAlerts;
-      renderAlerts();
-    });
   }
 
   // ------------------------------------------------------------------
@@ -1127,7 +1552,7 @@
     renderUser();
     populateMonthFilter();
     loadWeather();
-    setInterval(loadWeather, WEATHER_REFRESH_MS);
+    setInterval(refreshNow, WEATHER_REFRESH_MS);
     bindEvents();
 
     window.DashboardMap.init({
@@ -1139,10 +1564,17 @@
       labelsId: "mapLabels",
       hotspotsId: "mapHotspots",
       scaleBarId: "mapScaleBar",
-      onSelect: (id) => showOccByPointId(id),
+      onSelect: (id) => {
+        showOccByPointId(id);
+        focusActivePoint();
+      },
+      tooltip: pinTooltip,
     });
+    applyColorMode();
+    buildTimeline();
 
     loadHealth();
     loadCoastalRisks();
+    loadCondicoes();
   });
 })();

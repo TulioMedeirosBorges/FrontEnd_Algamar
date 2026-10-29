@@ -1,96 +1,105 @@
-// Tela "Histórico de Ocorrências". Tudo vem de GET /ml/coastal-risks (data[]).
-// Cada registro da API é uma região num mês (month/year) com risk_level e
-// probability — não existem, na API, tipo de alga, concentração, status nem
-// o dia exato. Por isso:
-//  - "ocorrência" = um registro região/mês já ocorrido (mês futuro é previsão
-//    e fica de fora);
-//  - o gráfico e o donut agrupam por nível de risco (no design, por espécie);
-//  - "Ativo" = registro do mês atual com risco alto ou médio; o resto é
-//    "Resolvida" (derivado só de month/year + risk_level).
+// Tela "Histórico de Ocorrências". Tudo vem do histórico de Condições
+// Propícias (GET /ml/condicoes-propicias/historico): o índice de condições da
+// literatura, mês a mês, por município e espécie tóxica. Por isso:
+//  - "ocorrência" = um município/espécie/mês em que o mar esteve propício ou
+//    parcialmente propício para a espécie (meses desfavoráveis ficam de fora);
+//  - o gráfico empilha por nível e o donut divide por espécie;
+//  - "Ativo" = ocorrência do mês mais recente com dado; o resto "Encerrada".
+// É índice de condições, NÃO floração confirmada nem probabilidade.
 (function () {
   const S = window.DashShell;
+  const C = window.CondicoesData;
   const $ = (id) => document.getElementById(id);
 
   const PAGE_SIZE = 6;
-  // Os 4 níveis do ML (AlgamarRisk, em api-client.js); "medio" = moderado.
-  const AR = window.AlgamarRisk;
-  const RISKS = {
-    muito_alto: { label: AR.LABEL.muito_alto, color: AR.COLOR.muito_alto },
-    alto: { label: AR.LABEL.alto, color: AR.COLOR.alto },
-    medio: { label: AR.LABEL.moderado, color: AR.COLOR.moderado },
-    baixo: { label: AR.LABEL.baixo, color: AR.COLOR.baixo },
+  // Níveis que contam como ocorrência (cores de js/condicoes-data.js).
+  const NIVEIS = {
+    propicio: C.NIVEIS["propício"],
+    parcial: C.NIVEIS["parcialmente propício"],
   };
-  // Ordem do empilhamento (de baixo para cima) e da legenda do donut.
-  const RISK_ORDER = ["muito_alto", "alto", "medio", "baixo"];
+  const NIVEL_ORDER = ["propicio", "parcial"];
+  const ESPECIE_CORES = ["#4da3ff", "#5fc9be", "#ff383c", "#b38cff", "#f5c518", "#00c05d"];
+  const MAX_MESES = 12;
 
   const now = new Date();
-  const nowIdx = now.getFullYear() * 12 + now.getMonth();
+  // Vindo do painel do mapa: ?municipio=Ubatuba já filtra a busca.
+  const params = new URLSearchParams(window.location.search);
 
   const state = {
     data: [],
-    search: "",
+    especies: [],
+    search: params.get("municipio") || "",
     // Filtros só valem quando o usuário clica em "Buscar" (como no design).
-    applied: { period: 12, region: "", status: "" },
+    applied: { period: 12, region: "", especie: "", status: "" },
     page: 1,
     rows: [], // linhas filtradas, já ordenadas (usadas pela tabela e pelo CSV)
+    lastMes: "",
   };
 
-  const periodIndex = (p) => (p.year && p.month ? p.year * 12 + (p.month - 1) : nowIdx);
+  const mesIdx = (ym) => {
+    const [a, m] = ym.split("-").map(Number);
+    return a * 12 + (m - 1);
+  };
   const monthShort = (idx) => S.MONTH_NAMES[idx % 12].slice(0, 3);
-  const periodLabel = (p) => `${monthShort(periodIndex(p))}/${Math.floor(periodIndex(p) / 12)}`;
-  const pct = (v) => `${Math.round(v * 100)}%`;
+  const periodLabel = (r) => C.mesLabel(r.mes, true);
+  const fmtIdx = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const nf = (n) => n.toLocaleString("pt-BR");
-
-  // Nível do ML (risk_level); sem ele, pela probabilidade com as faixas do ML.
-  function riskOf(p) {
-    const k = AR.of(p);
-    return k === "moderado" ? "medio" : k;
-  }
-  const statusOf = (p) =>
-    periodIndex(p) === nowIdx && riskOf(p) !== "baixo" ? "ativo" : "resolvida";
+  const nivelOf = (r) => C.nivelDe(r.nivel).key; // "propicio" | "parcial" | "desfavoravel"
+  const statusOf = (r) => (r.mes === state.lastMes ? "ativo" : "resolvida");
+  const especieLabel = (r) => `${r.especie}${r.toxina ? ` (${C.siglaToxina(r.toxina)})` : ""}`;
 
   // ------------------------------------------------------------------
   // Dados
   // ------------------------------------------------------------------
   async function load() {
     try {
-      const res = await window.AlgamarAPI.apiFetch("/ml/coastal-risks", {
-        params: { region: state.applied.region || undefined },
-      });
-      state.data = (res.data || []).map((p, i) => ({ ...p, _i: i }));
+      const res = await C.historico({ region: state.applied.region, meses: MAX_MESES, force: true });
+      state.data = res.data.filter((r) => NIVEIS[nivelOf(r)]).map((r, i) => ({ ...r, _i: i }));
+      state.especies = res.especies;
+      state.lastMes = res.meses.length ? res.meses[res.meses.length - 1] : "";
       S.hideApiWarning();
     } catch (err) {
       if (err.status !== 401) S.showApiWarning(err);
       state.data = [];
     }
-    S.setAlertBadge(state.data.filter((p) => ["alto", "muito_alto"].includes(riskOf(p))).length);
+    renderEspecies();
     state.page = 1;
     render();
     window.PageLoader.done();
   }
 
-  // Janela de meses: termina no último mês com registro (no máximo o mês
-  // atual) e volta "período" meses. Meses futuros são previsão, não histórico.
+  function renderEspecies() {
+    const sel = $("hsAlga");
+    sel.disabled = !state.especies.length;
+    sel.title = "";
+    sel.innerHTML =
+      `<option value="">Todas</option>` +
+      state.especies
+        .map((e) => `<option value="${S.escapeHtml(e)}"${e === state.applied.especie ? " selected" : ""}>${S.escapeHtml(e)}</option>`)
+        .join("");
+  }
+
+  // Janela de meses: termina no último mês com dado e volta "período" meses.
   function compute() {
-    const past = state.data.filter((p) => periodIndex(p) <= nowIdx);
-    const end = past.length ? past.reduce((m, p) => Math.max(m, periodIndex(p)), 0) : nowIdx;
+    const end = state.lastMes ? mesIdx(state.lastMes) : now.getFullYear() * 12 + now.getMonth();
     const start = end - state.applied.period + 1;
-    const term = state.search.toLowerCase();
-    const rows = past
-      .filter((p) => {
-        const idx = periodIndex(p);
+    const term = C.norm(state.search);
+    const rows = state.data
+      .filter((r) => {
+        const idx = mesIdx(r.mes);
         return (
           idx >= start &&
           idx <= end &&
-          (!term || (p.region || "").toLowerCase().includes(term)) &&
-          (!state.applied.status || statusOf(p) === state.applied.status)
+          (!term || C.norm(r.municipio).includes(term) || C.norm(r.especie).includes(term)) &&
+          (!state.applied.especie || r.especie === state.applied.especie) &&
+          (!state.applied.status || statusOf(r) === state.applied.status)
         );
       })
       .sort(
         (a, b) =>
-          periodIndex(b) - periodIndex(a) ||
-          (b.probability ?? 0) - (a.probability ?? 0) ||
-          String(a.region).localeCompare(String(b.region), "pt-BR")
+          b.mes.localeCompare(a.mes) ||
+          b.indice - a.indice ||
+          a.municipio.localeCompare(b.municipio, "pt-BR")
       );
     return { rows, start, end };
   }
@@ -109,14 +118,11 @@
 
   function renderKpis(rows) {
     $("hsTotal").textContent = nf(rows.length);
-    $("hsActive").textContent = nf(rows.filter((p) => statusOf(p) === "ativo").length);
+    $("hsActive").textContent = nf(rows.filter((r) => statusOf(r) === "ativo").length);
 
-    const top = rows.reduce(
-      (best, p) => (typeof p.probability === "number" && (!best || p.probability > best.probability) ? p : best),
-      null
-    );
-    $("hsMax").textContent = top ? pct(top.probability) : "—";
-    $("hsMaxHint").textContent = top ? `${top.region} (${periodLabel(top)})` : " ";
+    const top = rows.reduce((best, r) => (!best || r.indice > best.indice ? r : best), null);
+    $("hsMax").textContent = top ? fmtIdx(top.indice) : "—";
+    $("hsMaxHint").textContent = top ? `${top.municipio} · ${top.especie} (${periodLabel(top)})` : " ";
   }
 
   // Passo "redondo" para o eixo Y: 4 divisões de 1, 2, 4, 5, 8, 10, 16, 20...
@@ -133,10 +139,10 @@
       return;
     }
     const slots = [];
-    for (let idx = start; idx <= end; idx++) slots.push({ idx, muito_alto: 0, alto: 0, medio: 0, baixo: 0, total: 0 });
-    rows.forEach((p) => {
-      const slot = slots[periodIndex(p) - start];
-      slot[riskOf(p)]++;
+    for (let idx = start; idx <= end; idx++) slots.push({ idx, propicio: 0, parcial: 0, total: 0 });
+    rows.forEach((r) => {
+      const slot = slots[mesIdx(r.mes) - start];
+      slot[nivelOf(r)]++;
       slot.total++;
     });
 
@@ -147,11 +153,11 @@
 
     const cols = slots
       .map((s) => {
-        const tip = `${monthShort(s.idx)}/${Math.floor(s.idx / 12)} — ${RISK_ORDER.map(
-          (k) => `${RISKS[k].label}: ${s[k]}`
+        const tip = `${monthShort(s.idx)}/${Math.floor(s.idx / 12)} — ${NIVEL_ORDER.map(
+          (k) => `${NIVEIS[k].label}: ${s[k]}`
         ).join(", ")}`;
-        const segs = RISK_ORDER.filter((k) => s[k])
-          .map((k) => `<span style="flex:${s[k]} 1 0;background:${RISKS[k].color}"></span>`)
+        const segs = NIVEL_ORDER.filter((k) => s[k])
+          .map((k) => `<span style="flex:${s[k]} 1 0;background:${NIVEIS[k].color}"></span>`)
           .join("");
         return `<div class="hs-col" title="${S.escapeHtml(tip)}"><div class="hs-col__stack" style="height:${
           (s.total / max) * 100
@@ -169,20 +175,24 @@
       <div class="hs-chart__x">${labels}</div>`;
   }
 
+  // Donut por espécie tóxica.
   function renderDonut(rows) {
-    const counts = { muito_alto: 0, alto: 0, medio: 0, baixo: 0 };
-    rows.forEach((p) => counts[riskOf(p)]++);
+    const especies = state.especies.length ? state.especies : [...new Set(rows.map((r) => r.especie))];
+    const color = (e) => ESPECIE_CORES[especies.indexOf(e) % ESPECIE_CORES.length];
+    const counts = Object.fromEntries(especies.map((e) => [e, 0]));
+    rows.forEach((r) => (counts[r.especie] = (counts[r.especie] || 0) + 1));
     const total = rows.length;
 
     const R = 70;
-    const C = 2 * Math.PI * R;
+    const CIRC = 2 * Math.PI * R;
     let acc = 0;
     $("hsDonutSegs").innerHTML = total
-      ? RISK_ORDER.filter((k) => counts[k])
-          .map((k) => {
-            const len = (counts[k] / total) * C;
-            const seg = `<circle cx="100" cy="100" r="${R}" fill="none" stroke="${RISKS[k].color}"
-              stroke-width="44" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}"></circle>`;
+      ? especies
+          .filter((e) => counts[e])
+          .map((e) => {
+            const len = (counts[e] / total) * CIRC;
+            const seg = `<circle cx="100" cy="100" r="${R}" fill="none" stroke="${color(e)}"
+              stroke-width="44" stroke-dasharray="${len} ${CIRC - len}" stroke-dashoffset="${-acc}"></circle>`;
             acc += len;
             return seg;
           })
@@ -190,14 +200,16 @@
       : `<circle cx="100" cy="100" r="${R}" fill="none" stroke="#115266" stroke-width="44"></circle>`;
 
     $("hsDonutTotal").textContent = nf(total);
-    $("hsDonutLegend").innerHTML = RISK_ORDER.map(
-      (k) => `
+    $("hsDonutLegend").innerHTML = especies
+      .map(
+        (e) => `
       <li>
-        <span class="hs-legend__dot" style="background:${RISKS[k].color}"></span>
-        <span class="hs-legend__name">${RISKS[k].label}</span>
-        <span class="hs-legend__pct">${total ? String(Math.round((counts[k] / total) * 100)).padStart(2, "0") : "00"}%</span>
+        <span class="hs-legend__dot" style="background:${color(e)}"></span>
+        <span class="hs-legend__name">${S.escapeHtml(e)}</span>
+        <span class="hs-legend__pct">${total ? String(Math.round(((counts[e] || 0) / total) * 100)).padStart(2, "0") : "00"}%</span>
       </li>`
-    ).join("");
+      )
+      .join("");
   }
 
   function statusHtml(p) {
@@ -206,7 +218,7 @@
     }
     return `<span class="hs-status hs-status--resolvida">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"></circle>
-      <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#0a2c37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Resolvida</span>`;
+      <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#0a2c37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Encerrada</span>`;
   }
 
   function renderTable() {
@@ -219,16 +231,16 @@
     } else {
       body.innerHTML = state.rows
         .slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE)
-        .map((p) => {
-          const r = RISKS[riskOf(p)];
+        .map((r) => {
+          const n = NIVEIS[nivelOf(r)];
           return `
           <tr>
-            <td>${S.escapeHtml(periodLabel(p))}</td>
-            <td>${S.escapeHtml(p.region)}</td>
-            <td>—</td>
-            <td>${typeof p.probability === "number" ? pct(p.probability) : "—"}</td>
-            <td><span class="fc-risk" style="color:${r.color}"><span class="material-symbols-outlined" aria-hidden="true">warning</span>${r.label}</span></td>
-            <td>${statusHtml(p)}</td>
+            <td>${S.escapeHtml(periodLabel(r))}</td>
+            <td>${S.escapeHtml(r.municipio)}</td>
+            <td>${S.escapeHtml(especieLabel(r))}</td>
+            <td>${fmtIdx(r.indice)}</td>
+            <td><span class="fc-risk" style="color:${n.color}"><span class="material-symbols-outlined" aria-hidden="true">warning</span>${n.label}</span></td>
+            <td>${statusHtml(r)}</td>
           </tr>`;
         })
         .join("");
@@ -267,15 +279,15 @@
     return `"${s.replace(/"/g, '""')}"`;
   }
   function exportCsv() {
-    const head = ["Período", "Local", "Tipo de alga", "Probabilidade", "Nível de risco", "Status"];
-    const lines = state.rows.map((p) =>
+    const head = ["Período", "Local", "Tipo de alga", "Índice de condições", "Nível", "Status"];
+    const lines = state.rows.map((r) =>
       [
-        periodLabel(p),
-        p.region,
-        "—",
-        typeof p.probability === "number" ? pct(p.probability) : "—",
-        RISKS[riskOf(p)].label,
-        statusOf(p) === "ativo" ? "Ativo" : "Resolvida",
+        periodLabel(r),
+        r.municipio,
+        especieLabel(r),
+        fmtIdx(r.indice),
+        NIVEIS[nivelOf(r)].label,
+        statusOf(r) === "ativo" ? "Ativo" : "Encerrada",
       ]
         .map(csvCell)
         .join(";")
@@ -301,6 +313,7 @@
       state.applied = {
         period: Number($("hsPeriod").value),
         region: $("hsRegion").value,
+        especie: $("hsAlga").value,
         status: $("hsStatus").value,
       };
       state.page = 1;
@@ -323,6 +336,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     if (!S.init(load)) return;
+    if (state.search) $("dashSearch").value = state.search;
     bindEvents();
     load();
   });

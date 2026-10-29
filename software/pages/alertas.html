@@ -15,12 +15,12 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/page-loader.js"></script>
     <script src="../js/user-prefs.js"></script>
-    <script src="../js/notifications.js"></script>
+    <script src="../js/notifications.js?v=2"></script>
   </head>
   <body class="dash-body alerts-page">
     <div class="dash">
@@ -82,6 +82,21 @@
               />
             </span>
             Previsões
+          </a>
+          <a href="condicoes-propicias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/eco-1.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/eco_Green.svg"
+                alt=""
+              />
+            </span>
+            Condições Propícias
           </a>
           <a href="historico-ocorrencias.html" class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
@@ -245,8 +260,8 @@
         <section class="al-head">
           <h1 class="fc-title">Central de alertas</h1>
           <p class="fc-sub">
-            Acompanhamento em tempo real de situações de risco e ocorrências no
-            litoral de São Paulo
+            Municípios do litoral de São Paulo onde o mar está propício para
+            espécies de algas tóxicas — agora e nos próximos 3 meses
           </p>
         </section>
 
@@ -257,8 +272,8 @@
           <button type="button" class="al-tab" data-tab="ativo" aria-pressed="false">
             <span>Ativos (<span id="alTabAtivo">0</span>)</span>
           </button>
-          <button type="button" class="al-tab" data-tab="resolvido" aria-pressed="false">
-            <span>Resolvidos (<span id="alTabResolvido">0</span>)</span>
+          <button type="button" class="al-tab" data-tab="previsto" aria-pressed="false">
+            <span>Previstos (<span id="alTabPrevisto">0</span>)</span>
           </button>
 
           <div class="al-filter">
@@ -283,11 +298,17 @@
                 </select>
               </label>
               <label class="lp-field">
-                <span>Período</span>
+                <span>Tipo de alga</span>
+                <select id="alEspecie">
+                  <option value="">Todas</option>
+                </select>
+              </label>
+              <label class="lp-field">
+                <span>Horizonte</span>
                 <select id="alWindow">
-                  <option value="1">Mês atual</option>
-                  <option value="3" selected>Últimos 3 meses</option>
-                  <option value="6">Últimos 6 meses</option>
+                  <option value="0">Só o mês atual</option>
+                  <option value="1">Até o próximo mês</option>
+                  <option value="3" selected>Próximos 3 meses</option>
                 </select>
               </label>
               <div class="lp-actions">
@@ -298,31 +319,31 @@
           </div>
         </section>
 
-        <section class="al-sev" aria-label="Alertas atuais por nível">
-          <button type="button" class="al-sevcard al-sev--muito_alto" data-sev="muito_alto" aria-pressed="false">
+        <section class="al-sev" aria-label="Situação do mês atual">
+          <button type="button" class="al-sevcard al-sev--propicio" data-sev="propicio" aria-pressed="false">
             <span class="material-symbols-outlined al-sevcard__icon" aria-hidden="true">warning</span>
-            <span class="al-sevcard__label">Muito alto</span>
-            <strong class="al-sevcard__count" id="alCount_muito_alto">0</strong>
-            <span class="al-sevcard__hint">Alertas atuais</span>
+            <span class="al-sevcard__label">Propício</span>
+            <strong class="al-sevcard__count" id="alCount_propicio">0</strong>
+            <span class="al-sevcard__hint">Alertas de agora</span>
           </button>
-          <button type="button" class="al-sevcard al-sev--alto" data-sev="alto" aria-pressed="false">
+          <button type="button" class="al-sevcard al-sev--parcial" data-sev="parcial" aria-pressed="false">
             <span class="material-symbols-outlined al-sevcard__icon" aria-hidden="true">warning</span>
-            <span class="al-sevcard__label">Alto</span>
-            <strong class="al-sevcard__count" id="alCount_alto">0</strong>
-            <span class="al-sevcard__hint">Alertas atuais</span>
+            <span class="al-sevcard__label">Parcial</span>
+            <strong class="al-sevcard__count" id="alCount_parcial">0</strong>
+            <span class="al-sevcard__hint">Alertas de agora</span>
           </button>
-          <button type="button" class="al-sevcard al-sev--moderado" data-sev="moderado" aria-pressed="false">
-            <span class="material-symbols-outlined al-sevcard__icon" aria-hidden="true">warning</span>
-            <span class="al-sevcard__label">Moderado</span>
-            <strong class="al-sevcard__count" id="alCount_moderado">0</strong>
-            <span class="al-sevcard__hint">Alertas atuais</span>
+          <button type="button" class="al-sevcard al-sev--previsto" data-sev="previsto" aria-pressed="false">
+            <span class="material-symbols-outlined al-sevcard__icon" aria-hidden="true">schedule</span>
+            <span class="al-sevcard__label">Previsões</span>
+            <strong class="al-sevcard__count" id="alCount_previsto">0</strong>
+            <span class="al-sevcard__hint">Propício nos próximos meses</span>
           </button>
-          <button type="button" class="al-sevcard al-sev--baixo" data-sev="baixo" aria-pressed="false">
-            <span class="material-symbols-outlined al-sevcard__icon" aria-hidden="true">warning</span>
-            <span class="al-sevcard__label">Baixo</span>
-            <strong class="al-sevcard__count" id="alCount_baixo">0</strong>
-            <span class="al-sevcard__hint">Alertas atuais</span>
-          </button>
+          <div class="al-sevcard al-sev--desfavoravel" title="Município × espécie sem condições propícias agora">
+            <span class="material-symbols-outlined al-sevcard__icon" aria-hidden="true">check_circle</span>
+            <span class="al-sevcard__label">Desfavorável</span>
+            <strong class="al-sevcard__count" id="alCount_desfavoravel">0</strong>
+            <span class="al-sevcard__hint">Sem alerta agora</span>
+          </div>
         </section>
 
         <div class="al-rule"></div>
@@ -331,11 +352,12 @@
           <div class="al-col">
             <header class="al-col__head">
               <h2 class="hs-card__title al-title">Alertas de aviso</h2>
-              <button type="button" class="al-more" id="alMore">Ver todas</button>
+              <span class="al-range" id="alRange"></span>
             </header>
             <ul class="al-list" id="alList">
               <li class="dash-empty">Carregando...</li>
             </ul>
+            <nav class="al-pager" id="alPager" aria-label="Páginas de alertas" hidden></nav>
           </div>
 
           <aside class="fc-card al-notes" aria-label="Últimas notificações">
@@ -348,7 +370,8 @@
       </main>
     </div>
 
-    <script src="../js/dash-shell.js"></script>
-    <script src="../js/alertas.js" defer></script>
+    <script src="../js/dash-shell.js?v=2"></script>
+    <script src="../js/condicoes-data.js?v=3"></script>
+    <script src="../js/alertas.js?v=3" defer></script>
   </body>
 </html>

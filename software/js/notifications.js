@@ -1,20 +1,20 @@
-// Menu do sino do topo: prévia das notificações mais recentes.
-// Usa a mesma regra da Central de alertas (js/alertas.js): cada registro
-// região/mês já ocorrido de GET /ml/coastal-risks vira uma notificação,
-// com a severidade tirada da probabilidade (ou do risk_level).
+// Menu do sino do topo: prévia das notificações.
+// Vem de GET /ml/condicoes-propicias (tela "Condições Propícias"): cada
+// município × espécie tóxica com o mar propício ou parcialmente propício
+// AGORA vira uma notificação, e também os meses seguintes previstos como
+// propícios. Só mês atual em diante — nada de meses que já passaram.
+// O contador do sino é o número de notificações de AGORA (sem as previsões).
 window.NotifMenu = (function () {
   var MAX = 5;
   var MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  // Mesmas cores dos níveis em js/condicoes-data.js (que não carrega em todas as telas).
   var SEV = {
-    muito_alto: { color: "#ff383c", title: "Floração identificada em " },
-    alto: { color: "#f08c28", title: "Risco de floração em " },
-    moderado: { color: "#f5c518", title: "Condições favoráveis à floração em " },
-    baixo: { color: "#00c05d", title: "Condições normalizadas em " },
+    "propício": { color: "#f08c28", rank: 2, title: "Condições propícias para " },
+    "parcialmente propício": { color: "#f5c518", rank: 1, title: "Condições parcialmente propícias para " },
   };
-  var RANK = { muito_alto: 4, alto: 3, moderado: 2, baixo: 1 };
 
   var now = new Date();
-  var nowIdx = now.getFullYear() * 12 + now.getMonth();
+  var nowYm = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
 
   function escapeHtml(str) {
     return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
@@ -22,21 +22,47 @@ window.NotifMenu = (function () {
     });
   }
 
-  function periodIndex(p) {
-    return p.year && p.month ? p.year * 12 + (p.month - 1) : nowIdx;
+  function mesCurto(ym) {
+    var parts = String(ym || "").split("-");
+    return parts.length === 2 ? MONTHS[Number(parts[1]) - 1] + "/" + parts[0].slice(-2) : "—";
   }
 
-  function severityOf(p) {
-    if (typeof p.probability === "number") {
-      return p.probability >= 0.85 ? "muito_alto" : p.probability >= 0.6 ? "alto" : p.probability >= 0.35 ? "moderado" : "baixo";
-    }
-    var norm = String(p.risk_level || "")
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "")
-      .toUpperCase();
-    if (norm.indexOf("ALT") === 0) return "alto";
-    if (norm.indexOf("MED") === 0) return "moderado";
-    return "baixo";
+  // "diarreica (DSP)" -> "DSP"
+  function sigla(t) {
+    return String(t || "").replace(/.*\((.*)\).*/, "$1");
+  }
+
+  // Lista completa (já ordenada) a partir da resposta da API.
+  function itemsFrom(res) {
+    var items = [];
+    (res.data || []).forEach(function (m) {
+      var regs = [m.agora].concat(m.proximos || []);
+      regs.forEach(function (r, i) {
+        if (!r || !r.mes || r.mes < nowYm || !SEV[r.nivel]) return;
+        // Agora: propício ou parcial. Próximos meses: só os previstos como propícios.
+        if (i > 0 && r.nivel !== "propício") return;
+        items.push({ m: m, r: r, previsto: i > 0 });
+      });
+    });
+    return items.sort(function (a, b) {
+      return (
+        a.r.mes.localeCompare(b.r.mes) ||
+        SEV[b.r.nivel].rank - SEV[a.r.nivel].rank ||
+        (b.r.indice || 0) - (a.r.indice || 0)
+      );
+    });
+  }
+
+  var count = null; // notificações do mês atual (null = ainda não carregou)
+
+  function applyBadge() {
+    var badge = document.getElementById("alertBadge");
+    if (!badge) return;
+    var n = count || 0;
+    // Preferência "Alertas de risco de floração" (Configurações) desliga o contador.
+    if (window.UserPrefs && !window.UserPrefs.get("notifRisk")) n = 0;
+    badge.textContent = n > 99 ? "99+" : String(n);
+    badge.hidden = n <= 0;
   }
 
   var btn, panel, list, onRefresh;
@@ -75,51 +101,46 @@ window.NotifMenu = (function () {
 
   function render(items) {
     if (!items.length) {
-      list.innerHTML = '<li class="notif-menu__empty">Sem notificações.</li>';
+      list.innerHTML = '<li class="notif-menu__empty">Sem condições propícias para espécies tóxicas.</li>';
       return;
     }
     list.innerHTML = items
       .map(function (it) {
-        var p = it.p;
-        var region = p.region || "ponto monitorado";
+        var m = it.m, r = it.r;
+        var sev = SEV[r.nivel];
+        var href = "condicoes-propicias.html?" + new URLSearchParams({ municipio: m.municipio, especie: m.especie });
         return (
-          '<li class="notif-item" style="--sev:' + SEV[it.sev].color + '">' +
+          '<li class="notif-item" style="--sev:' + sev.color + ';cursor:pointer" data-href="' + escapeHtml(href) + '">' +
           '<span class="material-symbols-outlined notif-item__icon" aria-hidden="true">warning</span>' +
           "<div>" +
-          '<p class="notif-item__title">' + escapeHtml(SEV[it.sev].title + region) + "</p>" +
+          '<p class="notif-item__title">' + escapeHtml((it.previsto ? "Previsão: " : "") + sev.title + m.especie + " em " + m.municipio) + "</p>" +
           '<p class="notif-item__sub">' +
-          escapeHtml(p.region || "—") +
-          (typeof p.probability === "number" ? " · Probabilidade " + Math.round(p.probability * 100) + "%" : "") +
+          escapeHtml(
+            (m.macro_region || "—") +
+              (typeof r.indice === "number" ? " · Índice " + r.indice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "") +
+              (m.toxina ? " · " + sigla(m.toxina) : "")
+          ) +
           "</p></div>" +
-          '<time class="notif-item__time">' +
-          escapeHtml(MONTHS[it.idx % 12] + "/" + Math.floor(it.idx / 12)) +
-          "</time></li>"
+          '<time class="notif-item__time">' + escapeHtml(mesCurto(r.mes)) + "</time></li>"
         );
       })
       .join("");
   }
 
-  // Mais recentes primeiro; dentro do mesmo mês, os mais graves no topo.
+  function fetchItems() {
+    return window.AlgamarAPI.apiFetch("/ml/condicoes-propicias").then(function (res) {
+      var items = itemsFrom(res);
+      count = items.filter(function (it) { return !it.previsto; }).length;
+      applyBadge();
+      return items;
+    });
+  }
+
   function load() {
     list.innerHTML = '<li class="notif-menu__empty">Carregando...</li>';
-    return window.AlgamarAPI.apiFetch("/ml/coastal-risks").then(
-      function (res) {
-        var items = (res.data || [])
-          .map(function (p) {
-            return { p: p, idx: periodIndex(p), sev: severityOf(p) };
-          })
-          .filter(function (it) {
-            return it.idx <= nowIdx;
-          })
-          .sort(function (a, b) {
-            return (
-              b.idx - a.idx ||
-              RANK[b.sev] - RANK[a.sev] ||
-              (b.p.probability || 0) - (a.p.probability || 0)
-            );
-          })
-          .slice(0, MAX);
-        render(items);
+    return fetchItems().then(
+      function (items) {
+        render(items.slice(0, MAX));
       },
       function (err) {
         if (err && err.status === 401) return;
@@ -151,6 +172,13 @@ window.NotifMenu = (function () {
     btn.setAttribute("aria-haspopup", "dialog");
     btn.setAttribute("aria-expanded", "false");
     build();
+    // O contador aparece já ao abrir a tela, sem precisar clicar no sino.
+    fetchItems().catch(function () {});
+
+    list.addEventListener("click", function (e) {
+      var li = e.target.closest("li[data-href]");
+      if (li) window.location.href = li.dataset.href;
+    });
 
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
@@ -168,5 +196,5 @@ window.NotifMenu = (function () {
     });
   }
 
-  return { init: init };
+  return { init: init, applyBadge: applyBadge };
 })();

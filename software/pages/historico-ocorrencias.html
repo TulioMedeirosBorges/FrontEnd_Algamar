@@ -15,12 +15,12 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/page-loader.js"></script>
     <script src="../js/user-prefs.js"></script>
-    <script src="../js/notifications.js"></script>
+    <script src="../js/notifications.js?v=2"></script>
   </head>
   <body class="dash-body history-page">
     <div class="dash">
@@ -82,6 +82,21 @@
               />
             </span>
             Previsões
+          </a>
+          <a href="condicoes-propicias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/eco-1.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/eco_Green.svg"
+                alt=""
+              />
+            </span>
+            Condições Propícias
           </a>
           <a
             href="historico-ocorrencias.html"
@@ -269,8 +284,8 @@
           <label class="fc-field">
             <span class="fc-field__label">Tipo de alga</span>
             <span class="fc-select">
-              <select id="hsAlga" disabled title="A API ainda não informa o tipo de alga">
-                <option value="">Todos</option>
+              <select id="hsAlga">
+                <option value="">Todas</option>
               </select>
               <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
             </span>
@@ -281,7 +296,7 @@
               <select id="hsStatus">
                 <option value="" selected>Todos</option>
                 <option value="ativo">Ativo</option>
-                <option value="resolvida">Resolvida</option>
+                <option value="resolvida">Encerrada</option>
               </select>
               <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
             </span>
@@ -309,7 +324,7 @@
           <article class="hs-kpi">
             <img class="hs-kpi__pin" src="../assets/Icons/LocalBlue.svg" alt="" />
             <div>
-              <p class="hs-kpi__label">Maior probabilidade</p>
+              <p class="hs-kpi__label">Maior índice de condições</p>
               <p class="hs-kpi__value" id="hsMax">—</p>
               <p class="hs-kpi__hint hs-kpi__hint--dim" id="hsMaxHint">&nbsp;</p>
             </div>
@@ -320,15 +335,14 @@
           <article class="fc-card hs-card">
             <h2 class="hs-card__title">Ocorrências por mês</h2>
               <ul class="hs-inline-legend" aria-label="Legenda">
-                <li><span style="background: var(--dash-red)"></span>Alto</li>
-                <li><span style="background: var(--dash-yellow)"></span>Moderado</li>
-                <li><span style="background: var(--dash-green)"></span>Baixo</li>
+                <li><span style="background: #f08c28"></span>Propício</li>
+                <li><span style="background: #f5c518"></span>Parcialmente propício</li>
               </ul>
             <div class="hs-chart" id="hsBars"></div>
           </article>
 
           <article class="fc-card hs-card">
-            <h2 class="hs-card__title">Níveis de risco</h2>
+            <h2 class="hs-card__title">Por espécie tóxica</h2>
             <div class="hs-donutwrap">
               <div class="hs-donut">
                 <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -359,8 +373,8 @@
                   <th>Período</th>
                   <th>Local</th>
                   <th>Tipo de alga</th>
-                  <th>Probabilidade</th>
-                  <th>Nível de risco</th>
+                  <th>Índice</th>
+                  <th>Nível</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -374,7 +388,8 @@
       </main>
     </div>
 
-    <script src="../js/dash-shell.js"></script>
-    <script src="../js/historico.js" defer></script>
+    <script src="../js/dash-shell.js?v=2"></script>
+    <script src="../js/condicoes-data.js?v=3"></script>
+    <script src="../js/historico.js?v=2" defer></script>
   </body>
 </html>

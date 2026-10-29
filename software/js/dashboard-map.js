@@ -30,16 +30,16 @@ window.DashboardMap = (function () {
     ["Ubatuba", 2340.7, 113.0],
   ];
 
-  // Categoria do ponto (camadas do painel "Camadas de mapa"): Pouca
-  // indicação / Florações identificadas / Risco de floração — ver
+  // Categoria do ponto (camadas do painel "Camadas de mapa"): risco baixo /
+  // alto ou muito alto / moderado — ver
   // categoryOf(). A COR do pino e do halo não vem daqui: segue o nível do
   // ML (AlgamarRisk em api-client.js), igual à legenda "Intensidade de
   // floração": baixo verde, moderado amarelo, alto laranja, muito alto
   // vermelho.
   var CAT_LABEL = {
-    baixa: "Pouca indicação",
-    identificada: "Florações identificadas",
-    risco: "Risco de floração",
+    baixa: "Risco baixo",
+    identificada: "Risco alto ou muito alto",
+    risco: "Risco moderado",
   };
 
   var stage, canvas, ov, hs, boundarySvg, labelsLayer, hotspotsLayer, scaleBarEl, scaleLabelsEl;
@@ -52,6 +52,10 @@ window.DashboardMap = (function () {
   // de probabilidade). Sem eles, tudo continua como antes.
   var pinColorFn = null;
   var pinLabelFn = null;
+  // Opcional: tooltipFn(point) => HTML do cartão que aparece ao passar o
+  // mouse (ou focar com o teclado) num pino. Sem ele, fica só o title.
+  var tooltipFn = null;
+  var tipEl = null;
 
   // Zoom (roda do mouse / pinça) + arraste (pan). `zoom` multiplica a
   // escala "cover": 1 = o mapa inteiro cobrindo o palco (o mais afastado
@@ -140,6 +144,31 @@ window.DashboardMap = (function () {
     updateScaleBar();
   }
 
+  function animate() {
+    canvas.style.transition = "transform 0.3s ease";
+    setTimeout(function () {
+      canvas.style.transition = "";
+    }, 320);
+  }
+
+  // Botões +/− e duplo clique: zoom em torno do centro do palco (ou do
+  // ponto clicado), com uma transição curta.
+  function zoomBy(factor, cx, cy) {
+    if (!stage) return;
+    var s = stageSize();
+    animate();
+    zoomAt(factor, cx == null ? s.w / 2 : cx, cy == null ? s.h / 2 : cy);
+  }
+
+  // Volta à vista inicial (litoral inteiro).
+  function resetView() {
+    if (!stage) return;
+    focusPt = null;
+    zoom = ZOOM;
+    animate();
+    fit();
+  }
+
   function stagePoint(clientX, clientY) {
     var rect = stage.getBoundingClientRect();
     return [clientX - rect.left, clientY - rect.top];
@@ -152,6 +181,7 @@ window.DashboardMap = (function () {
   }
 
   function dragStart(x, y) {
+    hideTip();
     dragging = true;
     dragMoved = false;
     dragStartX = x;
@@ -233,10 +263,16 @@ window.DashboardMap = (function () {
       dragEnd();
     });
 
+    stage.addEventListener("dblclick", function (e) {
+      var p = stagePoint(e.clientX, e.clientY);
+      zoomBy(e.shiftKey ? 1 / 1.8 : 1.8, p[0], p[1]);
+    });
+
     stage.addEventListener(
       "wheel",
       function (e) {
         e.preventDefault();
+        hideTip();
         var delta = e.deltaY * (e.deltaMode === 1 ? 16 : 1);
         var p = stagePoint(e.clientX, e.clientY);
         zoomAt(Math.exp(-delta * 0.0015), p[0], p[1]);
@@ -362,6 +398,33 @@ window.DashboardMap = (function () {
     return (Math.abs(h) % 4000) / 1000;
   }
 
+  // ---- Cartão de dica sobre o pino ----
+  function showTip(entry) {
+    if (!tooltipFn || !entry.point || dragging) return;
+    var host = stage.parentNode;
+    if (!tipEl) {
+      tipEl = document.createElement("div");
+      tipEl.className = "map-tip";
+      tipEl.setAttribute("role", "tooltip");
+      host.appendChild(tipEl);
+    }
+    tipEl.innerHTML = tooltipFn(entry.point);
+    tipEl.hidden = false;
+    var hr = host.getBoundingClientRect();
+    var mr = entry.marker.getBoundingClientRect();
+    var x = mr.left + mr.width / 2 - hr.left;
+    var top = mr.top - hr.top;
+    var w = tipEl.offsetWidth,
+      h = tipEl.offsetHeight;
+    // Acima do pino; se não couber, embaixo. Nunca sai pelas laterais.
+    var y = top - h - 12 >= 8 ? top - h - 12 : mr.bottom - hr.top + 12;
+    tipEl.style.left = Math.max(8, Math.min(hr.width - w - 8, x - w / 2)) + "px";
+    tipEl.style.top = y + "px";
+  }
+  function hideTip() {
+    if (tipEl) tipEl.hidden = true;
+  }
+
   // Pontos novos entram em cascata (um logo depois do outro); `enterIndex`
   // volta a zero a cada setPoints().
   var enterIndex = 0;
@@ -374,6 +437,7 @@ window.DashboardMap = (function () {
     var pinColor = pinColorFn ? pinColorFn(point) : window.AlgamarRisk.COLOR[level];
     var probability = typeof point.probability === "number" ? point.probability : 0.3;
     var blobColor = hexToRgb(window.AlgamarRisk.COLOR[level]);
+    var hadTitle = !tooltipFn;
     var radiusWorld = 28 + probability * 60;
 
     var entry = hotspotEls[point.id];
@@ -400,8 +464,22 @@ window.DashboardMap = (function () {
       marker.addEventListener("click", function (e) {
         e.stopPropagation();
         if (dragMoved) return; // clique disparado ao soltar um arraste — ignora
-        if (onSelectCb) onSelectCb(point.id, e.clientX, e.clientY);
+        if (onSelectCb) onSelectCb(entry.point.id, e.clientX, e.clientY);
       });
+      // Duplo clique no pino: aproxima nele (sem cair no dblclick do palco).
+      marker.addEventListener("dblclick", function (e) {
+        e.stopPropagation();
+        var p = entry.point;
+        zoomTo(p.latitude, p.longitude, Math.max(zoom * 1.8, 3));
+      });
+      marker.addEventListener("mouseenter", function () {
+        showTip(entry);
+      });
+      marker.addEventListener("focus", function () {
+        showTip(entry);
+      });
+      marker.addEventListener("mouseleave", hideTip);
+      marker.addEventListener("blur", hideTip);
       entry = { root: root, blob: blob, marker: marker, tag: tag };
       hotspotEls[point.id] = entry;
     }
@@ -413,8 +491,10 @@ window.DashboardMap = (function () {
     // o mês na tela de Previsões, a cor desliza em vez de pular.
     entry.blob.style.setProperty("--blob", rgbStr(blobColor, 1));
     entry.marker.style.setProperty("--pin", pinColor);
-    entry.marker.title =
-      point.region + " — " + (pinLabelFn ? pinLabelFn(point) : "Nível " + window.AlgamarRisk.LABEL[level].toLowerCase());
+    // Com o cartão de dica, o title nativo sairia duplicado por cima dele.
+    var label = point.region + " — " + (pinLabelFn ? pinLabelFn(point) : "Nível " + window.AlgamarRisk.LABEL[level].toLowerCase());
+    if (hadTitle) entry.marker.title = label;
+    else entry.marker.removeAttribute("title");
     entry.tag.textContent = point.region || "Ponto monitorado";
     entry.marker.setAttribute("aria-label", "Ver detalhes: " + point.region);
     entry.root.dataset.cat = cat;
@@ -501,6 +581,24 @@ window.DashboardMap = (function () {
     fit();
   }
 
+  // Aproxima até `z` e centraliza na coordenada.
+  function zoomTo(lat, lon, z) {
+    if (!stage || typeof lat !== "number" || typeof lon !== "number") return;
+    hideTip();
+    zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
+    focusPt = latLonToPixel(lat, lon);
+    animate();
+    fit();
+  }
+
+  // Troca o critério de cor/rótulo dos pinos depois do init (ex.: alternar
+  // entre "Risco de floração" e "Algas tóxicas") e redesenha os pinos.
+  function setStyle(opts) {
+    pinColorFn = (opts && opts.pinColor) || null;
+    pinLabelFn = (opts && opts.pinLabel) || null;
+    points.forEach(renderPoint);
+  }
+
   function setActive(id) {
     Object.keys(hotspotEls).forEach(function (key) {
       hotspotEls[key].marker.classList.toggle("map-hotspot__marker--active", key === id);
@@ -520,6 +618,7 @@ window.DashboardMap = (function () {
     onSelectCb = opts.onSelect || null;
     pinColorFn = opts.pinColor || null;
     pinLabelFn = opts.pinLabel || null;
+    tooltipFn = opts.tooltip || null;
 
     ov.style.width = NATURAL.w + "px";
     ov.style.height = NATURAL.h + "px";
@@ -549,5 +648,10 @@ window.DashboardMap = (function () {
     setBoundaryVisible: setBoundaryVisible,
     categoryOf: categoryOf,
     refit: fit,
+    zoomBy: zoomBy,
+    zoomTo: zoomTo,
+    resetView: resetView,
+    setStyle: setStyle,
+    hideTip: hideTip,
   };
 })();

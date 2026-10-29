@@ -9,6 +9,7 @@
 //    (~6 a 9 dias); depois disso a série vem null e o gráfico para ali.
 // Região "Todas" = média das 3 regiões (uma requisição só, com várias
 // coordenadas). Usado pela tela Dados Ambientais e pelo card do dashboard.
+// monthly(): vento e chuva mês a mês (histórico + normal), para a tela Previsões.
 window.EnvData = (function () {
   var FORECAST_URL = "https://api.open-meteo.com/v1/forecast";
   var MARINE_URL = "https://marine-api.open-meteo.com/v1/marine";
@@ -148,5 +149,76 @@ window.EnvData = (function () {
     return iso.slice(8, 10) + "/" + iso.slice(5, 7);
   }
 
-  return { load: load, dayLabel: dayLabel, PLACES: PLACES };
+  // Vento e chuva MÊS A MÊS, do histórico diário da Open-Meteo (archive, ERA5):
+  // os últimos NORMAL_YEARS anos até ~5 dias atrás. monthly(...).month("2026-12")
+  // devolve o mês medido se ele já passou (≥ 20 dias com dado); senão o normal
+  // do mesmo mês nesses anos (fonte "normal": não é previsão).
+  var ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive";
+  var NORMAL_YEARS = 10;
+  var DIRS = ["N", "NE", "L", "SE", "S", "SO", "O", "NO"];
+
+  function dirLabel(sumX, sumY) {
+    if (!sumX && !sumY) return null;
+    var ang = (Math.atan2(sumX, sumY) * 180) / Math.PI;
+    return DIRS[Math.round(((ang + 360) % 360) / 45) % 8];
+  }
+
+  function monthly(opts) {
+    var list = opts.place ? [opts.place] : placesFor(opts.region || "");
+    var key = "m|" + list.map(function (p) { return p.land.join(","); }).join(";");
+    var hit = cache[key];
+    if (hit && Date.now() - hit.at < CACHE_MS) return Promise.resolve(hit.data);
+
+    var end = new Date();
+    end.setDate(end.getDate() - 5); // o arquivo da Open-Meteo chega com ~5 dias de atraso
+    var start = new Date(end.getFullYear() - NORMAL_YEARS, 0, 1);
+    var land = coords(list, "land");
+    return fetchJson(ARCHIVE_URL, Object.assign({}, land, {
+      timezone: "America/Sao_Paulo", start_date: isoDay(start), end_date: isoDay(end),
+      daily: "precipitation_sum,wind_speed_10m_mean,wind_direction_10m_dominant",
+    })).then(function (r) {
+      var resp = Array.isArray(r) ? r : [r];
+      // por mês "AAAA-MM": somas dos dias (média entre os locais em cada dia)
+      var byMonth = {};
+      resp.forEach(function (one) {
+        var d = one.daily;
+        d.time.forEach(function (t, i) {
+          var ym = t.slice(0, 7);
+          var m = (byMonth[ym] = byMonth[ym] || { rain: [], wind: [], x: 0, y: 0 });
+          if (typeof d.precipitation_sum[i] === "number") m.rain.push(d.precipitation_sum[i]);
+          if (typeof d.wind_speed_10m_mean[i] === "number") m.wind.push(d.wind_speed_10m_mean[i]);
+          var dir = d.wind_direction_10m_dominant[i];
+          if (typeof dir === "number") {
+            m.x += Math.sin((dir * Math.PI) / 180);
+            m.y += Math.cos((dir * Math.PI) / 180);
+          }
+        });
+      });
+      var stats = {};
+      Object.keys(byMonth).forEach(function (ym) {
+        var m = byMonth[ym];
+        stats[ym] = { rain: mean(m.rain), wind: mean(m.wind), windDir: dirLabel(m.x, m.y), days: m.rain.length / resp.length, x: m.x, y: m.y };
+      });
+      var full = Object.keys(stats).filter(function (ym) { return stats[ym].days >= 20; });
+      var data = {
+        places: list.map(function (p) { return p.name; }).join(", "),
+        normalYears: NORMAL_YEARS,
+        month: function (ym) {
+          if (stats[ym] && stats[ym].days >= 20) return Object.assign({ fonte: "medido" }, stats[ym]);
+          var same = full.filter(function (k) { return k.slice(5) === ym.slice(5); }).map(function (k) { return stats[k]; });
+          if (!same.length) return null;
+          return {
+            fonte: "normal",
+            rain: mean(same.map(function (s) { return s.rain; })),
+            wind: mean(same.map(function (s) { return s.wind; })),
+            windDir: dirLabel(same.reduce(function (a, s) { return a + s.x; }, 0), same.reduce(function (a, s) { return a + s.y; }, 0)),
+          };
+        },
+      };
+      cache[key] = { at: Date.now(), data: data };
+      return data;
+    });
+  }
+
+  return { load: load, monthly: monthly, dayLabel: dayLabel, PLACES: PLACES };
 })();

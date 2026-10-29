@@ -15,12 +15,12 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/page-loader.js"></script>
     <script src="../js/user-prefs.js"></script>
-    <script src="../js/notifications.js"></script>
+    <script src="../js/notifications.js?v=2"></script>
   </head>
   <body class="dash-body">
     <div class="dash">
@@ -85,6 +85,21 @@
               />
             </span>
             Previsões
+          </a>
+          <a href="condicoes-propicias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/eco-1.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/eco_Green.svg"
+                alt=""
+              />
+            </span>
+            Condições Propícias
           </a>
           <a href="historico-ocorrencias.html" class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
@@ -248,9 +263,9 @@
         >
           <article class="stat-card">
             <img class="stat-card__icon" src="../assets/Icons/eco.svg" alt="" />
-            <p class="stat-card__label">Total de florações identificadas</p>
+            <p class="stat-card__label">Municípios monitorados</p>
             <p class="stat-card__value" data-field="total_identified">—</p>
-            <p class="stat-card__hint">pontos monitorados pela API</p>
+            <p class="stat-card__hint" data-field="total_hint">—</p>
           </article>
 
           <article class="stat-card">
@@ -259,7 +274,7 @@
               src="../assets/Icons/warning.svg"
               alt=""
             />
-            <p class="stat-card__label">Áreas em alerta</p>
+            <p class="stat-card__label">Alertas de algas tóxicas</p>
             <p class="stat-card__value" data-field="alert_areas">—</p>
             <p class="stat-card__hint" data-field="alert_areas_trend">—</p>
           </article>
@@ -270,9 +285,9 @@
               src="../assets/Icons/warningMedium.png"
               alt=""
             />
-            <p class="stat-card__label">Áreas com risco de floração</p>
+            <p class="stat-card__label">Risco alto de floração</p>
             <p class="stat-card__value" data-field="risk_areas">—</p>
-            <p class="stat-card__hint">previsão para os próximos dias</p>
+            <p class="stat-card__hint" data-field="risk_hint">—</p>
           </article>
 
           <article class="stat-card">
@@ -282,14 +297,14 @@
               src="../assets/Icons/shield.svg"
               alt=""
             />
-            <p class="stat-card__label">Nível de risco atual</p>
+            <p class="stat-card__label">Nível de risco de floração</p>
             <p
               class="stat-card__value stat-card__value--text"
               data-field="general_status"
             >
               —
             </p>
-            <p class="stat-card__hint">na maior parte do litoral</p>
+            <p class="stat-card__hint" data-field="level_hint">na maior parte do litoral</p>
           </article>
 
           <article class="stat-card stat-card--wide stat-card--weather">
@@ -381,6 +396,10 @@
                   &times;
                 </button>
               </div>
+              <div class="lp-colorby" role="group" aria-label="Colorir os pontos por">
+                <button type="button" class="is-active" data-color-by="risco" aria-pressed="true" title="Cor dos pontos pelo risco de floração (modelo de previsão)">Floração</button>
+                <button type="button" data-color-by="tox" aria-pressed="false" title="Cor dos pontos pelas condições propícias para espécies tóxicas">Algas tóxicas</button>
+              </div>
               <label class="lp-row">
                 <span class="lp-checkwrap"
                   ><input
@@ -393,21 +412,7 @@
                   class="lp-dot"
                   style="background: var(--map-baixa)"
                 ></span>
-                <span class="lp-name">Pouca indicação</span>
-              </label>
-              <label class="lp-row">
-                <span class="lp-checkwrap"
-                  ><input
-                    type="checkbox"
-                    class="lp-cb"
-                    id="layerIdentificada"
-                    checked /><span class="lp-box"></span
-                ></span>
-                <span
-                  class="lp-dot"
-                  style="background: var(--map-identificada)"
-                ></span>
-                <span class="lp-name">Florações identificadas</span>
+                <span class="lp-name">Risco baixo</span>
               </label>
               <label class="lp-row">
                 <span class="lp-checkwrap"
@@ -421,7 +426,21 @@
                   class="lp-dot"
                   style="background: var(--map-risco)"
                 ></span>
-                <span class="lp-name">Risco de floração</span>
+                <span class="lp-name">Risco moderado</span>
+              </label>
+              <label class="lp-row">
+                <span class="lp-checkwrap"
+                  ><input
+                    type="checkbox"
+                    class="lp-cb"
+                    id="layerIdentificada"
+                    checked /><span class="lp-box"></span
+                ></span>
+                <span
+                  class="lp-dot"
+                  style="background: var(--map-identificada)"
+                ></span>
+                <span class="lp-name">Risco alto ou muito alto</span>
               </label>
               <label class="lp-row" style="margin-bottom: 0">
                 <span class="lp-checkwrap"
@@ -457,7 +476,7 @@
               <label class="lp-field">
                 <span>Mês</span>
                 <select id="filterMonth">
-                  <option value="">Todos</option>
+                  <option value="">Mês atual</option>
                 </select>
               </label>
               <label class="lp-toggle-row">
@@ -503,7 +522,7 @@
             </button>
 
             <div class="legend">
-              <p class="legend-title">Intensidade de floração</p>
+              <p class="legend-title">Risco de floração (previsão)</p>
               <div class="legend-row">
                 <span class="dot" style="background: #00c05d"></span
                 ><span class="lbl">Baixo</span>
@@ -584,12 +603,6 @@
                   <h3 class="occ-title" id="occTitle">&mdash;</h3>
                   <span class="occ-severity" id="occSeverity">&mdash;</span>
                 </div>
-                <img
-                  class="occ-thumb"
-                  id="occThumb"
-                  src="../assets/NivelDeFloração/NivelBaixoFloração.png"
-                  alt="Nível de floração ilustrado"
-                />
               </div>
 
               <div class="occ-fields">
@@ -620,9 +633,11 @@
                   src="../assets/Icons/AlgaGrey.svg"
                   alt=""
                   />
-                    Tipo de alga: <span id="occSpecies">&mdash;</span>
+                  <span
+                    >Algas tóxicas com condições propícias:
+                    <span id="occSpecies">&mdash;</span>
                     <span class="occ-tox" id="occTox"></span
-                  >
+                  ></span>
                 </p>
                 <p>
                   <span class="material-symbols-outlined" aria-hidden="true"
@@ -638,6 +653,16 @@
               <button type="button" class="occ-btn" id="occDetailsBtn">
                 Ver detalhes completos
               </button>
+
+              <div class="occ-divider"></div>
+              <div class="occ-history-head">
+                <h4 class="occ-subhead">Condições propícias (espécies tóxicas)</h4>
+                <a class="dash-card__link" id="occCondLink" href="condicoes-propicias.html"
+                  >ver condições</a
+                >
+              </div>
+              <p class="occ-cond__sub" id="occCondSub">Carregando condições...</p>
+              <ul class="occ-cond" id="occCondList"></ul>
 
               <div class="occ-divider"></div>
               <h4 class="occ-subhead">Condições ambientais na região</h4>
@@ -682,7 +707,7 @@
                     class="icon-svg"
                     src="../assets/Icons/Precipitação.svg"
                     alt=""
-                  />Precipitação (24h)<strong id="occPrecip">&mdash;</strong>
+                  />Chuva hoje<strong id="occPrecip">&mdash;</strong>
                 </div>
               </div>
 
@@ -781,9 +806,9 @@
           <article class="dash-card dash-card--alerts">
             <header class="dash-card__header">
               <h2>Alertas</h2>
-              <button type="button" class="dash-card__link" id="toggleAlerts">
+              <a class="dash-card__link" id="toggleAlerts" href="alertas.html">
                 Ver todos
-              </button>
+              </a>
             </header>
             <ul class="alerts-list" id="alertsList">
               <li class="dash-empty">Carregando...</li>
@@ -815,7 +840,8 @@
     </div>
 
     <script src="../js/env-data.js"></script>
-    <script src="../js/dashboard-map.js" defer></script>
-    <script src="../js/dashboard.js" defer></script>
+    <script src="../js/condicoes-data.js?v=3"></script>
+    <script src="../js/dashboard-map.js?v=2" defer></script>
+    <script src="../js/dashboard.js?v=6" defer></script>
   </body>
 </html>

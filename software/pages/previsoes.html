@@ -15,12 +15,12 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/page-loader.js"></script>
     <script src="../js/user-prefs.js"></script>
-    <script src="../js/notifications.js"></script>
+    <script src="../js/notifications.js?v=2"></script>
   </head>
   <body class="dash-body forecast-page">
     <div class="dash">
@@ -86,6 +86,21 @@
               />
             </span>
             Previsões
+          </a>
+          <a href="condicoes-propicias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/eco-1.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/eco_Green.svg"
+                alt=""
+              />
+            </span>
+            Condições Propícias
           </a>
           <a href="historico-ocorrencias.html" class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
@@ -269,11 +284,9 @@
             <span class="fc-field__label">Período</span>
             <span class="fc-select">
               <select id="fcHorizon">
-                <option value="1">Mês atual</option>
-                <option value="3">Próximos 3 meses</option>
-                <option value="6">Próximos 6 meses</option>
-                <option value="12" selected>Próximos 12 meses</option>
-                <option value="24">Próximos 24 meses</option>
+                <option value="historico" selected>Últimos 9 meses + próximos 3</option>
+                <option value="proximos">Próximos 3 meses</option>
+                <option value="atual">Mês atual</option>
               </select>
               <span class="material-symbols-outlined" aria-hidden="true"
                 >expand_more</span
@@ -472,15 +485,24 @@
                 <img class="icon-svg" src="../assets/Icons/Precipitação.svg" alt="" />
                 <span><small id="fcPrecipLabel">Precipitação (24h)</small><strong id="fcPrecip">&mdash;</strong></span>
               </div>
+              <div>
+                <img class="icon-svg" src="../assets/Icons/AlgaGrey.svg" alt="" />
+                <span>Clorofila (média)<strong id="fcChl">&mdash;</strong></span>
+              </div>
+              <div>
+                <img class="icon-svg" src="../assets/Icons/experiment.svg" alt="" />
+                <span>Clorofila (máxima)<strong id="fcChlMax">&mdash;</strong></span>
+              </div>
             </div>
+            <p class="fc-env__note" id="fcEnvNote" hidden>≈ = valor típico do mês (média de anos anteriores; no pH, o último mês medido), não é previsão</p>
           </article>
         </section>
       </main>
     </div>
 
-    <script src="../js/dash-shell.js"></script>
-    <script src="../js/dashboard-map.js" defer></script>
-    <script src="../js/env-data.js"></script>
-    <script src="../js/previsoes.js" defer></script>
+    <script src="../js/dash-shell.js?v=2"></script>
+    <script src="../js/dashboard-map.js?v=2" defer></script>
+    <script src="../js/env-data.js?v=2"></script>
+    <script src="../js/previsoes.js?v=2" defer></script>
   </body>
 </html>

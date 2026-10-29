@@ -1,61 +1,55 @@
-// Tela "Central de alertas". Tudo vem de GET /ml/coastal-risks (data[]).
-// A API não tem uma tabela de alertas, então cada REGISTRO região/mês já
-// ocorrido vira um alerta:
-//  - severidade: o risk_level do ML (baixo, moderado, alto, muito alto), o
-//    mesmo de todas as telas (AlgamarRisk, em api-client.js);
-//  - "atual": registro do mês mais recente com dados (no máximo o mês atual);
-//  - "Ativo": alerta atual com severidade acima de baixo; o resto é
-//    "Resolvido". Derivado só de month/year + severidade.
-// Tipo de alga, concentração e hora não existem na API e ficam de fora.
+// Tela "Central de alertas". Tudo vem de Condições Propícias
+// (GET /ml/condicoes-propicias, via js/condicoes-data.js) — a mesma regra do
+// sino do topo (js/notifications.js), então os números batem:
+//  - "Ativo": município × espécie tóxica com o mar propício ou parcialmente
+//    propício no mês ATUAL;
+//  - "Previsto": um dos próximos meses previsto como propício;
+//  - só mês atual em diante (o passado fica no Histórico de Ocorrências).
+// É índice de condições da literatura, NÃO floração confirmada.
 (function () {
   const S = window.DashShell;
+  const C = window.CondicoesData;
   const $ = (id) => document.getElementById(id);
 
   const SEV = {
-    muito_alto: { label: "Muito alto", color: "#ff383c", rank: 4 },
-    alto: { label: "Alto", color: "#f08c28", rank: 3 },
-    moderado: { label: "Moderado", color: "#f5c518", rank: 2 },
-    baixo: { label: "Baixo", color: "#00c05d", rank: 1 },
+    propicio: { label: "Propício", color: C.NIVEIS["propício"].color, rank: 2 },
+    parcial: { label: "Parcialmente propício", color: C.NIVEIS["parcialmente propício"].color, rank: 1 },
   };
-  const SEV_KEYS = ["muito_alto", "alto", "moderado", "baixo"];
   const TITLE = {
-    muito_alto: (r) => `Floração identificada em ${r}`,
-    alto: (r) => `Risco de floração em ${r}`,
-    moderado: (r) => `Condições favoráveis à floração em ${r}`,
-    baixo: (r) => `Condições normalizadas em ${r}`,
+    propicio: (a) => `Condições propícias para ${a.m.especie} em ${a.m.municipio}`,
+    parcial: (a) => `Condições parcialmente propícias para ${a.m.especie} em ${a.m.municipio}`,
   };
-  const VISIBLE_DEFAULT = 4;
+  const PAGE_SIZE = 6;
   const NOTES = 5;
 
   const now = new Date();
-  const nowIdx = now.getFullYear() * 12 + now.getMonth();
+  const nowYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const mesIdx = (ym) => {
+    const [a, m] = ym.split("-").map(Number);
+    return a * 12 + (m - 1);
+  };
 
   const state = {
     data: [],
     tab: "todas",
     sev: null, // filtro por nível (clique nos cards)
     region: "",
-    window: 3, // meses considerados (a partir do mais recente)
-    showAll: false,
-    search: "", // busca do topo (por região)
+    horizon: 3, // meses à frente considerados (0 = só o atual)
+    especie: "", // tipo de alga (filtro local)
+    page: 1,
+    search: "", // busca do topo (município ou espécie)
   };
 
-  const periodIndex = (p) => (p.year && p.month ? p.year * 12 + (p.month - 1) : nowIdx);
-  const periodLabel = (idx) => `${S.MONTH_NAMES[idx % 12].slice(0, 3)}/${Math.floor(idx / 12)}`;
-  const pct = (v) => `${Math.round(v * 100)}%`;
-  const fmt1 = (v) => v.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
-
-  const severityOf = (p) => window.AlgamarRisk.of(p);
+  const fmtIdx = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // ------------------------------------------------------------------
   // Dados
   // ------------------------------------------------------------------
-  async function load() {
+  async function load(force) {
     try {
-      const res = await window.AlgamarAPI.apiFetch("/ml/coastal-risks", {
-        params: { region: state.region || undefined },
-      });
-      state.data = (res.data || []).map((p, i) => ({ ...p, _i: i }));
+      const res = await C.load(state.region, { force: !!force });
+      state.data = res.data;
+      fillEspecies(res.especies);
       S.hideApiWarning();
     } catch (err) {
       if (err.status !== 401) S.showApiWarning(err);
@@ -65,102 +59,116 @@
     window.PageLoader.done();
   }
 
-  // Todos os alertas da janela + o mês "atual" (o mais recente com dados).
-  function compute() {
-    const past = state.data.filter((p) => periodIndex(p) <= nowIdx);
-    const end = past.length ? past.reduce((m, p) => Math.max(m, periodIndex(p)), 0) : nowIdx;
-    const start = end - state.window + 1;
-    const alerts = past
-      .filter((p) => periodIndex(p) >= start)
-      .map((p) => {
-        const sev = severityOf(p);
-        const idx = periodIndex(p);
-        return { p, sev, idx, status: idx === end && sev !== "baixo" ? "ativo" : "resolvido" };
-      });
-    return { alerts, end };
+  function fillEspecies(list) {
+    const sel = $("alEspecie");
+    const especies = (list && list.length ? list : [...new Set(state.data.map((m) => m.especie))]).sort();
+    sel.innerHTML =
+      `<option value="">Todas</option>` +
+      especies.map((e) => `<option value="${S.escapeHtml(e)}">${S.escapeHtml(e)}</option>`).join("");
+    if (!especies.includes(state.especie)) state.especie = "";
+    sel.value = state.especie;
   }
 
-  const orderKey = (a) => (Number.isFinite(Number(a.p.id)) ? Number(a.p.id) : a.p._i);
+  // Um alerta por município × espécie × mês (mesma regra do sino).
+  function compute() {
+    const alerts = [];
+    let desfavoraveis = 0;
+    state.data.forEach((m) => {
+      if (state.especie && m.especie !== state.especie) return;
+      if (m.agora && m.agora.mes === nowYm && C.nivelDe(m.agora.nivel).key === "desfavoravel") desfavoraveis++;
+      [m.agora, ...(m.proximos || [])].forEach((r, i) => {
+        if (!r || !r.mes || r.mes < nowYm) return;
+        if (mesIdx(r.mes) - mesIdx(nowYm) > state.horizon) return;
+        const sev = C.nivelDe(r.nivel).key;
+        if (!SEV[sev] || (i > 0 && sev !== "propicio")) return;
+        alerts.push({ m, r, sev, status: i === 0 ? "ativo" : "previsto" });
+      });
+    });
+    return { alerts, desfavoraveis };
+  }
 
   // ------------------------------------------------------------------
   // Renderização
   // ------------------------------------------------------------------
   function render() {
-    const { alerts, end } = compute();
+    const { alerts, desfavoraveis } = compute();
+    const term = C.norm(state.search);
+    const bySearch = alerts.filter(
+      (a) => !term || C.norm(a.m.municipio).includes(term) || C.norm(a.m.especie).includes(term)
+    );
 
-    // Cards: alertas do mês atual por nível (não mudam com aba/filtro de nível).
-    SEV_KEYS.forEach((k) => {
-      $(`alCount_${k}`).textContent = alerts.filter((a) => a.idx === end && a.sev === k).length;
-    });
-    document.querySelectorAll(".al-sevcard").forEach((btn) => {
+    // Cards: situação do mês atual (não mudam com aba/filtro de nível).
+    $("alCount_propicio").textContent = bySearch.filter((a) => a.status === "ativo" && a.sev === "propicio").length;
+    $("alCount_parcial").textContent = bySearch.filter((a) => a.status === "ativo" && a.sev === "parcial").length;
+    $("alCount_previsto").textContent = bySearch.filter((a) => a.status === "previsto").length;
+    $("alCount_desfavoravel").textContent = desfavoraveis;
+    document.querySelectorAll(".al-sevcard[data-sev]").forEach((btn) => {
       const on = btn.dataset.sev === state.sev;
       btn.classList.toggle("is-active", on);
       btn.setAttribute("aria-pressed", String(on));
     });
 
     // Abas: contagens já respeitam o filtro de nível.
-    const term = state.search.toLowerCase();
-    const bySev = alerts.filter(
-      (a) =>
-        (!state.sev || a.sev === state.sev) &&
-        (!term || (a.p.region || "").toLowerCase().includes(term))
-    );
+    const bySev = bySearch.filter((a) => !state.sev || a.sev === state.sev);
     $("alTabTodas").textContent = bySev.length;
     $("alTabAtivo").textContent = bySev.filter((a) => a.status === "ativo").length;
-    $("alTabResolvido").textContent = bySev.filter((a) => a.status === "resolvido").length;
+    $("alTabPrevisto").textContent = bySev.filter((a) => a.status === "previsto").length;
     document.querySelectorAll(".al-tab[data-tab]").forEach((btn) => {
       const on = btn.dataset.tab === state.tab;
       btn.classList.toggle("is-active", on);
       btn.setAttribute("aria-pressed", String(on));
     });
 
-    // O sino do topo conta os alertas ativos de nível alto ou muito alto.
-    S.setAlertBadge(
-      alerts.filter((a) => a.status === "ativo" && SEV[a.sev].rank >= 3).length
-    );
-
     renderList(bySev.filter((a) => state.tab === "todas" || a.status === state.tab));
-    renderNotes(alerts);
+    renderNotes(bySearch);
+  }
+
+  function statusChip(a) {
+    return a.status === "ativo"
+      ? `<span class="al-chip al-chip--ativo">Agora</span>`
+      : `<span class="al-chip al-chip--resolvido">Previsão</span>`;
   }
 
   function renderList(list) {
     const el = $("alList");
     const sorted = [...list].sort(
-      (a, b) => SEV[b.sev].rank - SEV[a.sev].rank || b.idx - a.idx || (b.p.probability ?? 0) - (a.p.probability ?? 0)
+      (a, b) => a.r.mes.localeCompare(b.r.mes) || SEV[b.sev].rank - SEV[a.sev].rank || b.r.indice - a.r.indice
     );
-    const shown = state.showAll ? sorted : sorted.slice(0, VISIBLE_DEFAULT);
+    const pages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+    state.page = Math.min(Math.max(1, state.page), pages);
+    const start = (state.page - 1) * PAGE_SIZE;
+    const shown = sorted.slice(start, start + PAGE_SIZE);
 
-    $("alMore").hidden = sorted.length <= VISIBLE_DEFAULT;
-    $("alMore").textContent = state.showAll ? "Ver menos" : "Ver todas";
+    $("alRange").textContent = sorted.length
+      ? `${start + 1}–${start + shown.length} de ${sorted.length}`
+      : "";
+    renderPager(pages);
 
     if (!shown.length) {
       el.innerHTML = `<li class="dash-empty">Nenhum alerta para os filtros selecionados.</li>`;
       return;
     }
     el.innerHTML = shown
-      .map(({ p, sev, status, idx }) => {
-        const ef = p.environmental_factors || {};
-        const extras = [];
-        if (typeof ef.temperature_celsius === "number")
-          extras.push(`<span><span class="material-symbols-outlined" aria-hidden="true">thermostat</span>${fmt1(ef.temperature_celsius)}°C</span>`);
-        if (typeof ef.chlorophyll_mg_m3 === "number")
-          extras.push(`<span><span class="material-symbols-outlined" aria-hidden="true">eco</span>Clorofila ${fmt1(ef.chlorophyll_mg_m3)} mg/m³</span>`);
+      .map((a) => {
+        const tox = C.siglaToxina(a.m.toxina);
+        const conf = a.r.confianca ? a.r.confianca.split(":")[0] : "";
         return `
         <li>
-          <a class="al-item" style="--sev:${SEV[sev].color}" href="mapa-interativo.html?ponto=${encodeURIComponent(p.id ?? "")}">
+          <a class="al-item" style="--sev:${SEV[a.sev].color}" href="${S.escapeHtml(C.url(a.m.municipio, a.m.especie))}">
             <span class="material-symbols-outlined al-item__icon" aria-hidden="true">warning</span>
             <div class="al-item__body">
               <div class="al-item__head">
-                <h3>${S.escapeHtml(TITLE[sev](p.region || "ponto monitorado"))}</h3>
-                <span class="al-chip al-chip--sev" style="--sev:${SEV[sev].color}">${SEV[sev].label}</span>
-                <span class="al-chip al-chip--${status}">${status === "ativo" ? "Ativo" : "Resolvido"}</span>
+                <h3>${S.escapeHtml(`${a.m.especie} em ${a.m.municipio}`)}</h3>
+                <span class="al-chip al-chip--sev" style="--sev:${SEV[a.sev].color}">${SEV[a.sev].label}</span>
+                ${statusChip(a)}
               </div>
-              <p class="al-meta"><span><span class="material-symbols-outlined" aria-hidden="true">location_on</span>${S.escapeHtml(p.region || "—")}</span></p>
               <p class="al-meta">
-                <span><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>${S.escapeHtml(periodLabel(idx))}</span>
-                ${typeof p.probability === "number" ? `<span><span class="material-symbols-outlined" aria-hidden="true">water_drop</span>Probabilidade ${pct(p.probability)}</span>` : ""}
+                <span><span class="material-symbols-outlined" aria-hidden="true">location_on</span>${S.escapeHtml(`${a.m.municipio} · ${a.m.macro_region || "—"}`)}</span>
+                ${tox ? `<span><span class="material-symbols-outlined" aria-hidden="true">science</span>${S.escapeHtml(tox)}</span>` : ""}
+                <span><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>${S.escapeHtml(C.mesLabel(a.r.mes))}${a.status === "ativo" ? " (observado)" : " (previsto)"}</span>
+                <span><span class="material-symbols-outlined" aria-hidden="true">speed</span>Índice ${fmtIdx(a.r.indice)}</span>
+                ${conf ? `<span><span class="material-symbols-outlined" aria-hidden="true">info</span>Confiança ${S.escapeHtml(conf)}</span>` : ""}
               </p>
-              ${extras.length ? `<p class="al-meta">${extras.join("")}</p>` : ""}
             </div>
             <span class="material-symbols-outlined al-item__chev" aria-hidden="true">chevron_right</span>
           </a>
@@ -169,27 +177,57 @@
       .join("");
   }
 
-  // Últimas notificações: os registros mais recentes (o mês é a menor unidade
-  // de tempo da API, então dentro do mesmo mês vale a ordem de cadastro).
+  // Paginação numerada: ‹ 1 2 3 … 9 ›
+  function renderPager(pages) {
+    const nav = $("alPager");
+    nav.hidden = pages <= 1;
+    if (pages <= 1) {
+      nav.innerHTML = "";
+      return;
+    }
+    const cur = state.page;
+    // janela de 5 números em volta da atual, sempre com a primeira e a última
+    const lo = Math.max(1, Math.min(cur - 2, pages - 4));
+    const hi = Math.min(pages, lo + 4);
+    const nums = [];
+    if (lo > 1) nums.push(1);
+    if (lo > 2) nums.push("…");
+    for (let i = lo; i <= hi; i++) nums.push(i);
+    if (hi < pages - 1) nums.push("…");
+    if (hi < pages) nums.push(pages);
+    const btn = (page, label, extra = "") =>
+      `<button type="button" class="al-pager__btn${extra}" data-page="${page}"${
+        page === cur && !extra ? ' aria-current="page"' : ""
+      }${page < 1 || page > pages ? " disabled" : ""}>${label}</button>`;
+    nav.innerHTML =
+      btn(cur - 1, `<span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>`, " al-pager__btn--nav") +
+      nums.map((n) => (n === "…" ? `<span class="al-pager__gap">…</span>` : btn(n, n))).join("") +
+      btn(cur + 1, `<span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>`, " al-pager__btn--nav");
+  }
+
+  // Últimas notificações: as de agora com maior índice (as mesmas do sino).
   function renderNotes(alerts) {
     const el = $("alNotes");
-    const latest = [...alerts].sort((a, b) => b.idx - a.idx || orderKey(b) - orderKey(a)).slice(0, NOTES);
+    const latest = alerts
+      .filter((a) => a.status === "ativo")
+      .sort((a, b) => SEV[b.sev].rank - SEV[a.sev].rank || b.r.indice - a.r.indice)
+      .slice(0, NOTES);
     if (!latest.length) {
       el.innerHTML = `<li class="dash-empty">Sem notificações.</li>`;
       return;
     }
     el.innerHTML = latest
       .map(
-        ({ p, sev, idx }) => `
-      <li class="al-note" style="--sev:${SEV[sev].color}">
+        (a) => `
+      <li class="al-note" style="--sev:${SEV[a.sev].color}">
         <span class="material-symbols-outlined al-note__icon" aria-hidden="true">warning</span>
         <div>
-          <p class="al-note__title">${S.escapeHtml(TITLE[sev](p.region || "ponto monitorado"))}</p>
-          <p class="al-note__sub">${S.escapeHtml(p.region || "—")}${
-            typeof p.probability === "number" ? ` · Probabilidade ${pct(p.probability)}` : ""
+          <p class="al-note__title">${S.escapeHtml(TITLE[a.sev](a))}</p>
+          <p class="al-note__sub">${S.escapeHtml(`${a.m.macro_region || "—"} · Índice ${fmtIdx(a.r.indice)}`)}${
+            a.m.toxina ? ` · ${S.escapeHtml(C.siglaToxina(a.m.toxina))}` : ""
           }</p>
         </div>
-        <time class="al-note__time">${S.escapeHtml(periodLabel(idx))}</time>
+        <time class="al-note__time">${S.escapeHtml(C.mesLabel(a.r.mes, true))}</time>
       </li>`
       )
       .join("");
@@ -202,23 +240,33 @@
     document.querySelectorAll(".al-tab[data-tab]").forEach((btn) =>
       btn.addEventListener("click", () => {
         state.tab = btn.dataset.tab;
-        state.showAll = false;
+        state.page = 1;
         render();
       })
     );
-    document.querySelectorAll(".al-sevcard").forEach((btn) =>
+    document.querySelectorAll(".al-sevcard[data-sev]").forEach((btn) =>
       btn.addEventListener("click", () => {
-        state.sev = state.sev === btn.dataset.sev ? null : btn.dataset.sev;
-        state.showAll = false;
+        const sev = btn.dataset.sev;
+        // "Previsões" é um atalho para a aba; os outros filtram por nível.
+        if (sev === "previsto") {
+          state.sev = null;
+          state.tab = state.tab === "previsto" ? "todas" : "previsto";
+        } else {
+          state.sev = state.sev === sev ? null : sev;
+        }
+        state.page = 1;
         render();
       })
     );
-    $("alMore").addEventListener("click", () => {
-      state.showAll = !state.showAll;
+    $("alPager").addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-page]");
+      if (!b || b.disabled) return;
+      state.page = Number(b.dataset.page);
       render();
+      $("alList").closest(".al-col").scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
 
-    // Popover "Filtrar" (região vai para a API; período é local)
+    // Popover "Filtrar" (região vai para a API; horizonte é local)
     const btn = $("alFilterBtn");
     const pop = $("alPop");
     const setOpen = (open) => {
@@ -232,31 +280,33 @@
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") setOpen(false);
     });
-    function apply(region, win) {
+    function apply(region, horizon, especie) {
       const regionChanged = region !== state.region;
       state.region = region;
-      state.window = win;
-      state.showAll = false;
+      state.horizon = horizon;
+      state.especie = especie;
+      state.page = 1;
       setOpen(false);
       if (regionChanged) load();
       else render();
     }
-    $("alApply").addEventListener("click", () => apply($("alRegion").value, Number($("alWindow").value)));
+    $("alApply").addEventListener("click", () => apply($("alRegion").value, Number($("alWindow").value), $("alEspecie").value));
     $("alClear").addEventListener("click", () => {
       $("alRegion").value = "";
       $("alWindow").value = "3";
+      $("alEspecie").value = "";
       state.sev = null;
       state.tab = "todas";
-      apply("", 3);
+      apply("", 3, "");
     });
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    if (!S.init(load)) return;
+    if (!S.init(() => load(true))) return;
     bindEvents();
     $("dashSearch").addEventListener("input", (e) => {
       state.search = e.target.value.trim();
-      state.showAll = false;
+      state.page = 1;
       render();
     });
     load();

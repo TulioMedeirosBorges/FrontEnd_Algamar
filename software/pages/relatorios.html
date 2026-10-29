@@ -6,7 +6,7 @@
     <title>Algamar — Relatórios</title>
     <meta
       name="description"
-      content="Geração de relatórios de ocorrências, condições ambientais e risco de floração de algas."
+      content="Geração de relatórios de ocorrências, condições ambientais, risco de floração e condições propícias para algas tóxicas."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,11 +15,11 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/user-prefs.js"></script>
-    <script src="../js/notifications.js"></script>
+    <script src="../js/notifications.js?v=2"></script>
   </head>
   <body class="dash-body reports-page">
     <div class="dash">
@@ -81,6 +81,21 @@
               />
             </span>
             Previsões
+          </a>
+          <a href="condicoes-propicias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/eco-1.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/eco_Green.svg"
+                alt=""
+              />
+            </span>
+            Condições Propícias
           </a>
           <a href="historico-ocorrencias.html" class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
@@ -283,6 +298,15 @@
               </span>
               <span class="rp-radio" aria-hidden="true"></span>
             </label>
+            <label class="rp-model">
+              <input type="radio" name="rpModel" value="condicoes" />
+              <span class="rp-model__icon"><img src="../assets/Icons/eco_Green.svg" alt="" /></span>
+              <span class="rp-model__text">
+                <strong>Relatório de Condições Propícias</strong>
+                <span>Onde o mar favorece cada alga tóxica, agora e nos próximos 3 meses</span>
+              </span>
+              <span class="rp-radio" aria-hidden="true"></span>
+            </label>
             </div>
           </div>
 
@@ -316,7 +340,7 @@
             <label class="rp-field">
               <span class="rp-field__label">Tipo de alga</span>
               <span class="fc-select rp-select">
-                <select id="rpAlga" disabled title="A API ainda não informa o tipo de alga">
+                <select id="rpAlga" disabled title="Disponível no Relatório de Condições Propícias">
                 <option value="" selected>Todas</option>
                 </select>
                 <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
@@ -367,9 +391,10 @@
       </main>
     </div>
 
-    <script src="../js/dash-shell.js"></script>
-    <script src="../js/pdf-lite.js"></script>
+    <script src="../js/dash-shell.js?v=2"></script>
+    <script src="../js/pdf-lite.js?v=2"></script>
     <script src="../js/env-data.js"></script>
-    <script src="../js/relatorios.js" defer></script>
+    <script src="../js/condicoes-data.js?v=3"></script>
+    <script src="../js/relatorios.js?v=2" defer></script>
   </body>
 </html>

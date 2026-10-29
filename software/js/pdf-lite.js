@@ -29,10 +29,14 @@ window.PdfLite = (function () {
   ];
   const SPECIAL = { "—": [0x97, 1000], "–": [0x96, 556], "•": [0x95, 350], "…": [0x85, 1000], "‘": [0x91, 222], "’": [0x92, 222], "“": [0x93, 333], "”": [0x94, 333] };
 
+  // Símbolos fora do WinAnsi que aparecem nos dados (ex.: regras das espécies).
+  const TROCA = { "≤": "<=", "≥": ">=", "−": "-", "→": "->" };
+  const troca = (str) => String(str ?? "").replace(/[≤≥−→]/g, (c) => TROCA[c]);
+
   // Texto -> string "latin1" (WinAnsi) segura para o PDF.
   function enc(str) {
     let out = "";
-    for (const ch of String(str ?? "")) {
+    for (const ch of troca(str)) {
       const code = ch.codePointAt(0);
       if (SPECIAL[ch]) out += String.fromCharCode(SPECIAL[ch][0]);
       else if (code >= 32 && code <= 126) out += ch;
@@ -46,7 +50,7 @@ window.PdfLite = (function () {
   function width(str, size, bold) {
     const table = bold ? W_BOLD : W_REG;
     let w = 0;
-    for (const ch of String(str ?? "")) {
+    for (const ch of troca(str)) {
       if (SPECIAL[ch]) {
         w += SPECIAL[ch][1];
         continue;

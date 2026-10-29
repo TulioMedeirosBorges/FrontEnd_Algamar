@@ -15,11 +15,11 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/user-prefs.js"></script>
-    <script src="../js/notifications.js"></script>
+    <script src="../js/notifications.js?v=2"></script>
   </head>
   <body class="dash-body settings-page">
     <div class="dash">
@@ -81,6 +81,21 @@
               />
             </span>
             Previsões
+          </a>
+          <a href="condicoes-propicias.html" class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/eco-1.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/eco_Green.svg"
+                alt=""
+              />
+            </span>
+            Condições Propícias
           </a>
           <a href="historico-ocorrencias.html" class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
@@ -372,7 +387,7 @@
             <ul class="st-toggles">
               <li>
                 <label class="st-row">
-                  <span>Alertas de risco de floração de algas</span>
+                  <span>Alertas de algas tóxicas (condições propícias)</span>
                   <span class="st-switch">
                     <input type="checkbox" role="switch" data-pref="notifRisk" />
                     <span class="st-switch__track"><span class="st-switch__thumb"></span></span>
@@ -444,7 +459,7 @@
       </main>
     </div>
 
-    <script src="../js/dash-shell.js"></script>
+    <script src="../js/dash-shell.js?v=2"></script>
     <script src="../js/configuracoes.js" defer></script>
   </body>
 </html>

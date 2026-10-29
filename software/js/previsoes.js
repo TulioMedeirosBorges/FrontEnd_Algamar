@@ -10,7 +10,7 @@
     data: [],
     trends: [],
     region: "", // "" = todas as regiões
-    horizon: 12, // quantos meses entram na linha do tempo
+    periodo: "historico", // historico = últimos 9 meses medidos + próximos 3; proximos; atual
     search: "",
     steps: [], // índices de mês (ano*12 + mês-1), em ordem
     stepIdx: 0,
@@ -78,7 +78,7 @@
     $("mapEmpty").hidden = true;
     try {
       const res = await window.AlgamarAPI.apiFetch("/ml/coastal-risks", {
-        params: { region: state.region || undefined },
+        params: { region: state.region || undefined, meses: FORECAST_MONTHS },
       });
       R.setRanges(res.summary && res.summary.niveis);
       state.data = (res.data || []).map(normalizePoint);
@@ -97,17 +97,20 @@
     window.PageLoader.done();
   }
 
-  // Meses da linha do tempo: os que a API tem dentro da janela [mês atual,
-  // mês atual + horizonte). Se faltam meses futuros para completar o
-  // horizonte, completa com os meses passados mais recentes (dados reais),
-  // para a animação sempre percorrer o período inteiro escolhido.
+  // Meses da linha do tempo. A previsão do ML vai de hoje até daqui 3 meses
+  // (a API manda só esses meses: o mês atual entra inteiro, então são até 4
+  // marcadores); antes deles vêm os últimos PAST_MONTHS meses já medidos.
+  const PAST_MONTHS = 9;
+  const FORECAST_MONTHS = 3;
   function buildSteps() {
     const keep = state.steps[state.stepIdx];
     const all = [...new Set(state.data.map(periodIndex))].sort((a, b) => a - b);
-    const future = all.filter((i) => i >= nowIdx && i < nowIdx + state.horizon);
+    const future = all.filter((i) => i >= nowIdx);
     const past = all.filter((i) => i < nowIdx);
-    const need = Math.max(0, state.horizon - future.length);
-    const steps = [...past.slice(Math.max(0, past.length - need)), ...future];
+    const steps =
+      state.periodo === "atual" ? future.slice(0, 1)
+      : state.periodo === "proximos" ? future
+      : [...past.slice(-PAST_MONTHS), ...future];
     state.steps = steps;
     const at = steps.indexOf(keep);
     state.stepIdx = at === -1 ? 0 : at;
@@ -327,14 +330,17 @@
   }
 
   // ------------------------------------------------------------------
-  // Condições ambientais do MÊS da linha do tempo (acompanha a animação):
-  //  - mês atual: valores de hoje (Open-Meteo);
-  //  - outro mês coberto pela série diária da Open-Meteo (até ~3 meses para
-  //    trás e 16 dias para frente): média dos dias daquele mês — medidos ou
-  //    previstos;
-  //  - mês além do alcance diário: só o que o modelo do Algamar manda por
-  //    mês (temperatura, salinidade, pH); vento/corrente/chuva ficam "—".
-  // Salinidade e pH vêm sempre da API (a Open-Meteo não tem).
+  // Condições ambientais do MÊS da linha do tempo (acompanha a animação).
+  // Cada variável vem da melhor fonte que cobre o mês:
+  //  1. série diária da Open-Meteo (até ~3 meses para trás e 16 dias para
+  //     frente): temperatura do mar, vento, corrente e chuva — hoje, ou a
+  //     média dos dias daquele mês;
+  //  2. mês fora desse alcance: valores MENSAIS medidos — GET
+  //     /ml/condicoes-ambientais (temperatura, salinidade, clorofila, pH,
+  //     corrente) e o histórico diário da Open-Meteo (vento e chuva);
+  //  3. mês que ainda não aconteceu: o normal histórico daquele mês, marcado
+  //     com "≈" (não é previsão).
+  // Salinidade, clorofila e pH vêm sempre do ML (a Open-Meteo não tem).
   // O local é o ponto selecionado no mapa/tabela, ou a região do filtro.
   // ------------------------------------------------------------------
   const ENV_PAST_DAYS = 92; // máximo que a Open-Meteo aceita
@@ -358,28 +364,37 @@
     el.classList.add("is-changing");
   }
 
+  // Condições mensais do ML por região/município (uma chamada por local).
+  const mlEnvCache = {};
+  function loadMlEnv(region) {
+    const key = region || "";
+    if (!mlEnvCache[key]) {
+      mlEnvCache[key] = window.AlgamarAPI.apiFetch("/ml/condicoes-ambientais", {
+        params: { region: region || undefined, meses: FORECAST_MONTHS },
+      })
+        .then((r) => r.meses || [])
+        .catch(() => {
+          delete mlEnvCache[key]; // tenta de novo na próxima vez
+          return [];
+        });
+    }
+    return mlEnvCache[key];
+  }
+
+  const fmt2 = (v) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   async function renderEnv(pts) {
     const seq = ++envSeq;
     const idx = state.steps[state.stepIdx];
     const avgOf = (key) =>
       mean(pts.map((p) => p.environmental_factors && p.environmental_factors[key]).filter((v) => typeof v === "number"));
-    const apiTemp = avgOf("temperature_celsius");
-    const sal = avgOf("salinity_psu");
-    const ph = avgOf("ph");
-    setEnvValue("fcSal", sal == null ? "—" : `${fmt1(sal)} PSU`);
-    setEnvValue("fcPh", ph == null ? "—" : ph.toFixed(2).replace(".", ","));
+    const place = envPlace();
 
-    let env = null;
-    try {
-      env = await window.EnvData.load({
-        region: state.region,
-        place: envPlace(),
-        pastDays: ENV_PAST_DAYS,
-        forecastDays: ENV_NEXT_DAYS,
-      });
-    } catch (e) {
-      env = null;
-    }
+    const [env, mensal, ml] = await Promise.all([
+      window.EnvData.load({ region: state.region, place, pastDays: ENV_PAST_DAYS, forecastDays: ENV_NEXT_DAYS }).catch(() => null),
+      window.EnvData.monthly({ region: state.region, place }).catch(() => null),
+      loadMlEnv(place ? place.name : state.region),
+    ]);
     if (seq !== envSeq) return; // a linha do tempo já foi para outro mês
 
     const monthName = idx == null ? "—" : `${S.MONTH_NAMES[idx % 12]}/${Math.floor(idx / 12)}`;
@@ -391,16 +406,51 @@
       if (isNow) return env.series[key][env.todayIdx];
       return mean(days.map((i) => env.series[key][i]).filter((v) => typeof v === "number"));
     };
-    const where = env ? env.places : state.region || "litoral";
-    const sst = isNow || days.length ? pick("sst") : null;
-    const wind = isNow || days.length ? pick("wind") : null;
-    const cur = isNow || days.length ? pick("current") : null;
-    const rain = isNow || days.length ? pick("rain") : null;
+    const where = place ? place.name : state.region || "litoral de SP";
+    const daily = isNow || days.length > 0;
+    const sst = daily ? pick("sst") : null;
+    const wind = daily ? pick("wind") : null;
+    const cur = daily ? pick("current") : null;
+    const rain = daily ? pick("rain") : null;
 
-    setEnvValue("fcTemp", sst != null ? `${fmt1(sst)}°C` : apiTemp != null ? `${fmt1(apiTemp)}°C` : "—");
-    setEnvValue("fcWind", wind != null ? `${Math.round(wind)} km/h` : "—");
-    setEnvValue("fcCurrent", cur != null ? `${fmt1(cur)} km/h` : "—");
-    setEnvValue("fcPrecip", rain != null ? `${fmt1(rain)} mm` : "—");
+    // valores mensais (ML e histórico da Open-Meteo) para o mês da linha do tempo
+    const row = ml.find((m) => m.mes === ym);
+    const mv = (k) => (row && row.variaveis[k] && row.variaveis[k].valor != null ? row.variaveis[k] : null);
+    const mo = mensal ? mensal.month(ym) : null;
+    let estimado = false;
+    // "≈" = normal histórico (ou último valor do pH): o mês ainda não tem medição
+    const show = (id, value, fonte, text) => {
+      if (value == null) return setEnvValue(id, "—");
+      const approx = fonte === "normal" || fonte === "ultimo";
+      if (approx) estimado = true;
+      setEnvValue(id, (approx ? "≈ " : "") + text);
+    };
+
+    const temp = mv("temperatura_c");
+    if (sst != null) show("fcTemp", sst, "medido", `${fmt1(sst)}°C`);
+    else if (temp) show("fcTemp", temp.valor, temp.fonte, `${fmt1(temp.valor)}°C`);
+    else show("fcTemp", avgOf("temperature_celsius"), "medido", `${fmt1(avgOf("temperature_celsius") || 0)}°C`);
+
+    const sal = mv("salinidade_psu");
+    if (sal) show("fcSal", sal.valor, sal.fonte, `${fmt1(sal.valor)} PSU`);
+    else show("fcSal", avgOf("salinity_psu"), "medido", `${fmt1(avgOf("salinity_psu") || 0)} PSU`);
+
+    const ph = mv("ph") || (avgOf("ph") != null ? { valor: avgOf("ph"), fonte: "medido" } : null);
+    show("fcPh", ph && ph.valor, ph && ph.fonte, ph ? ph.valor.toFixed(2).replace(".", ",") : "");
+
+    const chl = mv("clorofila_mg_m3"), chlMax = mv("clorofila_max_mg_m3");
+    show("fcChl", chl && chl.valor, chl && chl.fonte, chl ? `${fmt2(chl.valor)} mg/m³` : "");
+    show("fcChlMax", chlMax && chlMax.valor, chlMax && chlMax.fonte, chlMax ? `${fmt2(chlMax.valor)} mg/m³` : "");
+
+    if (wind != null) show("fcWind", wind, "medido", `${Math.round(wind)} km/h`);
+    else show("fcWind", mo && mo.wind, mo && mo.fonte, mo ? `${Math.round(mo.wind)} km/h${mo.windDir ? " de " + mo.windDir : ""}` : "");
+
+    const corr = mv("corrente_kmh");
+    if (cur != null) show("fcCurrent", cur, "medido", `${fmt1(cur)} km/h`);
+    else show("fcCurrent", corr && corr.valor, corr && corr.fonte, corr ? `${fmt2(corr.valor)} km/h${corr.direcao ? " → " + corr.direcao : ""}` : "");
+
+    if (rain != null) show("fcPrecip", rain, "medido", `${fmt1(rain)} mm`);
+    else show("fcPrecip", mo && mo.rain, mo && mo.fonte, mo ? `${fmt1(mo.rain)} mm` : "");
     $("fcPrecipLabel").textContent = isNow ? "Precipitação (hoje)" : "Precipitação (média/dia)";
 
     let sub;
@@ -410,10 +460,13 @@
       const last = window.EnvData.dayLabel(env.dates[days[days.length - 1]]);
       const kind = idx > nowIdx ? "previstos" : "medidos";
       sub = `${monthName} · média de ${days.length} ${days.length === 1 ? "dia" : "dias"} ${kind} (${first}–${last}) · ${where}`;
+    } else if (idx >= nowIdx) {
+      sub = `${monthName} · mês que ainda não aconteceu: valores típicos do mês · ${where}`;
     } else {
-      sub = `${monthName} · além da previsão diária (16 dias): só valores mensais do modelo Algamar`;
+      sub = `${monthName} · média do mês medida (satélite, GLORYS e Open-Meteo) · ${where}`;
     }
     $("fcEnvSub").textContent = sub;
+    $("fcEnvNote").hidden = !estimado;
     $("fcEnv").classList.toggle("is-forecast", idx > nowIdx);
   }
 
@@ -542,7 +595,7 @@
       load();
     });
     $("fcHorizon").addEventListener("change", (e) => {
-      state.horizon = Number(e.target.value);
+      state.periodo = e.target.value;
       buildSteps();
       render({ refit: true });
     });

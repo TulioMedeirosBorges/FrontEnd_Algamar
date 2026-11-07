@@ -2,6 +2,9 @@
 // Centraliza: header de autenticação, Content-Type e o comportamento de
 // sessão expirada (401 -> limpa token e redireciona para o login).
 (function () {
+  // Token da sessão local de desenvolvimento (login admin do .env).
+  const DEV_TOKEN = "dev-local-admin";
+
   function getToken() {
     return localStorage.getItem(window.ALGAMAR_TOKEN_KEY);
   }
@@ -71,6 +74,12 @@
       // resposta sem corpo JSON
     }
 
+    // Sessão local de desenvolvimento: a API não conhece esse token, então
+    // um 401 não deve derrubar o usuário de volta para o login.
+    if (response.status === 401 && token === DEV_TOKEN) {
+      throw { status: 401, message: "Sessão local (admin): a API exige login real." };
+    }
+
     if (response.status === 401 && requireAuth) {
       clearSession();
       goToLogin();
@@ -84,7 +93,9 @@
     return data;
   }
 
-  window.AlgamarAPI = { apiFetch, getToken, getUser, saveSession, clearSession, goToLogin };
+  window.AlgamarAPI = {
+    apiFetch, getToken, getUser, saveSession, clearSession, goToLogin, DEV_TOKEN,
+  };
 })();
 
 // Nível de floração: UMA regra para todas as telas. Quem decide é o ML

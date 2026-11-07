@@ -56,29 +56,123 @@ body.login-body {
   isolation: isolate;
 }
 
-.login-visual__coastline {
+/* --------------------------------------------------------------------------
+   Mapa animado. Tudo o que se mexe aqui é calculado em js/login-anim.js a
+   partir de um único tempo t (dá pra congelar com login.html?t=2.5).
+   -------------------------------------------------------------------------- */
+
+/* Ondas: SVG do tamanho do painel, atrás do mapa (só aparecem no mar). */
+.login-visual__waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+.login-wave {
+  fill: none;
+  stroke: var(--login-line);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.login-wave--far {
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+.login-wave--glint {
+  stroke: var(--login-mint);
+  stroke-width: 2;
+  opacity: 0.55;
+}
+
+/* Mapa + estações: o wrapper tem a proporção do mapa, então as estações
+   (em %) ficam sempre no mesmo ponto do mar. */
+.login-visual__map {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: auto;
-  z-index: 0;
+  /* altura ~8% menor que a original (762/565): a costa sobe um pouco */
+  aspect-ratio: 762 / 520;
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform;
 }
-
-.login-visual__lines {
+.login-visual__coastline {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  opacity: 0.9;
-  background-image: url("../assets/login-wave-line.svg");
-  background-repeat: repeat-y;
-  background-position: top center;
-  background-size: 100% 14.5%;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.login-coast__land {
+  fill: var(--login-sand);
+}
+/* Espuma: duas linhas tracejadas acompanhando a costa, por dentro do mar. */
+.login-coast__surf {
+  fill: none;
+  stroke: var(--login-mint);
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.login-coast__surf--1 {
+  stroke-width: 2;
+  opacity: 0.45;
+}
+.login-coast__surf--2 {
+  stroke-width: 1.5;
+  opacity: 0.22;
+}
+/* Rota de monitoramento ligando as estações. */
+.login-route {
+  fill: none;
+  stroke: var(--login-mint);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 6;
+  stroke-linecap: round;
+  opacity: 0.35;
+  vector-effect: non-scaling-stroke;
+}
+
+.login-station,
+.login-pulse {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: clamp(7px, 0.85vw, 11px);
+  aspect-ratio: 1;
+  margin: calc(clamp(7px, 0.85vw, 11px) / -2) 0 0
+    calc(clamp(7px, 0.85vw, 11px) / -2);
+  border-radius: 50%;
+}
+.login-station {
+  background: var(--login-mint);
+  box-shadow: 0 0 calc(6px + 14px * var(--glow, 0)) rgba(127, 227, 208, 0.75);
+  transform: scale(var(--s, 0));
+}
+.login-station__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--login-mint);
+  opacity: 0;
+}
+/* Pulso de dados que percorre a rota e "acende" cada estação. */
+.login-pulse {
+  width: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  background: #fff;
+  box-shadow:
+    0 0 6px 2px rgba(127, 227, 208, 0.9),
+    0 0 18px 6px rgba(127, 227, 208, 0.35);
+  opacity: 0;
 }
 
 .login-visual__logo {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: inline-flex;
   align-self: flex-start;
   flex: none;
@@ -91,7 +185,7 @@ body.login-body {
 
 .login-visual__bottom {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   margin-top: auto;
   flex: none;
   padding: 0 clamp(20px, 3.7vw, 40px) clamp(14px, 3.4vh, 40px);
@@ -276,30 +370,24 @@ body.login-body {
   border-color: #e07a5f;
 }
 
-.login-demo-btn {
-  width: 100%;
-  margin-top: clamp(10px, 2vh, 16px);
-  padding: clamp(8px, 1.6vh, 12px) clamp(10px, 2vw, 14px);
-  border-radius: var(--radius-lg);
-  background: transparent;
-  border: 1px dashed var(--login-muted);
-  color: var(--login-muted);
+.login-forgot {
+  align-self: flex-end;
+  margin-top: 2px;
   font-family: var(--font-ui);
-  font-size: clamp(11px, 1.5vh, 13px);
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-.login-demo-btn:hover {
-  border-color: var(--login-mint);
+  font-size: clamp(10px, 1.3vh, 13px);
   color: var(--login-mint);
 }
-.login-demo-hint {
-  margin: 4px 0 0;
-  text-align: center;
+.login-forgot:hover {
+  text-decoration: underline;
+}
+.login-forgot__info {
+  margin: 0;
   font-family: var(--font-ui);
-  font-size: clamp(9px, 1.2vh, 11px);
+  font-size: clamp(10px, 1.3vh, 13px);
   color: var(--login-muted);
-  opacity: 0.75;
+}
+.login-forgot__info[hidden] {
+  display: none;
 }
 
 .login-form__error {
@@ -332,6 +420,106 @@ body.login-body {
   .login-visual__headline {
     max-width: 14ch;
   }
+}
+
+/* ==========================================================================
+   Transição de entrada no software
+   Três camadas de onda sobem e cobrem a tela (menta → azul → navy); o logo
+   se monta peça por peça com molas; a linha de onda se desenha embaixo.
+   Animação feita em js/login-anim.js; o JS redireciona ao dashboard no fim.
+   ========================================================================== */
+.login-entry {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  visibility: hidden;
+}
+.login-entry.is-active {
+  visibility: visible;
+  pointer-events: auto;
+}
+/* Abertura: até o JS desenhar o mar, a tela já começa coberta. */
+.login-entry.is-intro:not(.is-drawn) {
+  background: var(--login-navy-deep);
+}
+.login-entry.is-intro .login-entry__text {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-entry.is-intro {
+    display: none;
+  }
+}
+.login-entry__sea {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.login-entry__layer--1 { fill: var(--login-mint); }
+.login-entry__layer--2 { fill: #1b6f80; }
+.login-entry__layer--3 { fill: var(--login-navy-deep); }
+
+.login-entry__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 2.8vh, 28px);
+  width: min(60vw, 420px);
+}
+.login-entry__logo {
+  position: relative;
+  width: clamp(110px, 18vh, 180px);
+  aspect-ratio: 932 / 640;
+}
+/* Ondulação de "gota na água" quando o logo assenta. */
+.login-entry__ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: clamp(110px, 18vh, 180px);
+  aspect-ratio: 1;
+  margin: calc(clamp(110px, 18vh, 180px) / -2) 0 0
+    calc(clamp(110px, 18vh, 180px) / -2);
+  border-radius: 50%;
+  border: 2px solid var(--login-mint);
+  opacity: 0;
+  pointer-events: none;
+}
+.login-logo-piece {
+  position: absolute;
+  background-image: url("../../shared/assets/LogoBranca.png");
+  background-repeat: no-repeat;
+  opacity: 0;
+  will-change: transform;
+}
+.login-entry__wave {
+  width: 100%;
+  height: clamp(28px, 6vh, 56px);
+  overflow: visible;
+}
+.login-entry__wave path {
+  fill: none;
+  stroke: var(--login-mint);
+  stroke-width: 3;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.login-entry__text {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1.6vh, 14px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--login-muted);
+  opacity: 0;
 }
 
 @media (max-width: 860px) and (min-height: 560px) {

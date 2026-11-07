@@ -876,10 +876,6 @@
       p.latitude != null && p.longitude != null ? `${p.latitude}, ${p.longitude}` : "—";
     $("occDate").textContent = periodLabel(p);
 
-    // Concentração não existe na API ainda — "—" em vez de inventar um número
-    // que pareceria um dado real de segurança. As espécies vêm de Condições Propícias.
-    $("occConcentration").textContent = "—";
-
     renderOccCond(p);
     renderOccEnv(p);
     renderOccHistory(p);

@@ -18,17 +18,34 @@
     <link rel="stylesheet" href="../css/login.css" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
+    <!-- Login local de desenvolvimento (arquivo fora do git; pode não existir) -->
+    <script src="../js/dev-login.local.js"></script>
   </head>
   <body class="login-body">
     <div class="login-page">
       <section class="login-visual">
-        <img
-          class="login-visual__coastline"
-          src="../assets/login-coastline.svg"
-          alt=""
-          aria-hidden="true"
-        />
-        <div class="login-visual__lines" aria-hidden="true"></div>
+        <svg class="login-visual__waves" id="loginWaves" aria-hidden="true"></svg>
+        <div class="login-visual__map" id="loginMap" aria-hidden="true">
+          <svg
+            class="login-visual__coastline"
+            viewBox="0 0 762 565.269"
+            preserveAspectRatio="none"
+          >
+            <g transform="translate(7 9)">
+              <path class="login-coast__surf login-coast__surf--1" id="loginSurf1" pathLength="1" d="M761.5 100.656L709.702 121.611C698.99 129.171 693.305 132.73 670.677 165.296C650.281 183.988 640.949 190.8 624.91 201.878V214.664L606.462 201.878C599.07 199.884 593.273 198.583 582.337 196.195C538.578 210.39 502.718 215.152 487.966 223.898C464.635 234.224 460.388 239.652 458.164 249.115C458.164 249.115 459.938 253.021 448.94 259.414C437.942 265.807 434.039 259.414 434.039 259.414L420.203 243.432C420.203 243.432 419.139 253.021 409.914 259.414C400.69 265.807 383.778 266.805 352.44 286.052C305.091 311.76 289.999 321.923 269.422 353.888C248.845 385.853 177.515 402.901 159.086 430.958C140.657 459.016 103.253 480.881 60.4576 537.863L0.5 564.5" />
+            </g>
+            <g transform="translate(15 20)">
+              <path class="login-coast__surf login-coast__surf--2" id="loginSurf2" pathLength="1" d="M761.5 100.656L709.702 121.611C698.99 129.171 693.305 132.73 670.677 165.296C650.281 183.988 640.949 190.8 624.91 201.878V214.664L606.462 201.878C599.07 199.884 593.273 198.583 582.337 196.195C538.578 210.39 502.718 215.152 487.966 223.898C464.635 234.224 460.388 239.652 458.164 249.115C458.164 249.115 459.938 253.021 448.94 259.414C437.942 265.807 434.039 259.414 434.039 259.414L420.203 243.432C420.203 243.432 419.139 253.021 409.914 259.414C400.69 265.807 383.778 266.805 352.44 286.052C305.091 311.76 289.999 321.923 269.422 353.888C248.845 385.853 177.515 402.901 159.086 430.958C140.657 459.016 103.253 480.881 60.4576 537.863L0.5 564.5" />
+            </g>
+            <path class="login-coast__land" id="loginLand" d="M0.5 564.5V0.5H761.5V100.656L709.702 121.611C698.99 129.171 693.305 132.73 670.677 165.296C650.281 183.988 640.949 190.8 624.91 201.878V214.664L606.462 201.878C599.07 199.884 593.273 198.583 582.337 196.195C538.578 210.39 502.718 215.152 487.966 223.898C464.635 234.224 460.388 239.652 458.164 249.115C458.164 249.115 459.938 253.021 448.94 259.414C437.942 265.807 434.039 259.414 434.039 259.414L420.203 243.432C420.203 243.432 419.139 253.021 409.914 259.414C400.69 265.807 383.778 266.805 352.44 286.052C305.091 311.76 289.999 321.923 269.422 353.888C248.845 385.853 177.515 402.901 159.086 430.958C140.657 459.016 103.253 480.881 60.4576 537.863L0.5 564.5Z" />
+            <path
+              class="login-route"
+              id="loginRoute"
+              d="M655 260 C600 300 560 322 503 339 S410 388 358 407 S262 468 221 497"
+            />
+          </svg>
+          <!-- Estações costeiras e pulso de dados: criados em js/login-anim.js -->
+        </div>
 
         <a
           href="../../site/index.html"
@@ -78,7 +95,15 @@
                 autocomplete="current-password"
                 required
               />
+              <a href="#" class="login-forgot" id="loginForgot">
+                Esqueceu a senha?
+              </a>
             </div>
+
+            <p class="login-forgot__info" id="loginForgotInfo" role="status" hidden>
+              Para redefinir sua senha, entre em contato com o administrador
+              do sistema do seu órgão.
+            </p>
 
             <p class="login-form__error" id="loginError" role="alert" hidden></p>
 
@@ -100,17 +125,37 @@
             + segundo fator obrigatório, com permissões por perfil e registro
             de auditoria.
           </p>
-
-          <button type="button" class="login-demo-btn" id="loginDemoBtn">
-            Entrar em modo demonstração (sem API)
-          </button>
-          <p class="login-demo-hint">
-            Use enquanto o backend não estiver no ar. Nenhum dado será real.
-          </p>
         </div>
       </section>
     </div>
 
+    <!-- Abertura da página e transição de entrada no software: o mesmo
+         palco serve aos dois (ver js/login-anim.js). -->
+    <div class="login-entry is-intro is-active" id="loginEntry" aria-hidden="true">
+      <svg class="login-entry__sea" id="loginEntrySea">
+        <path class="login-entry__layer--1" />
+        <path class="login-entry__layer--2" />
+        <path class="login-entry__layer--3" />
+      </svg>
+      <div class="login-entry__content">
+        <!-- Peças do logo: recortadas de LogoBranca.png em js/login-anim.js -->
+        <div class="login-entry__logo" id="loginEntryLogo"></div>
+        <svg
+          class="login-entry__wave"
+          viewBox="0 0 761.785 68.9991"
+          preserveAspectRatio="none"
+        >
+          <path
+            id="loginEntryLine"
+            pathLength="1"
+            d="M0.232095 12.5769C382.318 -47.2639 384.431 161.927 761.232 12.5769"
+          />
+        </svg>
+        <p class="login-entry__text" id="loginEntryText">Carregando painel…</p>
+      </div>
+    </div>
+
+    <script src="../js/login-anim.js" defer></script>
     <script src="../js/login.js" defer></script>
   </body>
 </html>

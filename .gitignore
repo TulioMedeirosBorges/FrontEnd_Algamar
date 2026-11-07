@@ -1,6 +1,8 @@
 # Configuração local (cada um tem a sua; o endereço da API do frontend fica em software/js/api-config.js)
 .env
 .env.*
+# Login local de desenvolvimento (espelho do .env para o navegador)
+software/js/*.local.js
 
 # Ferramentas locais (Claude Code, worktrees, caches)
 .claude/

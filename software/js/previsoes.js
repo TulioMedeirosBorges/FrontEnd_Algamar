@@ -113,7 +113,8 @@
       : [...past.slice(-PAST_MONTHS), ...future];
     state.steps = steps;
     const at = steps.indexOf(keep);
-    state.stepIdx = at === -1 ? 0 : at;
+    // Sem mês anterior para manter, abre em "Hoje" (não no mês mais antigo).
+    state.stepIdx = at === -1 ? Math.max(steps.indexOf(nowIdx), 0) : at;
     if (steps.length < 2) stopPlay();
   }
 

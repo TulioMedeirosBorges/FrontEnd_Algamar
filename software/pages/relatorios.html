@@ -37,7 +37,12 @@
         </div>
 
         <nav class="dash-nav" aria-label="Navegação principal">
-          <a href="dashboard.html" class="dash-nav__link">
+          <div class="dash-nav__section" role="group" aria-labelledby="navsec1">
+            <p class="dash-nav__heading" id="navsec1">Visão geral</p>
+          <a
+            href="dashboard.html"
+            title="Resumo do litoral: indicadores, mapa e alertas"
+            class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
                 class="nav-icon__default"
@@ -52,7 +57,10 @@
             </span>
             Dashboard
           </a>
-          <a href="mapa-interativo.html" class="dash-nav__link">
+          <a
+            href="mapa-interativo.html"
+            title="Mapa com o risco de floração por região"
+            class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
                 class="nav-icon__default"
@@ -67,7 +75,13 @@
             </span>
             Mapa Interativo
           </a>
-          <a href="previsoes.html" class="dash-nav__link">
+          </div>
+          <div class="dash-nav__section" role="group" aria-labelledby="navsec2">
+            <p class="dash-nav__heading" id="navsec2">Previsão e risco</p>
+          <a
+            href="previsoes.html"
+            title="Previsão de floração para os próximos meses"
+            class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
                 class="nav-icon__default"
@@ -82,7 +96,10 @@
             </span>
             Previsões
           </a>
-          <a href="condicoes-propicias.html" class="dash-nav__link">
+          <a
+            href="condicoes-propicias.html"
+            title="Condições favoráveis a cada espécie de alga"
+            class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
                 class="nav-icon__default"
@@ -97,22 +114,10 @@
             </span>
             Condições Propícias
           </a>
-          <a href="historico-ocorrencias.html" class="dash-nav__link">
-            <span class="nav-icon" aria-hidden="true">
-              <img
-                class="nav-icon__default"
-                src="../assets/Icons/update.svg"
-                alt=""
-              />
-              <img
-                class="nav-icon__active"
-                src="../assets/Icons/update_Green.svg"
-                alt=""
-              />
-            </span>
-            Histórico de Ocorrências
-          </a>
-          <a href="alertas.html" class="dash-nav__link">
+          <a
+            href="alertas.html"
+            title="Alertas de algas tóxicas e notificações"
+            class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
                 class="nav-icon__default"
@@ -127,7 +132,31 @@
             </span>
             Alertas
           </a>
-          <a href="dados-ambientais.html" class="dash-nav__link">
+          </div>
+          <div class="dash-nav__section" role="group" aria-labelledby="navsec3">
+            <p class="dash-nav__heading" id="navsec3">Dados e registros</p>
+          <a
+            href="historico-ocorrencias.html"
+            title="Florações registradas no passado"
+            class="dash-nav__link">
+            <span class="nav-icon" aria-hidden="true">
+              <img
+                class="nav-icon__default"
+                src="../assets/Icons/update.svg"
+                alt=""
+              />
+              <img
+                class="nav-icon__active"
+                src="../assets/Icons/update_Green.svg"
+                alt=""
+              />
+            </span>
+            Histórico de Ocorrências
+          </a>
+          <a
+            href="dados-ambientais.html"
+            title="Temperatura, clorofila, chuva e outras medições"
+            class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
                 class="nav-icon__default"
@@ -144,6 +173,7 @@
           </a>
           <a
             href="relatorios.html"
+            title="Relatórios para exportar e compartilhar"
             class="dash-nav__link dash-nav__link--active"
             aria-current="page"
           >
@@ -161,20 +191,15 @@
             </span>
             Relatórios
           </a>
+          </div>
         </nav>
 
         <div class="dash-sidebar__bottom">
-          <button
-            type="button"
-            class="dash-nav__link dash-nav__link--button"
-            id="logoutBtn"
-          >
-            <span class="material-symbols-outlined" aria-hidden="true"
-              >logout</span
-            >
-            Sair
-          </button>
-          <a href="configuracoes.html" class="dash-nav__link">
+          <p class="dash-nav__heading">Conta</p>
+          <a
+            href="configuracoes.html"
+            title="Perfil, senha e preferências"
+            class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
                 class="nav-icon__default"
@@ -189,6 +214,17 @@
             </span>
             Configurações
           </a>
+          <button
+            type="button"
+            class="dash-nav__link dash-nav__link--button dash-nav__link--logout"
+            title="Encerrar a sessão"
+            id="logoutBtn"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true"
+              >logout</span
+            >
+            Sair
+          </button>
           <p class="dash-sidebar__warning" id="dashApiWarning" hidden>
             <span class="material-symbols-outlined" aria-hidden="true"
               >cloud_off</span
@@ -220,8 +256,9 @@
             <input
               type="search"
               id="dashSearch"
-              placeholder="Buscar por localidade, região ou tipo de alga..."
+              placeholder="Buscar município, região, alga ou tela…"
             />
+            <kbd class="dash-search__kbd" aria-hidden="true" title="Atalho: tecle / para buscar">/</kbd>
           </label>
 
           <div class="dash-topbar__actions">
@@ -396,5 +433,6 @@
     <script src="../js/env-data.js"></script>
     <script src="../js/condicoes-data.js?v=3"></script>
     <script src="../js/relatorios.js?v=2" defer></script>
+    <script src="../js/search-suggest.js" defer></script>
   </body>
 </html>

@@ -2,7 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("loginForm");
   const submitBtn = document.getElementById("loginSubmit");
   const errorEl = document.getElementById("loginError");
-  const demoBtn = document.getElementById("loginDemoBtn");
+  const forgotLink = document.getElementById("loginForgot");
+  const forgotInfo = document.getElementById("loginForgotInfo");
 
   if (!form || !submitBtn) return;
 
@@ -12,16 +13,33 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Modo demonstração: entra sem chamar a API. O dashboard mostra os
-  // avisos de "API indisponível" normalmente, já que nenhum dado é real.
-  demoBtn?.addEventListener("click", () => {
-    window.AlgamarAPI.saveSession("demo-mode", {
-      id: "demo",
-      fullName: "Usuário demonstração",
-      email: "demo@algamar.local",
-    });
-    window.location.href = "dashboard.html";
+  // Esqueceu a senha: a API ainda não tem rota de redefinição, então
+  // apenas orienta o usuário a procurar o administrador.
+  forgotLink?.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (forgotInfo) forgotInfo.hidden = !forgotInfo.hidden;
   });
+
+  // Transição de entrada (onda cobrindo a tela + logo se montando), feita
+  // em js/login-anim.js. Sem o módulo ou com "menos movimento", vai direto.
+  function playEntry({ redirect = true } = {}) {
+    const anim = window.AlgamarLoginAnim;
+    const finish = () => {
+      if (redirect) {
+        window.location.href = "dashboard.html";
+      } else {
+        setTimeout(() => anim?.resetEntry(), 900);
+      }
+    };
+    if (!anim) return finish();
+    anim.playEntry(finish);
+  }
+
+  // Teste: abrir login.html#teste-entrada toca a transição sem logar
+  // (espera a abertura da página terminar).
+  if (window.location.hash === "#teste-entrada") {
+    setTimeout(() => playEntry({ redirect: false }), 4500);
+  }
 
   function showError(message) {
     if (!errorEl) return;
@@ -41,6 +59,25 @@ document.addEventListener("DOMContentLoaded", () => {
     form.querySelectorAll(".login-field--error").forEach((field) => {
       field.classList.remove("login-field--error");
     });
+
+    // Login local de desenvolvimento (js/dev-login.local.js, espelho do
+    // .env): entra sem chamar a API. Vem antes da validação porque "admin"
+    // não é um e-mail.
+    const dev = window.ALGAMAR_DEV_LOGIN;
+    if (
+      dev?.user &&
+      document.getElementById("loginEmail").value.trim() === dev.user &&
+      document.getElementById("loginPassword").value === dev.password
+    ) {
+      window.AlgamarAPI.saveSession(window.AlgamarAPI.DEV_TOKEN, {
+        id: "dev-admin",
+        fullName: "Administrador (local)",
+        email: dev.user,
+      });
+      submitBtn.disabled = true;
+      playEntry();
+      return;
+    }
 
     if (!form.checkValidity()) {
       form.querySelectorAll(":invalid").forEach((input) => {
@@ -65,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       window.AlgamarAPI.saveSession(response.token, response.user);
-      window.location.href = "dashboard.html";
+      playEntry();
     } catch (err) {
       if (err.status === 401) {
         showError("E-mail ou senha inválidos.");

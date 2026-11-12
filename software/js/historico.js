@@ -11,7 +11,18 @@
   const C = window.CondicoesData;
   const $ = (id) => document.getElementById(id);
 
-  const PAGE_SIZE = 6;
+  // Linhas por página: no desktop (página cabe na tela) = quantas couberem
+  // na altura da tabela; no celular, 6 fixas (a página rola).
+  const PAGE_SIZE_MOBILE = 6;
+  const ROW_H = 41; // .hs-table td height (40) + borda
+  const fitMode = window.matchMedia("(min-width: 1101px) and (min-height: 640px)");
+  function pageSize() {
+    const wrap = $("hsTableWrap");
+    if (!fitMode.matches || !wrap) return PAGE_SIZE_MOBILE;
+    const head = wrap.querySelector("thead");
+    const free = wrap.clientHeight - (head ? head.offsetHeight : 36);
+    return Math.max(3, Math.floor(free / ROW_H));
+  }
   // Níveis que contam como ocorrência (cores de js/condicoes-data.js).
   const NIVEIS = {
     propicio: C.NIVEIS["propício"],
@@ -223,14 +234,19 @@
 
   function renderTable() {
     const body = $("hsTableBody");
-    const pages = Math.max(1, Math.ceil(state.rows.length / PAGE_SIZE));
+    const size = pageSize();
+    const pages = Math.max(1, Math.ceil(state.rows.length / size));
     state.page = Math.min(state.page, pages);
+    const from = (state.page - 1) * size;
+    $("hsCount").textContent = state.rows.length
+      ? `${nf(from + 1)}–${nf(Math.min(from + size, state.rows.length))} de ${nf(state.rows.length)}`
+      : "";
 
     if (!state.rows.length) {
       body.innerHTML = `<tr><td colspan="6" class="dash-empty">Nenhuma ocorrência para os filtros selecionados.</td></tr>`;
     } else {
       body.innerHTML = state.rows
-        .slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE)
+        .slice(from, from + size)
         .map((r) => {
           const n = NIVEIS[nivelOf(r)];
           return `
@@ -332,6 +348,21 @@
       renderTable();
     });
     $("hsExport").addEventListener("click", exportCsv);
+
+    // Janela redimensionada: recalcula quantas linhas cabem.
+    let lastSize = pageSize();
+    let t = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const size = pageSize();
+        if (size === lastSize) return;
+        // mantém a primeira linha visível na nova paginação
+        state.page = Math.floor(((state.page - 1) * lastSize) / size) + 1;
+        lastSize = size;
+        renderTable();
+      }, 120);
+    });
   }
 
   document.addEventListener("DOMContentLoaded", () => {

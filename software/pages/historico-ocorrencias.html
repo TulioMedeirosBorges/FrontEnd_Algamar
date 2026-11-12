@@ -6,7 +6,7 @@
     <title>Algamar — Histórico de Ocorrências</title>
     <meta
       name="description"
-      content="Histórico de ocorrências de florações de algas no litoral paulista."
+      content="Histórico de condições propícias para algas tóxicas no litoral paulista."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=15" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/page-loader.js"></script>
@@ -33,7 +33,7 @@
             class="dash-logo"
             aria-label="Algamar — página inicial"
           >
-            <img src="../../shared/assets/LogoBranca.png" alt="Algamar" />
+            <img src="../../shared/assets/LogoBranca.svg" alt="Algamar" />
           </a>
         </div>
 
@@ -60,7 +60,7 @@
           </a>
           <a
             href="mapa-interativo.html"
-            title="Mapa com o risco de floração por região"
+            title="Mapa de floração e de algas tóxicas"
             class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
@@ -81,7 +81,7 @@
             <p class="dash-nav__heading" id="navsec2">Previsão e risco</p>
           <a
             href="previsoes.html"
-            title="Previsão de floração para os próximos meses"
+            title="Previsão de floração de qualquer alga"
             class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
@@ -99,7 +99,7 @@
           </a>
           <a
             href="condicoes-propicias.html"
-            title="Condições favoráveis a cada espécie de alga"
+            title="Onde o mar favorece algas tóxicas"
             class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
@@ -294,6 +294,11 @@
           </div>
         </header>
 
+        <section class="hs-head">
+          <h1 class="fc-title">Histórico de ocorrências <span class="scope-tag scope-tag--tox">Algas tóxicas</span></h1>
+          <p class="fc-sub">Meses em que o mar esteve propício para espécies tóxicas</p>
+        </section>
+
         <section class="hs-filters" aria-label="Filtros do histórico">
           <label class="fc-field">
             <span class="fc-field__label">Período</span>
@@ -342,92 +347,100 @@
         </section>
 
         <section class="hs-kpis" aria-label="Resumo do período">
-          <article class="hs-kpi">
-            <span class="material-symbols-outlined hs-kpi__icon" style="color: #4da3ff" aria-hidden="true">history</span>
+          <article class="hs-kpi" style="--k: #4da3ff">
+            <span class="hs-kpi__icon"><span class="material-symbols-outlined" aria-hidden="true">history</span></span>
             <div>
               <p class="hs-kpi__label">Total de ocorrências</p>
               <p class="hs-kpi__value" id="hsTotal">—</p>
               <p class="hs-kpi__hint">no período</p>
             </div>
           </article>
-          <article class="hs-kpi">
-            <span class="material-symbols-outlined hs-kpi__icon" style="color: var(--dash-yellow)" aria-hidden="true">warning</span>
+          <article class="hs-kpi" style="--k: #f5c518">
+            <span class="hs-kpi__icon"><span class="material-symbols-outlined" aria-hidden="true">warning</span></span>
             <div>
               <p class="hs-kpi__label">Ocorrências ativas</p>
               <p class="hs-kpi__value" id="hsActive">—</p>
-              <p class="hs-kpi__hint">em andamento</p>
+              <p class="hs-kpi__hint">no mês mais recente</p>
             </div>
           </article>
-          <article class="hs-kpi">
-            <img class="hs-kpi__pin" src="../assets/Icons/LocalBlue.svg" alt="" />
+          <article class="hs-kpi" style="--k: #f5a04a">
+            <span class="hs-kpi__icon"><span class="material-symbols-outlined" aria-hidden="true">location_on</span></span>
             <div>
               <p class="hs-kpi__label">Maior índice de condições</p>
               <p class="hs-kpi__value" id="hsMax">—</p>
-              <p class="hs-kpi__hint hs-kpi__hint--dim" id="hsMaxHint">&nbsp;</p>
+              <p class="hs-kpi__hint" id="hsMaxHint">&nbsp;</p>
             </div>
           </article>
         </section>
 
-        <section class="hs-charts">
-          <article class="fc-card hs-card">
-            <h2 class="hs-card__title">Ocorrências por mês</h2>
-              <ul class="hs-inline-legend" aria-label="Legenda">
-                <li><span style="background: #f08c28"></span>Propício</li>
-                <li><span style="background: #f5c518"></span>Parcialmente propício</li>
-              </ul>
-            <div class="hs-chart" id="hsBars"></div>
-          </article>
-
-          <article class="fc-card hs-card">
-            <h2 class="hs-card__title">Por espécie tóxica</h2>
-            <div class="hs-donutwrap">
-              <div class="hs-donut">
-                <svg viewBox="0 0 200 200" aria-hidden="true">
-                  <g id="hsDonutSegs" transform="rotate(-90 100 100)"></g>
-                </svg>
-                <div class="hs-donut__center">
-                  <strong id="hsDonutTotal">—</strong>
-                  <span>Total</span>
+        <section class="hs-grid">
+          <div class="hs-side">
+            <article class="fc-card hs-card">
+              <header class="hs-card__head">
+                <h2 class="hs-card__title">Ocorrências por mês</h2>
+                <ul class="hs-inline-legend" aria-label="Legenda">
+                  <li><span style="background: #f08c28"></span>Propício</li>
+                  <li><span style="background: #f5c518"></span>Parcial</li>
+                </ul>
+              </header>
+              <div class="hs-chart" id="hsBars"></div>
+            </article>
+            <article class="fc-card hs-card">
+              <header class="hs-card__head">
+                <h2 class="hs-card__title">Por espécie</h2>
+              </header>
+              <div class="hs-donutwrap">
+                <div class="hs-donut">
+                  <svg viewBox="0 0 200 200" aria-hidden="true">
+                    <g id="hsDonutSegs" transform="rotate(-90 100 100)"></g>
+                  </svg>
+                  <div class="hs-donut__center">
+                    <strong id="hsDonutTotal">—</strong>
+                    <span>Total</span>
+                  </div>
                 </div>
+                <ul class="hs-legend" id="hsDonutLegend"></ul>
               </div>
-              <ul class="hs-legend" id="hsDonutLegend"></ul>
-            </div>
-          </article>
-        </section>
-
-        <section class="fc-card hs-list">
-          <header class="hs-list__head">
-            <h2 class="hs-card__title">Lista de ocorrência</h2>
-            <button type="button" class="hs-export" id="hsExport">
-              <span class="material-symbols-outlined" aria-hidden="true">download</span>
-              Exportar
-            </button>
-          </header>
-          <div class="hs-table-wrap">
-            <table class="hs-table">
-              <thead>
-                <tr>
-                  <th>Período</th>
-                  <th>Local</th>
-                  <th>Tipo de alga</th>
-                  <th>Índice</th>
-                  <th>Nível</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="hsTableBody">
-                <tr><td colspan="6" class="dash-empty">Carregando...</td></tr>
-              </tbody>
-            </table>
+            </article>
           </div>
-          <nav class="hs-pager" id="hsPager" aria-label="Paginação"></nav>
+
+          <section class="fc-card hs-list">
+            <header class="hs-list__head">
+              <h2 class="hs-card__title">Lista de ocorrências</h2>
+              <button type="button" class="hs-export" id="hsExport">
+                <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                Exportar CSV
+              </button>
+            </header>
+            <div class="hs-table-wrap" id="hsTableWrap">
+              <table class="hs-table">
+                <thead>
+                  <tr>
+                    <th>Período</th>
+                    <th>Local</th>
+                    <th>Tipo de alga</th>
+                    <th>Índice</th>
+                    <th>Nível</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="hsTableBody">
+                  <tr><td colspan="6" class="dash-empty">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <footer class="hs-list__foot">
+              <span class="hs-count" id="hsCount"></span>
+              <nav class="hs-pager" id="hsPager" aria-label="Paginação"></nav>
+            </footer>
+          </section>
         </section>
       </main>
     </div>
 
     <script src="../js/dash-shell.js?v=2"></script>
     <script src="../js/condicoes-data.js?v=3"></script>
-    <script src="../js/historico.js?v=2" defer></script>
+    <script src="../js/historico.js?v=3" defer></script>
     <script src="../js/search-suggest.js" defer></script>
   </body>
 </html>

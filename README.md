@@ -19,7 +19,7 @@ index.html            redireciona para site/index.html
 
 shared/
   css/base.css          tokens de design (cores, fontes, espaçamentos) + reset
-  assets/               LogoBranca.png, LogoEscura.png
+  assets/               LogoBranca.svg, LogoEscura.svg
 
 site/                 SITE institucional
   index.html            página inicial (hero, litoral, impactos)

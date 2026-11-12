@@ -106,9 +106,9 @@ window.PdfLite = (function () {
     green: [0, 150, 80],
   };
 
-  // Logo (LogoBranca.png) convertida para JPEG sobre a cor do topo do
+  // Logo (LogoBranca.svg) convertida para JPEG sobre a cor do topo do
   // relatório — o PDF embute JPEG direto (DCTDecode), sem precisar de
-  // compressor. O PNG tem margem transparente: recorta antes. Fica em cache;
+  // compressor. Se a imagem tiver margem transparente, recorta antes. Fica em cache;
   // se a imagem falhar (ex.: página aberta via file://), o topo sai só com
   // texto, como antes.
   let logoPromise = null;

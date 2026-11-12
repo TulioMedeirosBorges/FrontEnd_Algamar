@@ -899,7 +899,7 @@
     };
   }
 
-  const LOGO_SRC = "../../shared/assets/LogoBranca.png";
+  const LOGO_SRC = "../../shared/assets/LogoBranca.svg";
 
   async function fetchData(region) {
     const res = await window.AlgamarAPI.apiFetch("/ml/coastal-risks", { params: { region: region || undefined } });

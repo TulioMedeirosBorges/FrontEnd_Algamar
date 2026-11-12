@@ -44,6 +44,10 @@
   async function apiFetch(path, opts = {}) {
     const { method = "GET", body, params, requireAuth = true } = opts;
 
+    // Sessão local admin/admin: responde com dados mocados (js/mock-data.js),
+    // sem chamar a API — serve para testar a interface sem back-end.
+    if (getToken() === DEV_TOKEN) return mockFetch(path, method, params || {}, body);
+
     let url = window.ALGAMAR_API_BASE + path;
     if (params) {
       const qs = new URLSearchParams(
@@ -74,12 +78,6 @@
       // resposta sem corpo JSON
     }
 
-    // Sessão local de desenvolvimento: a API não conhece esse token, então
-    // um 401 não deve derrubar o usuário de volta para o login.
-    if (response.status === 401 && token === DEV_TOKEN) {
-      throw { status: 401, message: "Sessão local (admin): a API exige login real." };
-    }
-
     if (response.status === 401 && requireAuth) {
       clearSession();
       goToLogin();
@@ -91,6 +89,98 @@
     }
 
     return data;
+  }
+
+  // ------------------------------------------------------------------
+  // Dados mocados para o login local (admin/admin). O arquivo de dados
+  // (~440 KB) só é baixado quando essa sessão está ativa. Os filtros
+  // imitam os do servidor (dashboard_local.py / algamar_ml).
+  // Para regerar: veja software/tools/gera_mock_data.py.
+  // ------------------------------------------------------------------
+  const MOCK_SRC = (document.currentScript && document.currentScript.src || "").replace(/api-client\.js.*$/, "mock-data.js");
+  let mockPromise = null;
+
+  function loadMock() {
+    if (window.ALGAMAR_MOCK) return Promise.resolve(window.ALGAMAR_MOCK);
+    if (!mockPromise) {
+      mockPromise = new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = MOCK_SRC;
+        s.onload = () => (window.ALGAMAR_MOCK ? resolve(window.ALGAMAR_MOCK) : reject(new Error("mock vazio")));
+        s.onerror = () => {
+          mockPromise = null;
+          reject(new Error("mock-data.js não carregou"));
+        };
+        document.head.appendChild(s);
+      });
+    }
+    return mockPromise;
+  }
+
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const low = (v) => String(v || "").toLowerCase();
+  const levelKey = (v) =>
+    String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[_\s]+/g, " ").trim();
+
+  async function mockFetch(path, method, params, body) {
+    // Pequeno atraso para os estados de "carregando" aparecerem.
+    await new Promise((r) => setTimeout(r, 250));
+    const route = path.split("?")[0];
+
+    if (route === "/health") {
+      return { success: true, system: "Algamar (mock)", status: "online", database: { status: "mock" } };
+    }
+    if (route === "/auth/me" && method === "PUT") {
+      const b = body || {};
+      const user = { ...(getUser() || {}) };
+      if (b.full_name !== undefined) user.fullName = b.full_name;
+      if (b.email !== undefined) user.email = b.email;
+      return { success: true, token: DEV_TOKEN, user };
+    }
+    if (route === "/auth/me" && method === "DELETE") {
+      throw { status: 403, message: "Sessão de teste (admin): a conta local não pode ser excluída." };
+    }
+
+    let M;
+    try {
+      M = await loadMock();
+    } catch (e) {
+      throw { status: 0, message: "Dados de teste indisponíveis (js/mock-data.js).", cause: e };
+    }
+    const region = params.region || "";
+
+    if (route === "/ml/coastal-risks") {
+      const res = clone(M.coastalRisks[region] || M.coastalRisks[""]);
+      if (region && !M.coastalRisks[region]) {
+        res.data = res.data.filter((d) => d.region === region);
+      }
+      if (params.risk_level) {
+        const alvo = levelKey(params.risk_level);
+        res.data = res.data.filter((d) => levelKey(d.risk_level) === alvo);
+      }
+      if (params.month) res.data = res.data.filter((d) => d.month === Number(params.month));
+      return res;
+    }
+    if (route === "/ml/condicoes-ambientais") {
+      return clone(M.condicoesAmbientais[region] || M.condicoesAmbientais[""]);
+    }
+    if (route === "/ml/condicoes-propicias") {
+      const res = clone(M.condicoesPropicias);
+      if (params.especie) res.data = res.data.filter((m) => low(m.especie) === low(params.especie));
+      if (region) res.data = res.data.filter((m) => [low(m.macro_region), low(m.municipio)].includes(low(region)));
+      return res;
+    }
+    if (route === "/ml/condicoes-propicias/historico") {
+      const res = clone(M.condicoesHistorico);
+      if (params.especie) res.data = res.data.filter((m) => low(m.especie) === low(params.especie));
+      if (region) res.data = res.data.filter((m) => [low(m.macro_region), low(m.municipio)].includes(low(region)));
+      const n = Math.max(1, Number(params.meses) || 12);
+      res.meses = res.meses.slice(-n);
+      const janela = new Set(res.meses);
+      res.data = res.data.filter((m) => janela.has(m.mes));
+      return res;
+    }
+    throw { status: 404, message: `Sessão de teste (admin): sem dados mocados para ${route}.` };
   }
 
   window.AlgamarAPI = {

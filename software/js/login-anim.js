@@ -325,21 +325,21 @@
   const lineEl = document.getElementById("loginEntryLine");
   const textEl = document.getElementById("loginEntryText");
 
-  // Peças do logo (caixas medidas em LogoBranca.png, 932×640).
-  const LOGO_W = 932;
-  const LOGO_H = 640;
+  // Peças do logo (caixas medidas no viewBox de LogoBranca.svg, 433.54×303.31).
+  const LOGO_W = 433.54;
+  const LOGO_H = 303.31;
   const PIECES = [
     // símbolo da esquerda: 4 pétalas em 2×2 + base em onda
-    { id: "a1", box: [0, 0, 175, 175], kind: "petal", d: 0.0, spin: -1 },
-    { id: "a2", box: [215, 0, 390, 175], kind: "petal", d: 0.07, spin: 1 },
-    { id: "a4", box: [215, 209, 390, 384], kind: "petal", d: 0.14, spin: 1 },
-    { id: "a3", box: [0, 209, 175, 384], kind: "petal", d: 0.21, spin: -1 },
-    { id: "a5", box: [0, 417, 390, 640], kind: "base", d: 0.3 },
+    { id: "a1", box: [0, 0, 86.3, 86.3], kind: "petal", d: 0.0, spin: -1 },
+    { id: "a2", box: [107.23, 0, 193.54, 86.3], kind: "petal", d: 0.07, spin: 1 },
+    { id: "a4", box: [107.23, 108.25, 193.54, 194.55], kind: "petal", d: 0.14, spin: 1 },
+    { id: "a3", box: [0, 108.25, 86.3, 194.55], kind: "petal", d: 0.21, spin: -1 },
+    { id: "a5", box: [0, 216.49, 193.54, 303.31], kind: "base", d: 0.3 },
     // letra da direita: 4 peças que caem
-    { id: "b1", box: [508, 216, 692, 400], kind: "drop", d: 0.18 },
-    { id: "b2", box: [748, 216, 932, 400], kind: "drop", d: 0.25 },
-    { id: "b3", box: [508, 456, 692, 640], kind: "drop", d: 0.32 },
-    { id: "b4", box: [748, 456, 932, 640], kind: "drop", d: 0.39 },
+    { id: "b1", box: [238.47, 108.25, 324.77, 194.55], kind: "drop", d: 0.18 },
+    { id: "b2", box: [347.23, 108.25, 433.54, 194.55], kind: "drop", d: 0.25 },
+    { id: "b3", box: [238.47, 217.01, 324.77, 303.31], kind: "drop", d: 0.32 },
+    { id: "b4", box: [347.23, 216.49, 433.54, 303.31], kind: "drop", d: 0.39 },
   ];
   const pieceEls = [];
 

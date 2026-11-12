@@ -100,8 +100,11 @@
     return { lo, hi, ticks, dec };
   }
 
-  function chartSvg(param, labels, vals, todayIdx) {
-    const W = 320, H = 168, pl = 40, pr = 18, pt = 16, pb = 26;
+  // Desenhado no tamanho real do card (W = largura medida, H fixo): assim o
+  // texto do gráfico fica sempre com o mesmo tamanho, sem esticar.
+  const CHART_H = 130;
+  function chartSvg(param, labels, vals, todayIdx, width) {
+    const W = Math.max(220, Math.round(width || 320)), H = CHART_H, pl = 34, pr = 10, pt = 14, pb = 20;
     const plotW = W - pl - pr, plotH = H - pt - pb;
     const all = vals.filter((v) => v != null);
     const sc = niceScale(Math.min(...all), Math.max(...all), param.kind === "bar" || param.zero);
@@ -115,13 +118,13 @@
     const tip = (i, v) => `<title>${labels[i]}${i > todayIdx ? " (previsão)" : i === todayIdx ? " (hoje)" : ""}: ${nfmt(v, param.dec)}${param.unit}</title>`;
 
     const grid = sc.ticks
-      .map((t) => `<line x1="${pl}" x2="${W - pr}" y1="${y(t)}" y2="${y(t)}" stroke="#177a66" stroke-width="1.2"/>
-        <text x="${pl - 7}" y="${y(t) + 4}" text-anchor="end" font-size="12" font-weight="600" fill="#fff">${nfmt(t, sc.dec)}</text>`)
+      .map((t) => (t === sc.lo ? `<line x1="${pl}" x2="${W - pr}" y1="${y(t)}" y2="${y(t)}" stroke="#7fe3d0" stroke-opacity="0.25" stroke-width="1"/>` : "") + `
+        <text x="${pl - 7}" y="${y(t) + 4}" text-anchor="end" font-size="10" font-weight="600" fill="#cfe9e4">${nfmt(t, sc.dec)}</text>`)
       .join("");
 
-    const step = Math.ceil(n / 6);
+    const step = Math.ceil(n / Math.max(3, Math.floor(plotW / 46)));
     const xl = labels
-      .map((l, i) => (i % step === 0 ? `<text x="${x(i)}" y="${H - 9}" text-anchor="middle" font-size="9" fill="#fff">${l}</text>` : ""))
+      .map((l, i) => (i % step === 0 ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#9fb8b4">${l}</text>` : ""))
       .join("");
 
     // Faixa da previsão + linha "hoje".
@@ -156,7 +159,7 @@
         .join("");
     }
 
-    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de ${param.label}">${grid}${today}${marks}${xl}</svg>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Gráfico de ${param.label}">${grid}${today}${marks}${xl}</svg>`;
   }
 
   // ------------------------------------------------------------------
@@ -191,7 +194,7 @@
       } else {
         avgEl.textContent = todayVal != null ? `hoje ${nfmt(todayVal, param.dec)}${param.unit}` : "";
       }
-      chartEl.innerHTML = chartSvg(param, labels, shown, env.todayIdx);
+      chartEl.innerHTML = chartSvg(param, labels, shown, env.todayIdx, chartEl.clientWidth);
     });
 
     renderFactors();
@@ -230,6 +233,17 @@
     $("evPeriod").addEventListener("change", (e) => {
       state.period = Number(e.target.value);
       load();
+    });
+    // Largura dos cards mudou: redesenha os gráficos no novo tamanho.
+    let lastW = window.innerWidth;
+    let t = 0;
+    window.addEventListener("resize", () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        if (window.innerWidth === lastW) return;
+        lastW = window.innerWidth;
+        if (state.env) render();
+      }, 150);
     });
     $("evRefresh").addEventListener("click", (e) => {
       const btn = e.currentTarget;

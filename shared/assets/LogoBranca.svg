@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Camada_2" data-name="Camada 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 433.54 303.31" width="433.54" height="303.31">
+  <g id="Camada_1-2" data-name="Camada 1">
+    <path d="M347.23,108.25h0c47.63,0,86.3,38.67,86.3,86.3h-86.3v-86.3h0Z" style="fill: #fff;"/>
+    <path d="M238.47,217.01h26.62c32.94,0,59.68,26.74,59.68,59.68v26.62h-86.3v-86.3h0Z" transform="translate(541.78 -21.46) rotate(90)" style="fill: #fff;"/>
+    <path d="M238.47,108.25h26.62c32.94,0,59.68,26.74,59.68,59.68v26.62h-86.3v-86.3h0Z" transform="translate(130.23 433.02) rotate(-90)" style="fill: #fff;"/>
+    <rect x="347.23" y="216.49" width="86.3" height="86.3" rx="43.15" ry="43.15" style="fill: #fff;"/>
+    <path d="M107.23,108.25h0c47.63,0,86.3,38.67,86.3,86.3h-86.3v-86.3h0Z" style="fill: #fff;"/>
+    <path d="M193.54,0h0v86.3h-86.3C107.23,38.67,145.9,0,193.54,0Z" style="fill: #fff;"/>
+    <path d="M81.73,216.49h107.23c2.52,0,4.57,2.05,4.57,4.57h0c0,45.11-36.62,81.73-81.73,81.73H4.57C2.05,302.79,0,300.75,0,298.22H0C0,253.11,36.62,216.49,81.73,216.49Z" style="fill: #fff;"/>
+    <path d="M0,108.25h86.3v86.3h0C38.67,194.55,0,155.88,0,108.25H0Z" style="fill: #fff;"/>
+    <path d="M0,0h0C47.63,0,86.3,38.67,86.3,86.3H0V0H0Z" style="fill: #fff;"/>
+  </g>
+</svg>

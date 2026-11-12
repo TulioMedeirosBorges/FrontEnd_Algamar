@@ -15,7 +15,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../../shared/css/base.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=7" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=15" />
     <script src="../js/api-config.js"></script>
     <script src="../js/api-client.js"></script>
     <script src="../js/page-loader.js"></script>
@@ -33,7 +33,7 @@
             class="dash-logo"
             aria-label="Algamar — página inicial"
           >
-            <img src="../../shared/assets/LogoBranca.png" alt="Algamar" />
+            <img src="../../shared/assets/LogoBranca.svg" alt="Algamar" />
           </a>
         </div>
 
@@ -60,7 +60,7 @@
           </a>
           <a
             href="mapa-interativo.html"
-            title="Mapa com o risco de floração por região"
+            title="Mapa de floração e de algas tóxicas"
             class="dash-nav__link dash-nav__link--active"
             aria-current="page"
           >
@@ -83,7 +83,7 @@
             <p class="dash-nav__heading" id="navsec2">Previsão e risco</p>
           <a
             href="previsoes.html"
-            title="Previsão de floração para os próximos meses"
+            title="Previsão de floração de qualquer alga"
             class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
@@ -101,7 +101,7 @@
           </a>
           <a
             href="condicoes-propicias.html"
-            title="Condições favoráveis a cada espécie de alga"
+            title="Onde o mar favorece algas tóxicas"
             class="dash-nav__link">
             <span class="nav-icon" aria-hidden="true">
               <img
@@ -312,7 +312,7 @@
               src="../assets/Icons/warning.svg"
               alt=""
             />
-            <p class="stat-card__label">Alertas de algas tóxicas</p>
+            <p class="stat-card__label">Alertas <span class="scope-tag scope-tag--tox">Algas tóxicas</span></p>
             <div class="stat-card__value-row">
               <p class="stat-card__value" data-field="alert_areas">—</p>
               <span class="stat-trend" data-trend="alert_areas" hidden></span>
@@ -326,7 +326,7 @@
               src="../assets/Icons/warningMedium.png"
               alt=""
             />
-            <p class="stat-card__label">Risco alto de floração</p>
+            <p class="stat-card__label">Risco alto de floração <span class="scope-tag scope-tag--any">Qualquer alga</span></p>
             <p class="stat-card__value" data-field="risk_areas">—</p>
             <p class="stat-card__hint" data-field="risk_hint">—</p>
           </article>
@@ -338,7 +338,7 @@
               src="../assets/Icons/shield.svg"
               alt=""
             />
-            <p class="stat-card__label">Nível de risco de floração</p>
+            <p class="stat-card__label">Nível de floração <span class="scope-tag scope-tag--any">Qualquer alga</span></p>
             <p
               class="stat-card__value stat-card__value--text"
               data-field="general_status"
@@ -352,7 +352,7 @@
             <img
               class="stat-card__icon"
               id="weatherIcon"
-              src="../assets/IconsTemp/Ceu_Limpo_Dia.svg"
+              src="https://maps.gstatic.com/weather/v1/sunny_dark.svg"
               alt=""
             />
             <div class="stat-card__body">
@@ -429,8 +429,8 @@
                 </button>
               </div>
               <div class="lp-colorby" role="group" aria-label="Colorir os pontos por">
-                <button type="button" class="is-active" data-color-by="risco" aria-pressed="true" title="Cor dos pontos pelo risco de floração (modelo de previsão)">Floração</button>
-                <button type="button" data-color-by="tox" aria-pressed="false" title="Cor dos pontos pelas condições propícias para espécies tóxicas">Algas tóxicas</button>
+                <button type="button" class="is-active" data-color-by="risco" aria-pressed="true" title="Cor dos pontos pelo risco de floração de qualquer alga">Floração<small>qualquer alga</small></button>
+                <button type="button" data-color-by="tox" aria-pressed="false" title="Cor dos pontos pelas condições propícias para algas tóxicas">Algas tóxicas<small>condições</small></button>
               </div>
               <label class="lp-row">
                 <span class="lp-checkwrap"
@@ -568,7 +568,7 @@
             </button>
 
             <div class="legend">
-              <p class="legend-title">Risco de floração (previsão)</p>
+              <p class="legend-title">Floração · qualquer alga</p>
               <div class="legend-row">
                 <span class="dot" style="background: #00c05d"></span
                 ><span class="lbl">Baixo</span>
@@ -610,136 +610,65 @@
             </p>
 
             <div class="occ-body" id="occBody" hidden>
-              <div class="occ-top">
-                <div class="occ-status">
-                  <span class="occ-bigicon occ-bigicon--identificada" id="occBigIcon">
-                    <span
-                      class="material-symbols-outlined"
-                      id="occBigIconGlyph"
-                      aria-hidden="true"
-                      >warning</span
-                    >
-                  </span>
-                  <span class="occ-badge" id="occBadge">
-                    <span id="occBadgeText">&mdash;</span>
-                  </span>
+              <header class="op-head">
+                <div class="op-head__text">
+                  <span class="op-kind" id="occBadge"><span id="occBadgeText">&mdash;</span></span>
+                  <h3 class="op-title" id="occTitle">&mdash;</h3>
+                  <p class="op-meta"><span id="occDate">&mdash;</span> · <span id="occLocation">&mdash;</span></p>
+                  <small class="op-coords" id="occCoords">&mdash;</small>
                 </div>
                 <div class="occ-pager">
-                  <button
-                    type="button"
-                    id="occPrev"
-                    aria-label="Ocorrência anterior"
-                  >
-                    <span class="material-symbols-outlined" aria-hidden="true"
-                      >chevron_left</span
-                    >
+                  <button type="button" id="occPrev" aria-label="Ocorrência anterior">
+                    <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
                   </button>
                   <span id="occPagerLabel">&mdash;</span>
-                  <button
-                    type="button"
-                    id="occNext"
-                    aria-label="Próxima ocorrência"
-                  >
-                    <span class="material-symbols-outlined" aria-hidden="true"
-                      >chevron_right</span
-                    >
+                  <button type="button" id="occNext" aria-label="Próxima ocorrência">
+                    <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
                   </button>
                 </div>
-              </div>
+              </header>
 
-              <div class="occ-head">
-                <h3 class="occ-title" id="occTitle">&mdash;</h3>
-                <span class="occ-severity" id="occSeverity">&mdash;</span>
-              </div>
-
-              <div class="occ-info">
-                <div class="occ-fields">
-                  <p>
-                    <img
-                      class="icon-svg"
-                      src="../assets/Icons/LocalGrey.svg"
-                      alt=""
-                    />
-                    <span
-                      ><span id="occLocation">&mdash;</span><br /><small
-                        id="occCoords"
-                        >&mdash;</small
-                      ></span
-                    >
-                  </p>
-                  <p>
-                    <img
-                      class="icon-svg"
-                      src="../assets/Icons/calendar_month_grey.svg"
-                      alt=""
-                    />
-                    <span id="occDate">&mdash;</span>
-                  </p>
-                  <p>
-                    <img
-                      class="icon-svg"
-                      src="../assets/Icons/AlgaGrey.svg"
-                      alt=""
-                    />
-                    <span class="occ-pair">
-                      <span>
-                        <span class="occ-k">Algas tóxicas com condições propícias</span>
-                        <strong id="occSpecies">&mdash;</strong>
-                      </span>
-                      <span>
-                        <span class="occ-k">Toxinas</span>
-                        <span class="occ-tox" id="occTox"></span>
-                      </span>
-                    </span>
-                  </p>
+              <section class="op-block op-block--any" aria-label="Floração de qualquer alga">
+                <p class="op-label">Floração <span>· qualquer alga</span></p>
+                <div class="op-risk">
+                  <strong class="op-big" id="occProb">&mdash;</strong>
+                  <span class="op-chip" id="occSeverity">&mdash;</span>
                 </div>
-              </div>
+                <span class="op-bar"><i id="occProbBar"></i></span>
+                <p class="op-note">Chance de as algas crescerem em excesso neste mês</p>
+              </section>
 
-              <button type="button" class="occ-btn occ-btn--outline" id="occDetailsBtn">
-                Ver detalhes completos
-              </button>
+              <section class="op-block op-block--tox" aria-label="Algas tóxicas">
+                <div class="op-block__head">
+                  <p class="op-label">Algas tóxicas <span>· condições</span></p>
+                  <a class="op-link" id="occCondLink" href="condicoes-propicias.html">ver mais</a>
+                </div>
+                <p class="op-summary"><strong id="occSpecies">&mdash;</strong><span class="op-tox" id="occTox"></span></p>
+                <p class="occ-cond__sub" id="occCondSub">Carregando condições...</p>
+                <ul class="occ-cond" id="occCondList"></ul>
+              </section>
 
-              <section class="occ-env" aria-label="Condições ambientais na região">
-                <h4 class="occ-subhead">Condições ambientais na região</h4>
-                <div class="occ-envgrid">
-                  <div>
-                    <img class="icon-svg" src="../assets/Icons/thermometer.svg" alt="" />
-                    <span>Temperatura da água<strong id="occTemp">&mdash;</strong></span>
-                  </div>
-                  <div>
-                    <img class="icon-svg" src="../assets/Icons/air.svg" alt="" />
-                    <span>Ventos<strong id="occWind">&mdash;</strong></span>
-                  </div>
-                  <div>
-                    <img class="icon-svg" src="../assets/Icons/salinity.svg" alt="" />
-                    <span>Salinidade<strong id="occSal">&mdash;</strong></span>
-                  </div>
-                  <div>
-                    <img class="icon-svg" src="../assets/Icons/airwave.svg" alt="" />
-                    <span>Correntes<strong id="occCurrent">&mdash;</strong></span>
-                  </div>
-                  <div>
-                    <img class="icon-svg" src="../assets/Icons/water_ph.svg" alt="" />
-                    <span>pH<strong id="occPh">&mdash;</strong></span>
-                  </div>
-                  <div>
-                    <img class="icon-svg" src="../assets/Icons/Precipitação.svg" alt="" />
-                    <span>Chuva hoje<strong id="occPrecip">&mdash;</strong></span>
-                  </div>
+              <section class="op-section" aria-label="Ambiente agora">
+                <h4 class="op-subhead">Ambiente agora</h4>
+                <div class="op-env">
+                  <div><img class="icon-svg" src="../assets/Icons/thermometer.svg" alt="" /><span>Água</span><strong id="occTemp">&mdash;</strong></div>
+                  <div><img class="icon-svg" src="../assets/Icons/air.svg" alt="" /><span>Vento</span><strong id="occWind">&mdash;</strong></div>
+                  <div><img class="icon-svg" src="../assets/Icons/airwave.svg" alt="" /><span>Corrente</span><strong id="occCurrent">&mdash;</strong></div>
+                  <div><img class="icon-svg" src="../assets/Icons/salinity.svg" alt="" /><span>Salinidade</span><strong id="occSal">&mdash;</strong></div>
+                  <div><img class="icon-svg" src="../assets/Icons/water_ph.svg" alt="" /><span>pH</span><strong id="occPh">&mdash;</strong></div>
+                  <div><img class="icon-svg" src="../assets/Icons/Precipitação.svg" alt="" /><span>Chuva hoje</span><strong id="occPrecip">&mdash;</strong></div>
                 </div>
               </section>
 
-              <div class="occ-history-head">
-                <h4 class="occ-subhead">Histórico da região</h4>
-                <button
-                  type="button"
-                  class="dash-card__link"
-                  id="occHistoryLink"
-                >
-                  ver histórico completo
-                </button>
-              </div>
-              <div class="occ-history-chart" id="occHistoryChart"></div>
+              <section class="op-section" aria-label="Histórico de algas tóxicas">
+                <div class="op-section__head">
+                  <h4 class="op-subhead">Histórico <span class="op-subhead__tag">· algas tóxicas, 12 meses</span></h4>
+                  <button type="button" class="op-link" id="occHistoryLink">ver tudo</button>
+                </div>
+                <div class="occ-history-chart" id="occHistoryChart"></div>
+              </section>
+
+              <button type="button" class="occ-btn" id="occDetailsBtn">Ver detalhes completos</button>
             </div>
           </aside>
         </section>
@@ -748,7 +677,7 @@
 
     <script src="../js/condicoes-data.js?v=3"></script>
     <script src="../js/dashboard-map.js?v=2" defer></script>
-    <script src="../js/dashboard.js?v=6" defer></script>
+    <script src="../js/dashboard.js?v=9" defer></script>
     <script src="../js/search-suggest.js" defer></script>
   </body>
 </html>

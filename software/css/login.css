@@ -475,7 +475,7 @@ body.login-body {
 .login-entry__logo {
   position: relative;
   width: clamp(110px, 18vh, 180px);
-  aspect-ratio: 932 / 640;
+  aspect-ratio: 433.54 / 303.31;
 }
 /* Ondulação de "gota na água" quando o logo assenta. */
 .login-entry__ripple {
@@ -493,7 +493,7 @@ body.login-body {
 }
 .login-logo-piece {
   position: absolute;
-  background-image: url("../../shared/assets/LogoBranca.png");
+  background-image: url("../../shared/assets/LogoBranca.svg");
   background-repeat: no-repeat;
   opacity: 0;
   will-change: transform;

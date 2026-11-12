@@ -65,11 +65,6 @@
   function riskIcon(level) {
     return { muito_alto: "warning", alto: "warning", medio: "warning", baixo: "check_circle" }[riskKey(level)];
   }
-  function periodLabel(point) {
-    const full = MONTH_NAMES[(point.month || 1) - 1];
-    const monthName = full ? full.slice(0, 3) : point.month;
-    return point.year ? `${monthName}/${point.year}` : `${monthName}`;
-  }
 
   // ------------------------------------------------------------------
   // Sessão / usuário
@@ -429,20 +424,28 @@
   };
   const WEATHER_DEFAULT_REGION = "Baixada Santista";
 
-  // Ícone principal (#weatherIcon): o único que usa assets/IconsTemp e muda
-  // conforme o tempo. Os mini-ícones de vento, chuva e corrente são fixos.
+  // Ícone principal (#weatherIcon): muda conforme o tempo. Os mini-ícones
+  // de vento, chuva e corrente são fixos.
+  // Ícones do Google (os mesmos que a Google Weather API devolve em
+  // weatherCondition.iconBaseUri), servidos por maps.gstatic.com, sem chave.
+  // Usamos a variante "_dark" porque o painel tem fundo escuro. Os dados
+  // continuam vindo do Open-Meteo; aqui só trocamos o desenho.
+  // Se o Google não responder, cai para o SVG local em assets/IconsTemp.
+  const GOOGLE_WEATHER_ICON_BASE = "https://maps.gstatic.com/weather/v1/";
+  const GOOGLE_WEATHER_ICON_SUFFIX = "_dark.svg";
   const WEATHER_SKY_ICONS = {
-    ceu_limpo: { dia: "Ceu_Limpo_Dia.svg", noite: "Ceu_Limpo_Noite.svg" },
-    parcialmente_nublado: { dia: "ParcialmenteNublado_Dia.svg", noite: "ParcialmeteNublado_Noite.svg" },
-    nublado_com_aberturas: { dia: "NubaldoComAberturas_Dia.svg", noite: "NubladoComAberturas_Noite.svg" },
-    nublado: { dia: "Nublado.svg", noite: "Nublado.svg" },
-    neblina: { dia: "Neblina.svg", noite: "Neblina.svg" },
-    chuva_fraca: { dia: "ChuvaFraca_Dia.svg", noite: "ChuvaFraca_Noite.svg" },
-    chuva_moderada: { dia: "ChuvaModerada_Dia.svg", noite: "ChuvaModerada_Noite.svg" },
-    chuva_forte: { dia: "ChuvaForte_Dia.svg", noite: "ChuvaForte_Noite.svg" },
-    tempestade: { dia: "Tempestade_Dia.svg", noite: "Tempestade_Noite.svg" },
-    trovoada: { dia: "Trovoada_Dia.svg", noite: "Trovoada_Noite.svg" },
-    ciclone: { dia: "Ciclone.svg", noite: "Ciclone.svg" },
+    ceu_limpo: { dia: "sunny", noite: "clear", local: { dia: "Ceu_Limpo_Dia.svg", noite: "Ceu_Limpo_Noite.svg" } },
+    parcialmente_nublado: { dia: "mostly_sunny", noite: "mostly_clear", local: { dia: "ParcialmenteNublado_Dia.svg", noite: "ParcialmeteNublado_Noite.svg" } },
+    nublado_com_aberturas: { dia: "partly_cloudy", noite: "partly_clear", local: { dia: "NubaldoComAberturas_Dia.svg", noite: "NubladoComAberturas_Noite.svg" } },
+    nublado: { dia: "cloudy", noite: "cloudy", local: { dia: "Nublado.svg", noite: "Nublado.svg" } },
+    neblina: { dia: "mist", noite: "mist", local: { dia: "Neblina.svg", noite: "Neblina.svg" } },
+    garoa: { dia: "drizzle", noite: "drizzle", local: { dia: "ChuvaFraca_Dia.svg", noite: "ChuvaFraca_Noite.svg" } },
+    chuva_fraca: { dia: "scattered_showers", noite: "scattered_showers", local: { dia: "ChuvaFraca_Dia.svg", noite: "ChuvaFraca_Noite.svg" } },
+    chuva_moderada: { dia: "showers", noite: "showers", local: { dia: "ChuvaModerada_Dia.svg", noite: "ChuvaModerada_Noite.svg" } },
+    chuva_forte: { dia: "heavy", noite: "heavy", local: { dia: "ChuvaForte_Dia.svg", noite: "ChuvaForte_Noite.svg" } },
+    tempestade: { dia: "sleet_hail", noite: "sleet_hail", local: { dia: "Tempestade_Dia.svg", noite: "Tempestade_Noite.svg" } },
+    trovoada: { dia: "strong_tstorms", noite: "strong_tstorms", local: { dia: "Trovoada_Dia.svg", noite: "Trovoada_Noite.svg" } },
+    ciclone: { dia: "tornado", noite: "tornado", local: { dia: "Ciclone.svg", noite: "Ciclone.svg" } },
   };
 
   // Código WMO (weather_code do Open-Meteo) -> ícone + texto.
@@ -452,7 +455,7 @@
     if (code === 2) return ["nublado_com_aberturas", "Parcialmente nublado"];
     if (code === 3) return ["nublado", "Nublado"];
     if (code === 45 || code === 48) return ["neblina", "Neblina"];
-    if (code >= 51 && code <= 57) return ["chuva_fraca", "Garoa"];
+    if (code >= 51 && code <= 57) return ["garoa", "Garoa"];
     if (code === 61 || code === 80) return ["chuva_fraca", "Chuva fraca"];
     if (code === 63 || code === 66 || code === 81) return ["chuva_moderada", "Chuva moderada"];
     if (code === 65 || code === 67 || code === 82) return ["chuva_forte", "Chuva forte"];
@@ -463,6 +466,18 @@
 
   function weatherIconPath(file) {
     return `../assets/IconsTemp/${file}`;
+  }
+  // Põe o ícone do Google; se falhar ao carregar, usa o SVG local.
+  function setWeatherIcon(skyKey, period, label) {
+    const icon = WEATHER_SKY_ICONS[skyKey] || WEATHER_SKY_ICONS.nublado;
+    const img = $("weatherIcon");
+    const fallback = weatherIconPath(icon.local[period]);
+    img.onerror = () => {
+      img.onerror = null;
+      img.src = fallback;
+    };
+    img.src = `${GOOGLE_WEATHER_ICON_BASE}${icon[period]}${GOOGLE_WEATHER_ICON_SUFFIX}`;
+    img.alt = label;
   }
   function isNightNow() {
     const h = new Date().getHours();
@@ -496,7 +511,7 @@
     setWeatherMini("weatherWind", "—", "Vento");
     setWeatherMini("weatherRain", "—", "Chuva hoje");
     setWeatherMini("weatherCurrent", "—", "Corrente marinha");
-    $("weatherIcon").src = weatherIconPath(WEATHER_SKY_ICONS.nublado.dia);
+    setWeatherIcon("nublado", "dia", "");
   }
 
   // ------------------------------------------------------------------
@@ -602,8 +617,7 @@
     }
     const [skyKey, skyLabel] = skyFromWmo(now.weatherCode);
     const period = now.isDay === 0 || (now.isDay == null && isNightNow()) ? "noite" : "dia";
-    $("weatherIcon").src = weatherIconPath(WEATHER_SKY_ICONS[skyKey][period]);
-    $("weatherIcon").alt = skyLabel;
+    setWeatherIcon(skyKey, period, skyLabel);
     $("weatherTemp").textContent = `${fmtNumber(now.temp, 0)} °C`;
     $("weatherSky").textContent = `${skyLabel} · ${place.name}`;
     setWeatherMini("weatherWind", typeof now.windSpeed === "number" ? `${fmtNumber(now.windSpeed, 0)} km/h` : "—", "Vento agora");
@@ -626,13 +640,13 @@
   // seguem o modo: baixo/desfavorável, moderado/parcial, alto/propício.
   const COLOR_MODES = {
     risco: {
-      legend: "Risco de floração (previsão)",
+      legend: "Floração · qualquer alga",
       rows: [["#00c05d", "Baixo"], ["#f5c518", "Moderado"], ["#f08c28", "Alto"], ["#ff383c", "Muito alto"]],
       layers: { baixa: ["Risco baixo", "var(--map-baixa)"], risco: ["Risco moderado", "var(--map-risco)"], identificada: ["Risco alto ou muito alto", "var(--map-identificada)"] },
       onlyInterest: "Mostrar só risco moderado ou maior",
     },
     tox: {
-      legend: "Algas tóxicas (condições)",
+      legend: "Algas tóxicas · condições",
       rows: [["#00c05d", "Desfavorável"], ["#f5c518", "Parcialmente propício"], ["#f08c28", "Propício"]],
       layers: { baixa: ["Desfavorável", "#00c05d"], risco: ["Parcialmente propício", "#f5c518"], identificada: ["Propício", "#f08c28"] },
       onlyInterest: "Mostrar só parcial ou propício",
@@ -720,20 +734,44 @@
       const r = condDoMes(m, ym);
       return r && C.nivelDe(r.nivel).ordem >= 1;
     });
-    const tox = best
-      ? `<span class="map-tip__chip" style="--c:${C.nivelDe(best.r.nivel).color}">${escapeHtml(C.nivelDe(best.r.nivel).short)}</span>
-         ${fav.length ? `${fav.length} de ${regs.length} espécies` : "nenhuma espécie favorecida"}`
-      : "—";
+    const R = window.AlgamarRisk;
+    const riskColor = R.COLOR[R.of(p)];
+    const hasProb = typeof p.probability === "number";
+    const pctVal = hasProb ? Math.round(p.probability * 100) : null;
+    const mes = MONTH_NAMES[(p.month || 1) - 1] || "";
+    const quando = p.year ? `${mes} de ${p.year}` : mes;
+    const previsto = p.tipo === "previsao";
+
+    const toxBody = best
+      ? `<div class="map-tip__row">
+           <span class="map-tip__chip" style="--c:${C.nivelDe(best.r.nivel).color}">${escapeHtml(C.nivelDe(best.r.nivel).short)}</span>
+           <span class="map-tip__muted">${fav.length ? `${fav.length} de ${regs.length} espécies favorecidas` : "nenhuma espécie favorecida"}</span>
+         </div>`
+      : `<p class="map-tip__muted">Sem dados para este mês</p>`;
+
     return `
-      <p class="map-tip__title">${escapeHtml(p.region || "Ponto monitorado")}</p>
-      <p class="map-tip__sub">${escapeHtml(periodLabel(p))}${p.tipo === "previsao" ? " · previsão" : ""}</p>
-      <dl>
-        <dt>Risco de floração</dt>
-        <dd><span class="map-tip__chip" style="--c:${window.AlgamarRisk.COLOR[window.AlgamarRisk.of(p)]}">${escapeHtml(riskLabel(p.risk_level))}</span>
-          ${typeof p.probability === "number" ? `${Math.round(p.probability * 100)}%` : ""}</dd>
-        <dt>Algas tóxicas</dt>
-        <dd>${tox}</dd>
-      </dl>
+      <div class="map-tip__head">
+        <div>
+          <p class="map-tip__title">${escapeHtml(p.region || "Ponto monitorado")}</p>
+          <p class="map-tip__sub">${escapeHtml(quando)}</p>
+        </div>
+        <span class="map-tip__kind${previsto ? " is-forecast" : ""}">${previsto ? "Previsão" : "Observado"}</span>
+      </div>
+
+      <section class="map-tip__block map-tip__block--any">
+        <p class="map-tip__label">Floração <span>· qualquer alga</span></p>
+        <div class="map-tip__row">
+          ${hasProb ? `<strong class="map-tip__big">${pctVal}%</strong>` : ""}
+          <span class="map-tip__chip" style="--c:${riskColor}">${escapeHtml(riskLabel(p.risk_level) || R.LABEL[R.of(p)])}</span>
+        </div>
+        ${hasProb ? `<span class="map-tip__bar"><i style="width:${pctVal}%;background:${riskColor}"></i></span>` : ""}
+      </section>
+
+      <section class="map-tip__block map-tip__block--tox">
+        <p class="map-tip__label">Algas tóxicas <span>· condições</span></p>
+        ${toxBody}
+      </section>
+
       <p class="map-tip__hint">Clique para detalhes · duplo clique aproxima</p>`;
   }
 
@@ -754,34 +792,6 @@
   // ------------------------------------------------------------------
   let occList = [];
   let occIndex = 0;
-
-  // Os meses mostrados são todos previsão do modelo de risco: nada aqui é
-  // floração "identificada" (observada) — por isso os rótulos falam em risco.
-  const OCC_BADGE_LABEL = {
-    identificada: "Risco alto de floração",
-    risco: "Risco moderado de floração",
-    previsao: "Previsão de floração",
-    baixa: "Risco baixo de floração",
-  };
-  const OCC_TITLE_PREFIX = {
-    identificada: "Risco alto em",
-    risco: "Risco moderado em",
-    previsao: "Previsão de floração em",
-    baixa: "Risco baixo em",
-  };
-  // Glifo do círculo grande ao lado do selo (só existe na página do mapa).
-  const OCC_ICON_GLYPH = { identificada: "warning", risco: "warning", previsao: "schedule", baixa: "check_circle" };
-  const OCC_SEVERITY_LABEL = { muito_alto: "Muito alta", alto: "Alta", medio: "Moderada", baixo: "Baixa" };
-  // Ilustração por nível de risco (assets/NivelDeFloração) — troca junto com
-  // occSeverity, então a imagem sempre corresponde ao risco real do ponto
-  // selecionado. Nome do arquivo do nível médio tem um typo de origem
-  // ("Floraçãp"), mantido igual ao que está em disco.
-  const OCC_THUMB = {
-    muito_alto: "../assets/NivelDeFloração/NivelAltoFloração.png",
-    alto: "../assets/NivelDeFloração/NivelAltoFloração.png",
-    medio: "../assets/NivelDeFloração/NivelMedioFloraçãp.png",
-    baixo: "../assets/NivelDeFloração/NivelBaixoFloração.png",
-  };
 
   function refreshOccList() {
     // Troca de mês/camada: o painel continua no mesmo município, se ele
@@ -836,45 +846,35 @@
     body.hidden = false;
 
     const p = occList[occIndex];
-    const cat = window.DashboardMap.categoryOf(p);
-    const riskK = riskKey(p.risk_level);
+    const R = window.AlgamarRisk;
+    const riskK = R.of(p);
+    const previsto = p.tipo === "previsao";
 
-    $("occBadgeText").textContent = OCC_BADGE_LABEL[cat];
-    $("occBadge").className = `occ-badge occ-badge--${cat}`;
-    // Ícone de alerta só nas categorias que já tratamos como "área de
-    // interesse" (identificada = vermelho, risco = amarelo) — as cores dos
-    // dois avisos que existem em assets/Icons batem exatamente com essas
-    // duas categorias, então não force um ícone sem a cor certa nas outras.
-    const badgeIcon = $("occBadgeIcon");
-    if (badgeIcon) {
-      if (cat === "identificada") {
-        badgeIcon.src = "../assets/Icons/warning.svg";
-        badgeIcon.hidden = false;
-      } else if (cat === "risco") {
-        badgeIcon.src = "../assets/Icons/warningMedium.png";
-        badgeIcon.hidden = false;
-      } else {
-        badgeIcon.hidden = true;
-      }
-    }
-    const bigIcon = $("occBigIcon");
-    if (bigIcon) {
-      bigIcon.className = `occ-bigicon occ-bigicon--${cat}`;
-      $("occBigIconGlyph").textContent = OCC_ICON_GLYPH[cat];
-    }
+    // Cabeçalho: selo observado/previsão, município, mês por extenso e região.
+    $("occBadgeText").textContent = previsto ? "Previsão" : "Observado";
+    $("occBadge").className = `op-kind${previsto ? " is-forecast" : ""}`;
     $("occPagerLabel").textContent = `${occIndex + 1} de ${occList.length}`;
     $("occPrev").disabled = occList.length < 2;
     $("occNext").disabled = occList.length < 2;
 
-    $("occTitle").textContent = `${OCC_TITLE_PREFIX[cat]} ${p.region || "ponto monitorado"}`;
-    $("occSeverity").textContent = OCC_SEVERITY_LABEL[riskK] || "—";
-    $("occSeverity").className = `occ-severity occ-severity--${riskK}`;
-    if ($("occThumb")) $("occThumb").src = OCC_THUMB[riskK] || OCC_THUMB.baixo;
-
-    $("occLocation").textContent = p.region ? `${p.region} - SP` : "Localização não informada";
+    $("occTitle").textContent = p.region || "Ponto monitorado";
+    const mes = MONTH_NAMES[(p.month || 1) - 1] || "";
+    $("occDate").textContent = p.year ? `${mes} de ${p.year}` : mes;
+    $("occLocation").textContent = p.macro_region || "Litoral de SP";
     $("occCoords").textContent =
-      p.latitude != null && p.longitude != null ? `${p.latitude}, ${p.longitude}` : "—";
-    $("occDate").textContent = periodLabel(p);
+      p.latitude != null && p.longitude != null
+        ? `${fmtNumber(p.latitude, 2)}, ${fmtNumber(p.longitude, 2)}`
+        : "";
+
+    // Bloco floração: probabilidade grande + nível + barra na cor do risco.
+    const color = R.COLOR[riskK];
+    const hasProb = typeof p.probability === "number";
+    const pctVal = hasProb ? Math.round(p.probability * 100) : 0;
+    $("occProb").textContent = hasProb ? `${pctVal}%` : "—";
+    $("occSeverity").textContent = R.LABEL[riskK];
+    $("occSeverity").style.setProperty("--c", color);
+    $("occProbBar").style.width = `${pctVal}%`;
+    $("occProbBar").style.background = color;
 
     renderOccCond(p);
     renderOccEnv(p);
@@ -922,8 +922,8 @@
     // A tela do Mapa Interativo reaproveita este arquivo sem o bloco da lista.
     if (link) link.href = C.url(regs[0] && regs[0].municipio, regs[0] && regs[0].especie);
     if (!regs.length) {
-      $("occSpecies").textContent = "—";
-      $("occTox").textContent = "";
+      $("occSpecies").textContent = "Sem dados";
+      $("occTox").innerHTML = "";
       if (sub)
         sub.textContent = state.condErro
           ? "Não foi possível carregar as condições propícias."
@@ -932,17 +932,18 @@
       return;
     }
 
+    // Resumo curto; o detalhe por espécie fica na lista logo abaixo.
     const favorecidas = regs.filter((m) => C.nivelDe(m.agora.nivel).ordem >= 1);
     $("occSpecies").textContent = favorecidas.length
-      ? favorecidas.map((m) => `${m.especie} (${C.nivelDe(m.agora.nivel).short.toLowerCase()})`).join(", ")
-      : "nenhuma no momento";
+      ? `${favorecidas.length} de ${regs.length} espécies favorecidas`
+      : "Nenhuma espécie favorecida";
     const toxinas = [...new Set(favorecidas.map((m) => C.siglaToxina(m.toxina)).filter(Boolean))];
-    $("occTox").textContent = toxinas.join(" · ");
+    $("occTox").innerHTML = toxinas.map((t) => `<span>${escapeHtml(t)}</span>`).join("");
 
     if (!list) return;
     const m0 = regs[0];
     const prox = m0.proximos[0];
-    sub.textContent = `${m0.municipio} · ${C.mesLabel(m0.agora.mes)} (observado)${prox ? ` → ${C.mesLabel(prox.mes, true)} (previsto)` : ""}`;
+    sub.textContent = `${C.mesLabel(m0.agora.mes, true)} (agora)${prox ? ` → ${C.mesLabel(prox.mes, true)} (previsto)` : ""}`;
     list.innerHTML = regs
       .map((m) => {
         const tox = C.siglaToxina(m.toxina);

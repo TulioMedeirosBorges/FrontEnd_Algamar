@@ -115,9 +115,9 @@
               Uma nova forma de<br />observar o litoral.
             </h2>
             <p class="layers__text">
-              Nosso objetivo é transformar dados ambientais em informações útil
-              para antecipar eventos de floração e apoiar decisões importantes
-              para o litoral de São Paulo.
+              Nosso objetivo é transformar dados ambientais em informações úteis
+              para antecipar períodos de risco de floração e apoiar decisões
+              no litoral de São Paulo, de Ubatuba a Cananéia.
             </p>
             <a href="pages/como-funciona.html" class="btn btn--outline">
               Saiba como funciona
@@ -139,10 +139,10 @@
                   >
                 </button>
                 <p class="layers__legend-desc">
-                  Dados de temperatura, chuva, vento e radiação solar serão
-                  cruzados com registros de ocorrências para identificar padrões
-                  e possíveis condições de risco para florações de algas tóxicas
-                  no litoral paulista.
+                  Vento medido por satélite (Copernicus) e chuva da estação do
+                  CEBIMar/USP, em São Sebastião, entram no índice de condições
+                  propícias para cada espécie tóxica. Vento de sul e frentes
+                  frias acompanharam as florações de Dinophysis de 2016 e 2024.
                 </p>
               </li>
               <li class="layers__legend-item" data-index="1">
@@ -155,9 +155,10 @@
                   <span class="layers__legend-label">Oceanografia</span>
                 </button>
                 <p class="layers__legend-desc">
-                  Dados oceanográficos, como correntes, temperatura e
-                  salinidade, serão analisados para compreender as condições do
-                  mar e sua relação com a formação e dispersão das algas.
+                  Temperatura e salinidade da superfície e camada de mistura,
+                  mês a mês desde 2000 (satélite e reanálise GLORYS). Também
+                  testamos as correntes de um modelo oceânico de 1,5 km: elas
+                  não melhoraram a previsão e ficaram de fora.
                 </p>
               </li>
               <li class="layers__legend-item" data-index="2">
@@ -170,9 +171,10 @@
                   <span class="layers__legend-label">Qualidade da água</span>
                 </button>
                 <p class="layers__legend-desc">
-                  Informações sobre nutrientes, turbidez, oxigênio e outros
-                  indicadores serão utilizadas para avaliar a qualidade da água
-                  e identificar condições favoráveis à proliferação de algas.
+                  A clorofila-a de satélite (Copernicus, 4 km, diária) é o
+                  principal dado do mapa de risco. Nutrientes, oxigênio e
+                  contagem de células ainda não entram: não há série pública
+                  desses dados para o litoral paulista.
                 </p>
               </li>
               <li class="layers__legend-item" data-index="3">
@@ -185,9 +187,9 @@
                   <span class="layers__legend-label">Modelo preditivo</span>
                 </button>
                 <p class="layers__legend-desc">
-                  O sistema combinará dados ambientais e históricos para
-                  identificar padrões e estimar a possibilidade de ocorrência de
-                  florações de algas tóxicas.
+                  Um conjunto de 8 modelos XGBoost, treinado com dados de 2000 a
+                  2018, estima para cada ponto de 4 km a chance de floração em
+                  cada um dos próximos 12 meses.
                 </p>
               </li>
               <li class="layers__legend-item" data-index="4">
@@ -200,9 +202,10 @@
                   <span class="layers__legend-label">Risco de floração</span>
                 </button>
                 <p class="layers__legend-desc">
-                  A partir dos dados analisados, o sistema indicará áreas com
-                  diferentes níveis de risco, auxiliando no monitoramento e na
-                  identificação antecipada de possíveis florações.
+                  Quatro níveis (baixo, moderado, alto e muito alto) para 2.406
+                  pontos do mar e 14 municípios. No nível muito alto (80% ou
+                  mais), a floração se confirmou em 88% a 99% dos casos
+                  testados.
                 </p>
               </li>
             </ul>
@@ -223,12 +226,12 @@
           <span class="eyebrow__line"></span>O problema
         </p>
         <h2 class="problem__heading split-text" data-reveal>
-          Por que nos preocupar ?
+          Por que nos preocupar?
         </h2>
         <p class="problem__intro reveal reveal-d2" data-reveal>
-          As florações de alga podem alterar o equilíbrio dos ambientes
-          aquáticos, afetar atividades económicas e, em alguns casos, estar
-          associadas á produção de toxinas que representam riscos á saúde humana
+          As florações de algas podem alterar o equilíbrio dos ambientes
+          aquáticos, afetar atividades econômicas e, em alguns casos, estar
+          associadas à produção de toxinas que representam riscos à saúde humana
           e animal.
         </p>
 
@@ -246,8 +249,13 @@
             <div class="card__overlay"></div>
             <div class="card__body">
               <p class="card__title">Impacto ambiental</p>
-              <p class="card__text">Texto a definir.</p>
-              <a href="#" class="btn btn--ghost">
+              <p class="card__text">
+                Florações mudam a cor da água e podem matar peixes e outros
+                animais. Em março de 2019, uma maré vermelha com mais de 2
+                milhões de células por litro tomou o canal de São Sebastião
+                (CEBIMar/USP).
+              </p>
+              <a href="pages/o-que-preve.html" class="btn btn--ghost">
                 Ler mais
                 <img
                   class="btn__icon"
@@ -269,12 +277,12 @@
             <div class="card__body">
               <p class="card__title">Impactos econômicos</p>
               <p class="card__text">
-                As florações de algas tóxicas podem causar prejuízos à pesca, ao
-                turismo e à aquicultura. A morte de peixes e a contaminação da
-                água reduzem a atividade pesqueira, enquanto praias interditadas
-                podem afastar turistas e prejudicar negócios locais.
+                As florações de algas tóxicas causam prejuízos à pesca, ao
+                turismo e à maricultura. Em 2016, uma floração de Dinophysis
+                vinda do Sul levou à interdição de moluscos na Baixada Santista
+                e no Litoral Norte durante o segundo semestre.
               </p>
-              <a href="#" class="btn btn--ghost">
+              <a href="pages/o-que-preve.html" class="btn btn--ghost">
                 Ler mais
                 <img
                   class="btn__icon"
@@ -294,9 +302,14 @@
             />
             <div class="card__overlay"></div>
             <div class="card__body">
-              <p class="card__title">Riscos á saúde</p>
-              <p class="card__text">Texto a definir.</p>
-              <a href="#" class="btn btn--ghost">
+              <p class="card__title">Riscos à saúde</p>
+              <p class="card__text">
+                Mexilhões e ostras filtram a água e acumulam toxinas sem mudar
+                de aspecto. De 2023 a 2026, o monitoramento estadual suspendeu
+                a retirada de moluscos 6 vezes por toxina diarreica acima do
+                limite, em Ubatuba e Caraguatatuba.
+              </p>
+              <a href="pages/o-que-preve.html" class="btn btn--ghost">
                 Ler mais
                 <img
                   class="btn__icon"
@@ -349,12 +362,14 @@
           <span class="eyebrow__line"></span>A pesquisa
         </p>
         <h2 class="research__heading split-text" data-reveal>
-          Testamos se dava para prever.<br />Dava.
+          Testamos se dava para prever.<br />Em parte, dava.
         </h2>
         <p class="research__intro reveal reveal-d2" data-reveal>
-          O estudo piloto que originou a <strong>ALGAMAR</strong> comparou o
-          risco calculado pelo modelo com as florações efetivamente registradas
-          no litoral paulista, ao longo de um ciclo sazonal completo.
+          O estudo que originou a <strong>Algamar</strong> comparou a
+          probabilidade calculada pelo modelo com as florações vistas por
+          satélite em quase cinco anos que o modelo nunca viu no treino. Também
+          testamos se simular as correntes do oceano melhorava a previsão: não
+          melhorou.
         </p>
 
         <div class="research__grid">
@@ -363,44 +378,45 @@
               <p class="study__header-label">Desenho do estudo</p>
             </div>
             <div class="study__row">
-              <p class="study__label">Titulo</p>
+              <p class="study__label">Título</p>
               <p class="study__desc">
-                Previsão de curto prazo de florações de algas nocivas por
-                integração de dados orbitais e oceanográficos no litoral de São
-                Paulo
+                Mapa de Risco de Floração Algamar: clorofila e temperatura de
+                satélite com a climatologia histórica do litoral de São Paulo
               </p>
             </div>
             <div class="study__row">
               <p class="study__label">Área</p>
               <p class="study__desc">
-                Litoral Norte, Baixada Santista e Complexo estuarino de
-                Iguape-Cananéia
+                2.406 pontos de 4 km, de Ubatuba a Cananéia, agrupados em 14
+                municípios do Litoral Norte, Baixada Santista e Litoral Sul
               </p>
             </div>
             <div class="study__row">
-              <p class="study__label">Periodo</p>
+              <p class="study__label">Período</p>
               <p class="study__desc">
-                12 meses de campo · 8 anos de série histórica para treino
+                Jan/2000 a set/2026 · treino até 2018, ajuste em 2019–2021 e
+                teste de 2022 a 2026
               </p>
             </div>
             <div class="study__row">
               <p class="study__label">Dados</p>
               <p class="study__desc">
-                Clorofila-a e temperatura de superfície diárias, cruzadas com
-                registros de ocorrência e balneabilidade
+                Clorofila-a (Copernicus) e temperatura da superfície (OSTIA)
+                diárias. Floração = clorofila máxima do mês acima de 1,5 mg/m³
               </p>
             </div>
             <div class="study__row">
               <p class="study__label">Método</p>
               <p class="study__desc">
-                Modelo de classificação treinado na série histórica, com
-                projeção de transporte por correntes costeiras
+                8 modelos XGBoost que partem da climatologia de cada ponto e
+                mês e aprendem o desvio, de 1 a 12 meses à frente
               </p>
             </div>
             <div class="study__row">
               <p class="study__label">Validação</p>
               <p class="study__desc">
-                Comparação semanal entre risco previsto e floração observada
+                1,46 milhão de previsões em meses nunca vistos no treino,
+                comparadas com a climatologia e a persistência
               </p>
             </div>
           </div>
@@ -408,7 +424,7 @@
           <div class="analysis reveal reveal-d4" data-reveal>
             <div class="analysis__chart-box">
               <p class="analysis__caption">
-                Risco previsto × floração observada · 24 semanas
+                Probabilidade prevista × floração observada · teste 2022–2026
               </p>
               <div class="analysis__chart">
                 <div class="analysis__axis">
@@ -422,11 +438,11 @@
                   viewBox="0 0 408 92"
                   preserveAspectRatio="none"
                   role="img"
-                  aria-label="Gráfico comparando risco previsto pelo modelo e floração observada em campo ao longo de 24 semanas"
+                  aria-label="Calibração do modelo no teste de 2022 a 2026: em cada faixa de probabilidade prevista, de 0–10% a 90–100%, a frequência de floração observada por satélite fica próxima da probabilidade prevista"
                 >
                   <polyline
                     class="analysis__line"
-                    points="0,70 34,66 68,58 102,44 136,30 170,18 204,12 238,14 272,24 306,40 340,56 374,66 408,70"
+                    points="0,88.4 45.3,78.2 90.7,69.6 136,60.1 181.3,50.8 226.7,41.7 272,32.3 317.3,23 362.7,13.4 408,3.3"
                     fill="none"
                     stroke="#0f766e"
                     stroke-width="2"
@@ -435,7 +451,7 @@
                   />
                   <polyline
                     class="analysis__line"
-                    points="0,74 34,72 68,64 102,50 136,34 170,20 204,16 238,20 272,32 306,46 340,60 374,70 408,76"
+                    points="0,89.3 45.3,78.2 90.7,71.2 136,61.4 181.3,51.9 226.7,41.2 272,32.2 317.3,22.1 362.7,10.8 408,0.9"
                     fill="none"
                     stroke="#111111"
                     stroke-width="2"
@@ -447,38 +463,38 @@
               <div class="analysis__legend">
                 <span class="analysis__legend-item"
                   ><span class="analysis__swatch analysis__swatch--teal"></span
-                  >Risco previsto pelo modelo</span
+                  >Probabilidade prevista (%), por faixa de 0–10% a 90–100%</span
                 >
                 <span class="analysis__legend-item"
                   ><span class="analysis__swatch analysis__swatch--black"></span
-                  >Floração observada em campo</span
+                  >Floração observada por satélite (%)</span
                 >
               </div>
             </div>
 
             <div class="analysis__stats" id="analysisStats">
               <div class="stat">
-                <p class="stat__value" data-count-to="82" data-suffix="%">0%</p>
-                <p class="stat__label">Acerto na detecção</p>
+                <p class="stat__value" data-count-to="86" data-suffix="%">0%</p>
+                <p class="stat__label">Dos alertas altos se confirmaram</p>
               </div>
               <div class="stat">
-                <p class="stat__value" data-count-to="4.3" data-decimals="1">
-                  0,0
-                </p>
-                <p class="stat__label">Dias de antecedência</p>
+                <p class="stat__value" data-count-to="70" data-suffix="%">0%</p>
+                <p class="stat__label">Das florações foram detectadas</p>
               </div>
               <div class="stat">
-                <p class="stat__value" data-count-to="9" data-suffix="%">0%</p>
-                <p class="stat__label">Falsos negativos</p>
+                <p class="stat__value" data-count-to="12">0</p>
+                <p class="stat__label">Meses de horizonte de previsão</p>
               </div>
             </div>
 
             <div class="analysis__note">
               <div class="analysis__note-bar"></div>
               <p class="analysis__note-text">
-                Resultado de simulação. Os números e o gráfico ilustram o
-                desenho da pesquisa e devem ser trocados pelos dados reais
-                quando o estudo de campo terminar.
+                Validação retrospectiva (hindcast), ainda sem conferência em
+                tempo real. "Floração" aqui é clorofila alta vista por
+                satélite, não toxina confirmada. O modelo quase empata com a
+                média histórica (PR-AUC 0,88 contra 0,87): mostra bem onde e
+                quando costuma florescer, mas não antecipa anos fora do padrão.
               </p>
             </div>
           </div>
@@ -516,7 +532,7 @@
             <span class="eyebrow__line"></span>Sobre nós
           </p>
           <h2 class="about__heading split-text" data-reveal>
-            Quem está por trás do <span class="text-green">Algamar.</span>
+            Quem está por trás da <span class="text-green">Algamar.</span>
           </h2>
           <p class="about__intro reveal reveal-d2" data-reveal>
             Somos um grupo de estudantes de Análise e Desenvolvimento de
@@ -578,7 +594,7 @@
                 </div>
               </div>
               <p class="team__name">Igor Henrique</p>
-              <p class="team__role">Software Architects, Machine Learning</p>
+              <p class="team__role">Software Architect, Machine Learning</p>
               <p class="team__desc">
                 Arquitetura, infraestrutura, implantação e versões, Mecanismo
                 preditivo e Machine Learning
@@ -616,7 +632,7 @@
                 </div>
               </div>
               <p class="team__name">João Francisco</p>
-              <p class="team__role">Software Architects, Machine Learning</p>
+              <p class="team__role">Software Architect, Machine Learning</p>
               <p class="team__desc">
                 Arquitetura, infraestrutura, implantação e versões, Mecanismo
                 preditivo e Machine Learning
@@ -658,7 +674,7 @@
               <p class="team__name">Joicy Nunes</p>
               <p class="team__role">Gestão de Projetos / Pesquisadora</p>
               <p class="team__desc">
-                Gestão, planejamento, acompanhamento e integração Levantamento
+                Gestão, planejamento, acompanhamento e integração, Levantamento
                 bibliográfico e fundamentação teórica
               </p>
             </div>
@@ -675,8 +691,8 @@
         <p class="footer__text">
           Grupo de pesquisa em previsão de florações de algas nocivas no litoral
           de São Paulo.<br />
-          Os resultados de pesquisa apresentados nesta página são uma simulação
-          para fins de demonstração.<br />
+          Resultados de validação retrospectiva com dados de satélite. A Algamar
+          não substitui o monitoramento oficial.<br />
           Em caso de suspeita de contaminação, procure a vigilância sanitária
           local.
         </p>

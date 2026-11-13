@@ -126,36 +126,35 @@ var preveUpdateFases = null;
       title: "Suspeita",
       fill: 17,
       gatilhos:
-        "Manchas atípicas ou espuma abundante na água. Mortandade anormal de peixes ou invertebrados. " +
-        "Notificação no SUS de diarreia ou parestesia após consumo recente de moluscos. Floração ativa " +
-        "reportada no Paraná ou em Santa Catarina.",
+        "Floração no litoral do Paraná ou de Santa Catarina. Mudança na cor da água. Mortandade de peixes. " +
+        "Casos de diarreia após consumo de moluscos. Microalga tóxica identificada em laboratório, ainda " +
+        "abaixo da densidade de floração.",
       acoes:
-        "Notificação preventiva a maricultores e extratores, ordem de amostragem de água direcionada e aviso " +
-        "à Vigilância Sanitária e Epidemiológica para intensificar o rastreio hospitalar.",
+        "Coletar e analisar água do mar nas áreas suspeitas e de cultivo, investigar casos de saúde e avisar " +
+        "maricultores e extratores. É nesta fase que o índice de condições da Algamar pode ajudar a decidir " +
+        "onde coletar primeiro.",
     },
     2: {
       alert: "Alerta 2",
       title: "Confirmação na água",
       fill: 54,
       gatilhos:
-        "Laudo laboratorial com densidade de microalgas potencialmente tóxicas igual ou acima do limite " +
-        "regulatório de segurança.",
+        "Laudo com densidade de microalgas potencialmente tóxicas igual ou acima da Tabela 04 do plano, " +
+        "ou combinação forte dos indicadores do Alerta 1.",
       acoes:
-        "Sugestão de suspensão imediata da despesca, bloqueio da emissão de guias de transporte animal no " +
-        "sistema de defesa agropecuária, notas técnicas a banhistas e comerciantes e ordem urgente de coleta " +
-        "de bivalves para análise de biotoxina.",
+        "Analisar toxinas na carne dos moluscos, suspender a produção e a extração, interditar cautelarmente " +
+        "o produto no comércio e emitir notas técnicas a banhistas, consumidores e maricultores.",
     },
     3: {
       alert: "Alerta 3",
       title: "Confirmação na carne",
       fill: 100,
       gatilhos:
-        "Laudo confirmatório por HPLC ou LC-MS/MS indicando contaminação dos tecidos do molusco acima do " +
-        "tolerável.",
+        "Laudo por HPLC ou LC-MS/MS com toxina na carne dos moluscos acima da Tabela 05 do plano " +
+        "(por exemplo, 0,8 mg/kg de saxitoxina).",
       acoes:
-        "Interdição sanitária obrigatória dos estoques da área afetada, alerta público à imprensa " +
-        "recomendando cessar o consumo de mariscos da região e monitoramento laboratorial contínuo da " +
-        "detoxificação natural.",
+        "Manter a suspensão da produção e da extração, interditar o produto no comércio, orientar a " +
+        "população a não consumir moluscos da área e monitorar a toxina até dois resultados negativos seguidos.",
     },
   };
 

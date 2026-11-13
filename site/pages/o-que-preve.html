@@ -106,14 +106,13 @@
             <span class="eyebrow__line"></span>O que o sistema prevê
           </p>
           <h1 class="preve-hero__title split-text" data-reveal>
-            Não é a mancha. É a semana antes dela.
+            Não é a mancha. É o mês antes dela.
           </h1>
           <p class="preve-hero__body reveal reveal-d2" data-reveal>
-            O ALGAMAR não tenta enxergar a floração que já está na superfície.
-            Ele calcula a probabilidade de ela se formar, projeta para onde vai
-            ser transportada e antecipa quando os moluscos vão ultrapassar o
-            limite legal de toxina — cada uma dessas três coisas com um gatilho
-            próprio.
+            A Algamar não tenta enxergar a floração que já está na superfície.
+            Ela estima, com dados de satélite e do oceano, em que meses e locais
+            a clorofila costuma passar do normal e quando o mar fica propício
+            para cada espécie tóxica. Quem confirma a toxina é o laboratório.
           </p>
         </div>
       </section>
@@ -133,8 +132,8 @@
             Três perguntas, em ordem.
           </h2>
           <p class="preve-body reveal reveal-d2" data-reveal>
-            Cada bloco só faz sentido depois que o anterior respondeu. É o que
-            separa a previsão de um simples painel de monitoramento.
+            Cada bloco responde uma coisa diferente. Os dois primeiros saem dos
+            nossos modelos; o terceiro só o laboratório responde.
           </p>
 
           <div class="preve-connector"><i id="connectorFill"></i></div>
@@ -143,38 +142,33 @@
               <p class="preve-question__label">Pergunta 01</p>
               <h3 class="preve-question__title">Vai florescer?</h3>
               <ul class="preve-question__list">
-                <li>
-                  Pressão atmosférica, vento, radiação solar e chuva acumulada
-                </li>
-                <li>
-                  Temperatura, salinidade, pH e oxigênio dissolvido da água
-                </li>
-                <li>Razões estequiométricas de nutrientes N:P, N:Si e P:Si</li>
-                <li>Densidade celular já contada em laboratório</li>
+                <li>Clorofila-a máxima do mês, por satélite, em pontos de 4 km</li>
+                <li>Temperatura da superfície do mar (OSTIA)</li>
+                <li>Climatologia de cada ponto e mês desde 2000</li>
+                <li>Probabilidade de floração de 1 a 12 meses à frente</li>
               </ul>
             </div>
             <div class="preve-question">
               <p class="preve-question__label">Pergunta 02</p>
-              <h3 class="preve-question__title">Para onde vai?</h3>
+              <h3 class="preve-question__title">O mar está propício?</h3>
               <ul class="preve-question__list">
-                <li>Correntes de maré e influência da Corrente do Brasil</li>
                 <li>
-                  Zonas de convergência, frentes estuarinas e ressurgência
+                  Índice por espécie: Dinophysis, Pseudo-nitzschia, Gymnodinium
+                  e Alexandrium
                 </li>
-                <li>Estratificação térmica e salina da coluna de água</li>
-                <li>Migração vertical ativa dos dinoflagelados móveis</li>
+                <li>Água mais fria que o normal e queda de salinidade</li>
+                <li>Vento de sul e mudança brusca de um mês para o outro</li>
+                <li>Floração ativa no Paraná ou em Santa Catarina</li>
               </ul>
             </div>
             <div class="preve-question">
               <p class="preve-question__label">Pergunta 03</p>
-              <h3 class="preve-question__title">Quando passa do limite?</h3>
+              <h3 class="preve-question__title">Passou do limite?</h3>
               <ul class="preve-question__list">
-                <li>
-                  Densidade celular projetada contra o limiar de cada espécie
-                </li>
-                <li>Acúmulo de biotoxina no tecido do molusco</li>
-                <li>Tempo de depuração natural por espécie cultivada</li>
-                <li>Data provável de interdição e de desinterdição</li>
+                <li>Contagem de células contra a Tabela 04 do plano de SP</li>
+                <li>Toxina nos moluscos contra a Tabela 05 do plano</li>
+                <li>Laudos da Rede Lanagro e da CETESB</li>
+                <li>Resultados do monitoramento estadual de moluscos (PEMMOBI)</li>
               </ul>
             </div>
           </div>
@@ -190,41 +184,41 @@
       >
         <div class="container">
           <p class="eyebrow eyebrow--on-ink reveal" data-reveal>
-            <span class="eyebrow__line"></span>A cadeia da previsão
+            <span class="eyebrow__line"></span>O achado
           </p>
           <h2
             class="preve-heading preve-heading--on-ink split-text"
             data-reveal
           >
-            O céu prevê melhor que o satélite.
+            Simular as correntes não ajudou.
           </h2>
           <p class="preve-body preve-body--on-ink reveal reveal-d2" data-reveal>
-            A leitura isolada de clorofila-a por satélite se mostrou um mau
-            preditor de floração na costa sul e sudeste do Brasil. Por isso o
-            modelo prioriza os parâmetros meteorológicos locais como gatilho
-            principal — em especial para Dinophysis spp. no outono e no inverno,
-            quando a combinação de alta pressão atmosférica, ventos frios de
-            oeste e sul e baixa radiação antecede o evento.
+            Rodamos um modelo oceânico regional (CROCO, 1,5 km, equações de
+            Navier–Stokes) para todo o litoral de SP e testamos as correntes
+            como entrada do modelo. Elas pioraram a previsão e perderam até
+            para um controle com os valores embaralhados. A reanálise GLORYS,
+            com 25 anos de dados, confirmou: o que funciona é satélite com
+            climatologia.
           </p>
 
           <div class="preve-compare reveal reveal-d3" data-reveal>
             <div class="preve-compare__card preve-compare__card--lead">
-              <p class="preve-compare__tag">Preditor principal</p>
-              <h3 class="preve-compare__title">Meteorologia local</h3>
+              <p class="preve-compare__tag">O que funcionou</p>
+              <h3 class="preve-compare__title">Satélite + climatologia</h3>
               <p class="preve-compare__desc">
-                Alta pressão atmosférica, ventos frios de quadrante oeste e sul,
-                baixa radiação solar, nebulosidade e chuva acumulada — medidos
-                em terra, com dados de reanálise e de estações em tempo real.
+                Clorofila e temperatura de satélite, comparadas com o normal de
+                cada ponto e mês. PR-AUC de 0,88 no teste, com probabilidades
+                bem calibradas.
               </p>
             </div>
             <p class="preve-compare__vs">em vez de</p>
             <div class="preve-compare__card preve-compare__card--dim">
-              <p class="preve-compare__tag">Preditor rebaixado</p>
-              <h3 class="preve-compare__title">Clorofila-a isolada</h3>
+              <p class="preve-compare__tag">O que não funcionou</p>
+              <h3 class="preve-compare__title">Correntes simuladas</h3>
               <p class="preve-compare__desc">
-                A concentração de clorofila vista do espaço continua no sistema
-                como contexto, mas perdeu o papel de gatilho: sozinha, ela não
-                anuncia a floração nesta faixa do litoral.
+                Correntes, vorticidade e velocidade vertical tiraram de 0,055 a
+                0,061 da PR-AUC. Nesta escala (mensal, 4 km), o ciclo das
+                estações domina e a média do mês apaga o efeito das correntes.
               </p>
             </div>
           </div>
@@ -240,14 +234,15 @@
       >
         <div class="container">
           <p class="eyebrow reveal" data-reveal>
-            <span class="eyebrow__line"></span>A cadeia da previsão
+            <span class="eyebrow__line"></span>As escalas
           </p>
           <h2 class="preve-heading split-text" data-reveal>
-            Três escalas ao mesmo tempo.
+            O que cada escala enxerga.
           </h2>
           <p class="preve-body reveal reveal-d2" data-reveal>
-            A previsão de movimentação da mancha só fecha quando as três escalas
-            espaciais rodam integradas. Uma sozinha erra o destino.
+            Uma floração pode chegar de longe ou nascer dentro de uma baía. Os
+            dados de satélite e de reanálise enxergam bem as duas primeiras
+            escalas; a terceira ainda depende de coleta em campo.
           </p>
         </div>
 
@@ -327,16 +322,16 @@
                 >≈ 100 km</span
               >
               <span class="preve-scale__tag" style="left: 29%; top: 90%"
-                >Corrente do Brasil</span
+                >Vento sul e frente fria</span
               >
             </div>
             <div class="preve-scale__text">
               <p class="preve-scale__eyebrow">Escala larga</p>
-              <h3 class="preve-scale__title">Regime regional</h3>
+              <h3 class="preve-scale__title">Florações que vêm do Sul</h3>
               <p class="preve-scale__desc">
-                Ventos regionais, correntes de maré e a influência estacional da
-                Corrente do Brasil definem o pano de fundo do transporte da
-                mancha.
+                Em junho de 2016, a floração de Dinophysis do Paraná e de Santa
+                Catarina chegou a Santos, São Sebastião e Peruíbe. O índice de
+                condições acendeu em quase todo o litoral naquele mês.
               </p>
             </div>
           </div>
@@ -419,7 +414,7 @@
                 >Frente</span
               >
               <span class="preve-scale__pill" style="left: 80%; top: 9%"
-                >≈ 10 km</span
+                >≈ 4 km</span
               >
               <span class="preve-scale__tag" style="left: 69%; top: 91%"
                 >Ressurgência</span
@@ -427,11 +422,11 @@
             </div>
             <div class="preve-scale__text">
               <p class="preve-scale__eyebrow">Escala intermediária</p>
-              <h3 class="preve-scale__title">Encontros de água</h3>
+              <h3 class="preve-scale__title">O ponto do mapa</h3>
               <p class="preve-scale__desc">
-                Zonas de convergência de massas de água, frentes estuarinas e
-                processos locais de ressurgência concentram ou dispersam a
-                floração.
+                Cada ponto do mapa de risco tem 4 km. O risco cresce de norte
+                para sul e da costa para os estuários: Iguape, Cananéia e Santos
+                têm os valores mais altos; Ilhabela e Ubatuba, os mais baixos.
               </p>
             </div>
           </div>
@@ -530,9 +525,9 @@
               <p class="preve-scale__eyebrow">Escala pequena</p>
               <h3 class="preve-scale__title">Dentro da baía</h3>
               <p class="preve-scale__desc">
-                A estratificação térmica e salina da coluna de água em baías e
-                estuários abrigados favorece a migração vertical ativa dos
-                dinoflagelados móveis.
+                De 2023 a 2026, 4 das 6 suspensões por toxina foram na mesma
+                área de cultivo de Ubatuba, sem floração no Sul e sem água fria.
+                A média mensal de satélite ainda não enxerga essa escala.
               </p>
             </div>
           </div>
@@ -542,8 +537,9 @@
           <div class="preve-note reveal reveal-d4" data-reveal>
             <div class="preve-note__bar"></div>
             <p class="preve-note__text preve-scales__note">
-              As três rodam de forma integrada: o resultado de cada escala
-              alimenta a seguinte.
+              Para florações locais de baixa intensidade, o índice diz
+              "atenção", não "alerta". Melhorar essa escala exige dados diários
+              e contagens de células em campo.
             </p>
           </div>
         </div>
@@ -559,10 +555,10 @@
         <div class="preve-fases-pin">
           <div class="container">
             <p class="eyebrow reveal" data-reveal>
-              <span class="eyebrow__line"></span>Saída do sistema
+              <span class="eyebrow__line"></span>Plano de contingência de SP
             </p>
             <h2 class="preve-heading split-text" data-reveal>
-              A previsão vira uma de três fases.
+              O alerta oficial tem três fases.
             </h2>
 
             <div
@@ -613,19 +609,20 @@
                   <div class="preve-stepper__row">
                     <p class="preve-stepper__row-label">Gatilhos</p>
                     <p class="preve-stepper__row-text" id="stepperGatilhos">
-                      Manchas atípicas ou espuma abundante na água. Mortandade
-                      anormal de peixes ou invertebrados. Notificação no SUS de
-                      diarreia ou parestesia após consumo recente de moluscos.
-                      Floração ativa reportada no Paraná ou em Santa Catarina.
+                      Floração no litoral do Paraná ou de Santa Catarina.
+                      Mudança na cor da água. Mortandade de peixes. Casos de
+                      diarreia após consumo de moluscos. Microalga tóxica
+                      identificada em laboratório, ainda abaixo da densidade de
+                      floração.
                     </p>
                   </div>
                   <div class="preve-stepper__row">
                     <p class="preve-stepper__row-label">Ações</p>
                     <p class="preve-stepper__row-text" id="stepperAcoes">
-                      Notificação preventiva a maricultores e extratores, ordem
-                      de amostragem de água direcionada e aviso à Vigilância
-                      Sanitária e Epidemiológica para intensificar o rastreio
-                      hospitalar.
+                      Coletar e analisar água do mar nas áreas suspeitas e de
+                      cultivo, investigar casos de saúde e avisar maricultores
+                      e extratores. É nesta fase que o índice de condições da
+                      Algamar pode ajudar a decidir onde coletar primeiro.
                     </p>
                   </div>
                 </div>
@@ -650,8 +647,9 @@
             Cada espécie tem seu próprio limite.
           </h2>
           <p class="preve-body reveal reveal-d2" data-reveal>
-            É contra estes valores que a densidade celular projetada é
-            comparada. Ultrapassou, o Alerta 2 dispara sozinho.
+            São os valores da Tabela 04 do plano de contingência de SP. Quando
+            a contagem de células na água chega a eles, os moluscos são
+            analisados para toxina e o Alerta 2 pode ser acionado.
           </p>
 
           <div class="preve-thresholds__list reveal reveal-d3" data-reveal>
@@ -746,87 +744,86 @@
           <div class="preve-note reveal reveal-d4" data-reveal>
             <div class="preve-note__bar"></div>
             <p class="preve-note__text preve-thresholds__note">
-              Barras em escala logarítmica — a distância entre o primeiro e o
+              Barras em escala logarítmica: a distância entre o primeiro e o
               último limite é de 2.500 vezes. Para Gymnodinium, o limite é 1.000
-              céls/L em áreas de cultivo de bivalves e 2.000 céls/L para ostras
-              e outros organismos.
+              céls/L para moluscos e 2.000 céls/L para outros organismos, como
+              ostras. Fonte: Resolução Conjunta SES/SIMA/SAA-1, de 23/04/2021.
             </p>
           </div>
         </div>
       </section>
 
-      <!-- Outras previsões -->
+      <!-- As espécies -->
       <section
         class="preve-section"
         id="outras-previsoes"
         data-checkpoint="78"
-        data-checkpoint-label="Outras previsões"
+        data-checkpoint-label="As espécies"
       >
         <div class="container">
           <p class="eyebrow reveal" data-reveal>
-            <span class="eyebrow__line"></span>Os números que o sistema vigia
+            <span class="eyebrow__line"></span>As espécies que o sistema vigia
           </p>
           <h2 class="preve-heading split-text" data-reveal>
-            O que mais o modelo antecipa.
+            O que antecedeu cada floração.
           </h2>
 
           <div class="preve-extra__grid reveal reveal-d2" data-reveal>
             <div class="preve-extra-card">
               <div class="preve-extra-card__stat-zone">
-                <p class="preve-extra-card__stat">0,8 mg/kg</p>
-                <p class="preve-extra-card__tag">Toxinas paralisantes · PSP</p>
+                <p class="preve-extra-card__stat">160 µg/kg</p>
+                <p class="preve-extra-card__tag">Toxinas diarreicas · DSP</p>
                 <p class="preve-extra-card__stat-desc">
-                  Equivalente de saxitoxina por quilo de carne de molusco. Acima
-                  disso, Alerta 3.
+                  Limite de ácido ocadaico usado pelo monitoramento estadual
+                  (PEMMOBI). De 2023 a 2026, 6 meses passaram dele, com até 615
+                  µg/kg em Ubatuba (maio de 2023).
                 </p>
               </div>
               <div class="preve-extra-card__detail-zone">
-                <p class="preve-scale__eyebrow">Estresse por nutrientes</p>
+                <p class="preve-scale__eyebrow">Dinophysis</p>
                 <h3 class="preve-extra-card__title">
-                  Quando a alga decide produzir mais toxina
+                  Água fria e floração no Sul
                 </h3>
                 <p class="preve-extra-card__desc">
-                  O sistema calcula sozinho as razões estequiométricas entre
-                  nitrogênio, fósforo e sílica a partir das concentrações de
-                  nitrito, nitrato, amônia, fosfato e silicato dissolvidos. O
-                  desequilíbrio na razão limitante é o que induz o fitoplâncton
-                  alelopático a reforçar a síntese de toxinas — ou seja, prevê
-                  não só quantas células existem, mas quão venenosas elas tendem
-                  a ficar.
+                  Nos meses de floração de Dinophysis no litoral de SP, já havia
+                  floração no Paraná ou em Santa Catarina em 92% dos casos,
+                  contra 18% nos outros meses. A água mais fria que o normal
+                  apareceu em 67%, contra 10%. A época vai de março a setembro.
                 </p>
                 <div class="preve-extra-card__mini-list">
-                  <span>N:P — nitrogênio e fósforo</span>
-                  <span>N:Si — nitrogênio e sílica</span>
-                  <span>P:Si — fósforo e sílica</span>
+                  <span>Floração no PR ou em SC</span>
+                  <span>Água 1 °C mais fria</span>
+                  <span>Queda de salinidade</span>
                 </div>
               </div>
             </div>
 
             <div class="preve-extra-card">
               <div class="preve-extra-card__stat-zone">
-                <p class="preve-extra-card__stat">160 µg/kg</p>
-                <p class="preve-extra-card__tag">Toxinas diarreicas · DSP</p>
+                <p class="preve-extra-card__stat">0,8 mg/kg</p>
+                <p class="preve-extra-card__tag">Toxinas paralisantes · PSP</p>
                 <p class="preve-extra-card__stat-desc">
-                  Equivalente de ácido ocadaico e DTX por quilo de
-                  hepatopâncreas ou carne. Acima disso, Alerta 3.
+                  Equivalente de saxitoxina por quilo de molusco (Tabela 05 do
+                  plano de SP). Nenhum resultado acima do limite no PEMMOBI de
+                  2023 a 2026.
                 </p>
               </div>
               <div class="preve-extra-card__detail-zone">
-                <p class="preve-scale__eyebrow">Plastisfera costeira</p>
+                <p class="preve-scale__eyebrow">Gymnodinium e Alexandrium</p>
                 <h3 class="preve-extra-card__title">
-                  Onde o plástico vira criadouro
+                  O que o índice ainda não separa
                 </h3>
                 <p class="preve-extra-card__desc">
-                  Cruzando dados térmicos regionais com o mapeamento de resíduos
-                  plásticos marinhos, o modelo estima as zonas com alta
-                  adequabilidade para colonização de dinoflagelados bênticos
-                  sobre fragmentos de micro e macroplástico flutuante — espécies
-                  que produzem ciguatoxina e ácido ocadaico.
+                  Para Gymnodinium catenatum, o índice fica "propício" em 25% dos
+                  meses de fevereiro a junho, com ou sem floração. Alexandrium
+                  catenella exige água de 9 a 15 °C, que o litoral de SP não
+                  teve desde 2000. Os Alexandrium de água quente, como o de São
+                  Sebastião em 2019, ainda não têm dados de campo.
                 </p>
                 <div class="preve-extra-card__mini-list">
-                  <span>Ostreopsis cf. ovata</span>
-                  <span>Gambierdiscus spp.</span>
-                  <span>Prorocentrum lima</span>
+                  <span>G. catenatum · fev–jun</span>
+                  <span>A. catenella · água fria</span>
+                  <span>Pseudo-nitzschia · nutrientes</span>
                 </div>
               </div>
             </div>
@@ -839,19 +836,20 @@
         class="preve-section"
         id="previsao"
         data-checkpoint="85"
-        data-checkpoint-label="A previsão"
+        data-checkpoint-label="A volta"
       >
         <div class="container">
           <p class="eyebrow reveal" data-reveal>
-            <span class="eyebrow__line"></span>A previsão que devolve o sustento
+            <span class="eyebrow__line"></span>Como a área volta a produzir
           </p>
           <h2 class="preve-heading split-text" data-reveal>
-            Prever a volta também é prever.
+            Liberar também tem regra.
           </h2>
           <p class="preve-body reveal reveal-d2" data-reveal>
-            Interditar é a parte fácil. O modelo também projeta a depuração
-            natural da toxina, para que a área volte a produzir assim que for
-            seguro — e não semanas depois, por precaução.
+            Interditar é a parte fácil. O plano de SP também define quando a
+            área pode voltar a produzir, e a volta depende de laudo, não de
+            modelo. Se a floração persistir sem toxina, o Alerta 2 continua e as
+            análises são refeitas em 15 a 20 dias.
           </p>
 
           <div class="preve-recovery__grid reveal reveal-d3" data-reveal>
@@ -874,18 +872,16 @@
           </div>
 
           <div class="preve-recovery-wide reveal reveal-d4" data-reveal>
-            <p class="preve-recovery-card__label">Berbigão sentinela</p>
+            <p class="preve-recovery-card__label">Tempo de depuração</p>
             <h3 class="preve-recovery-wide__title">
-              Cada espécie se limpa em um ritmo
+              Cada organismo se limpa em um ritmo
             </h3>
             <p class="preve-recovery-wide__desc">
-              O algoritmo de depuração aplica tempos diferentes por espécie
-              cultivada. O berbigão Anomalocardia flexuosa tem taxa experimental
-              de detoxificação de cerca de 3% por hora para toxina diarreica —
-              bem mais rápida que a de mexilhões e ostras. Isso permite
-              desinterditar os bancos extrativos de berbigão antes do restante
-              da área, em vez de manter todo mundo parado pelo prazo do
-              organismo mais lento.
+              Os moluscos filtram muita água, acumulam mais toxina e não mostram
+              sinal de contaminação. Segundo o plano de SP, os mexilhões levam
+              cerca de três semanas para eliminar por completo a toxina
+              paralisante; os peixes, cerca de duas. Por isso os moluscos são o
+              centro do monitoramento.
             </p>
           </div>
         </div>
@@ -900,51 +896,57 @@
       >
         <div class="container">
           <p class="eyebrow reveal" data-reveal>
-            <span class="eyebrow__line"></span>Saída do sistema
+            <span class="eyebrow__line"></span>A base
           </p>
           <h2 class="preve-heading split-text" data-reveal>
             De onde vêm estas regras.
           </h2>
           <p class="preve-body reveal reveal-d2" data-reveal>
-            A arquitetura foi estruturada sobre dados de ecologia costeira e
-            ecotoxicologia e sobre os fluxos regulatórios já existentes.
+            As fases e os limites vêm do plano oficial de SP. As condições por
+            espécie vêm de artigos revisados e foram conferidas com os
+            episódios registrados no litoral paulista.
           </p>
 
           <div class="preve-sources__list reveal reveal-d3" data-reveal>
             <div class="preve-source-row">
               <span class="preve-source-row__name"
-                >Plano de Contingência do Estado de São Paulo</span
+                >Plano de contingência de SP · Resolução Conjunta
+                SES/SIMA/SAA-1</span
               >
               <span class="preve-source-row__meta"
-                >2021 · fluxo regulatório</span
+                >2021 · fases, limites e episódios</span
               >
             </div>
             <div class="preve-source-row">
               <span class="preve-source-row__name"
-                >Pesquisas meteorológicas da Epagri e do IFSC</span
+                >PEMMOBI · Defesa Agropecuária do Estado de SP</span
               >
               <span class="preve-source-row__meta"
-                >2023 · gatilhos climáticos</span
+                >2023–2026 · toxinas em moluscos</span
               >
             </div>
             <div class="preve-source-row">
               <span class="preve-source-row__name"
-                >Pesquisas tróficas e de biomarcadores da UFPR</span
-              >
-              <span class="preve-source-row__meta">2021 · ecotoxicologia</span>
-            </div>
-            <div class="preve-source-row">
-              <span class="preve-source-row__name"
-                >Rede de laboratórios de referência RENAQUA e LAQUA</span
-              >
-              <span class="preve-source-row__meta">laudos analíticos</span>
-            </div>
-            <div class="preve-source-row">
-              <span class="preve-source-row__name"
-                >GEDAVE da CDA/SAA e PGA do MAPA</span
+                >Copernicus Marine · clorofila, OSTIA, GLORYS e vento</span
               >
               <span class="preve-source-row__meta"
-                >rastreabilidade e trânsito</span
+                >2000–2026 · dados do modelo</span
+              >
+            </div>
+            <div class="preve-source-row">
+              <span class="preve-source-row__name"
+                >Mafra Jr. et al. · Harmful Algae 158</span
+              >
+              <span class="preve-source-row__meta"
+                >2026 · Dinophysis no Sul</span
+              >
+            </div>
+            <div class="preve-source-row">
+              <span class="preve-source-row__name"
+                >CEBIMar/USP · marés vermelhas e estação meteorológica</span
+              >
+              <span class="preve-source-row__meta"
+                >2019–2025 · episódios do Litoral Norte</span
               >
             </div>
           </div>
@@ -960,8 +962,8 @@
         <p class="footer__text">
           Grupo de pesquisa em previsão de florações de algas nocivas no litoral
           de São Paulo.<br />
-          Os resultados de pesquisa apresentados nesta página são uma simulação
-          para fins de demonstração.<br />
+          Resultados de validação retrospectiva com dados de satélite. A Algamar
+          não substitui o monitoramento oficial.<br />
           Em caso de suspeita de contaminação, procure a vigilância sanitária
           local.
         </p>

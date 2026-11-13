@@ -107,9 +107,10 @@
             A máquina por trás do alerta.
           </h1>
           <p class="como-hero__body reveal reveal-d2" data-reveal>
-            Cinco módulos separam o dado bruto da decisão sanitária. No meio
-            deles há um modelo que aprende com o histórico — mas que, por
-            escolha de projeto, nunca interdita nada sozinho.
+            Cinco módulos separam o dado de satélite do nível de risco no
+            dashboard. No meio deles há um modelo que aprendeu com 26 anos de
+            histórico, mas que, por escolha de projeto, nunca interdita nada
+            sozinho.
           </p>
         </div>
       </section>
@@ -129,9 +130,8 @@
             O caminho do dado até a decisão.
           </h2>
           <p class="como-body reveal reveal-d2" data-reveal>
-            Nada pula etapa. Uma contagem de células feita no microscópio hoje
-            de manhã percorre os cinco módulos antes de virar uma ordem de
-            suspensão de despesca.
+            Nada pula etapa. Os dados de satélite do último mês percorrem os
+            cinco módulos antes de virar um nível de risco por município.
           </p>
 
           <div class="como-modules__grid reveal reveal-d3" data-reveal>
@@ -142,9 +142,9 @@
               </div>
               <h3 class="como-module__title">Ingestão de dados</h3>
               <p class="como-module__desc">
-                Recebe leituras de boias por API ou formulário manual,
-                contagens de fitoplâncton por estrato de coleta e laudos de
-                biotoxina dos laboratórios de referência.
+                Baixa todo mês a clorofila e a temperatura de satélite, a
+                reanálise GLORYS e o vento do Copernicus, desde janeiro de 2000,
+                e confere se cada fonte chegou completa.
               </p>
             </div>
             <div class="como-module">
@@ -152,11 +152,10 @@
                 <span class="como-module__num">02</span>
                 <span class="como-module__phase">Previsão</span>
               </div>
-              <h3 class="como-module__title">Inteligência preditiva</h3>
+              <h3 class="como-module__title">Mapa de risco</h3>
               <p class="como-module__desc">
-                Roda as simulações de crescimento populacional e de dispersão,
-                cruzando meteorologia em tempo real com a hidrodinâmica em
-                três escalas.
+                Um conjunto de 8 modelos XGBoost estima a chance de floração
+                em 2.406 pontos de 4 km, para cada um dos próximos 12 meses.
               </p>
             </div>
             <div class="como-module">
@@ -164,23 +163,23 @@
                 <span class="como-module__num">03</span>
                 <span class="como-module__phase">Regras</span>
               </div>
-              <h3 class="como-module__title">Motor de regras</h3>
+              <h3 class="como-module__title">Índice de condições</h3>
               <p class="como-module__desc">
-                Compara os resultados com os limites regulatórios e alterna
-                cada região entre as três fases de alerta, disparando as
-                ações de cada uma.
+                Compara temperatura, salinidade, vento e mistura da água com a
+                ficha de cada espécie tóxica e classifica o mês em
+                desfavorável, parcialmente propício ou propício.
               </p>
             </div>
             <div class="como-module">
               <div class="como-module__head">
                 <span class="como-module__num">04</span>
-                <span class="como-module__phase">Rastreio</span>
+                <span class="como-module__phase">Registro</span>
               </div>
               <h3 class="como-module__title">Rastreabilidade</h3>
               <p class="como-module__desc">
-                Liga a decisão à cadeia produtiva: cadastro das unidades de
-                cultivo, bloqueio de guias de trânsito e cálculo de depuração
-                por espécie.
+                Cada modelo é guardado com assinatura SHA256 e cada execução
+                gera um registro. Quando falta dado, o sistema mostra "dados
+                insuficientes" em vez de inventar um número.
               </p>
             </div>
             <div class="como-module">
@@ -188,11 +187,11 @@
                 <span class="como-module__num">05</span>
                 <span class="como-module__phase">Alerta</span>
               </div>
-              <h3 class="como-module__title">Vigilância e portal</h3>
+              <h3 class="como-module__title">Dashboard</h3>
               <p class="como-module__desc">
-                Publica o status sanitário para a população, recebe
-                notificações de casos pelo SUS e denúncias georreferenciadas
-                de anomalias na costa.
+                Mostra o risco por município, o histórico, as condições
+                propícias e os relatórios. O aviso oficial continua com os
+                órgãos do plano de contingência de SP.
               </p>
             </div>
           </div>
@@ -214,55 +213,54 @@
             Quatro famílias de variáveis.
           </h2>
           <p class="como-body reveal reveal-d2" data-reveal>
-            Elas não pesam igual. A pesquisa mostrou que os parâmetros
-            meteorológicos locais preveem melhor do que a leitura isolada de
-            clorofila por satélite nesta faixa do litoral — e o modelo foi
-            montado assim.
+            Elas não pesam igual. Testamos cada família contra o modelo sem
+            ela, no mesmo período de teste: só ficou o que melhorou a
+            previsão.
           </p>
 
           <div class="como-families__grid reveal reveal-d3" data-reveal>
             <div class="como-family">
               <p class="como-family__num">Família 01</p>
-              <h3 class="como-family__tag">Peso alto · gatilho principal</h3>
+              <h3 class="como-family__tag">Peso alto · mapa de risco</h3>
               <ul class="como-family__list">
-                <li>Pressão atmosférica</li>
-                <li>Direção e velocidade do vento</li>
-                <li>Radiação solar</li>
-                <li>Nebulosidade</li>
-                <li>Precipitação acumulada</li>
+                <li>Clorofila-a máxima do mês</li>
+                <li>Clorofila média dos 3 últimos meses</li>
+                <li>Temperatura da superfície</li>
+                <li>Climatologia do ponto e mês</li>
+                <li>Anomalias contra o normal</li>
               </ul>
             </div>
             <div class="como-family">
               <p class="como-family__num">Família 02</p>
-              <h3 class="como-family__tag">Peso alto · transporte</h3>
+              <h3 class="como-family__tag">Índice por espécie</h3>
               <ul class="como-family__list">
-                <li>Correntes de maré</li>
-                <li>Corrente do Brasil</li>
-                <li>Frentes e convergências</li>
-                <li>Ressurgência local</li>
-                <li>Estratificação da coluna</li>
+                <li>Anomalia de temperatura</li>
+                <li>Anomalia de salinidade</li>
+                <li>Vento de sul</li>
+                <li>Mudança brusca no mês</li>
+                <li>Floração no PR e em SC</li>
               </ul>
             </div>
             <div class="como-family">
               <p class="como-family__num">Família 03</p>
-              <h3 class="como-family__tag">Peso médio · condição da água</h3>
+              <h3 class="como-family__tag">Testadas e descartadas</h3>
               <ul class="como-family__list">
-                <li>Temperatura</li>
-                <li>Salinidade</li>
-                <li>pH</li>
-                <li>Oxigênio dissolvido</li>
-                <li>Razões N:P, N:Si, P:Si</li>
+                <li>Correntes (u, v)</li>
+                <li>Vorticidade e divergência</li>
+                <li>Velocidade vertical</li>
+                <li>Salinidade de satélite perto da costa</li>
+                <li>Camada de mistura (ganho de só +0,003)</li>
               </ul>
             </div>
             <div class="como-family">
               <p class="como-family__num">Família 04</p>
-              <h3 class="como-family__tag">Rótulo · valor de referência</h3>
+              <h3 class="como-family__tag">Gabarito · conferência</h3>
               <ul class="como-family__list">
-                <li>Densidade celular por espécie</li>
-                <li>Estrato de coleta</li>
-                <li>Laudos de biotoxina</li>
-                <li>Histórico de interdições</li>
-                <li>Clorofila-a orbital</li>
+                <li>Clorofila acima de 1,5 mg/m³</li>
+                <li>Episódios do plano de SP (2000–2018)</li>
+                <li>Toxinas do PEMMOBI (2023–2026)</li>
+                <li>Marés vermelhas do CEBIMar/USP</li>
+                <li>Florações no PR e em SC</li>
               </ul>
             </div>
           </div>
@@ -270,10 +268,10 @@
           <div class="preve-note como-note reveal reveal-d4" data-reveal>
             <div class="preve-note__bar"></div>
             <p class="preve-note__text">
-              A família 04 não é só entrada: é o gabarito. Cada laudo de
-              laboratório que chega diz ao sistema se a previsão daquela
-              semana estava certa ou errada — o que torna o próprio
-              monitoramento de rotina a fonte de treino do modelo.
+              A família 04 não é entrada: é o gabarito. Os laudos do PEMMOBI
+              foram os primeiros dados com ausência medida (um mês liberado é
+              um mês em que a toxina ficou abaixo do limite), o que permitiu
+              medir pela primeira vez o alarme falso do índice.
             </p>
           </div>
         </div>
@@ -294,9 +292,9 @@
             Um ciclo que não fecha nunca.
           </h2>
           <p class="como-body reveal reveal-d2" data-reveal>
-            O modelo não é treinado uma vez e esquecido. Ele roda, erra,
-            recebe o laudo que prova o erro e volta para o treino com esse
-            caso incorporado.
+            O modelo não é treinado uma vez e esquecido. Ele roda, é conferido
+            com o que o satélite e os laudos mostraram, e uma nova versão só
+            substitui a anterior se ganhar no mesmo teste.
           </p>
 
           <div class="como-cycle reveal reveal-d3" data-reveal>
@@ -346,45 +344,45 @@
               <div class="como-cycle__step">
                 <p class="como-cycle__step-label">Etapa 01 · Série histórica</p>
                 <p class="como-cycle__step-desc">
-                  Anos de registros de floração, de laudos e das condições
-                  ambientais que os antecederam formam a base de exemplos.
+                  De janeiro de 2000 a setembro de 2026: clorofila,
+                  temperatura e climatologia mês a mês em 2.406 pontos do
+                  litoral.
                 </p>
               </div>
               <div class="como-cycle__step">
                 <p class="como-cycle__step-label">Etapa 02 · Treino</p>
                 <p class="como-cycle__step-desc">
-                  O modelo aprende quais combinações de vento, pressão,
-                  radiação e condição da água precederam florações reais — e
-                  quais não precederam nada.
+                  Treino com meses até 2018 e ajuste em 2019–2021. As médias
+                  históricas usam só anos anteriores, para o modelo não ver o
+                  futuro sem querer.
                 </p>
               </div>
               <div class="como-cycle__step">
-                <p class="como-cycle__step-label">Etapa 03 · Previsão diária</p>
+                <p class="como-cycle__step-label">Etapa 03 · Previsão mensal</p>
                 <p class="como-cycle__step-desc">
-                  Com os dados do dia, ele estima a probabilidade de floração
-                  por região e projeta o transporte da mancha para os dias
-                  seguintes.
+                  Com os dados do último mês, ele estima a probabilidade de
+                  floração em cada ponto para cada um dos próximos 12 meses.
                 </p>
               </div>
               <div class="como-cycle__step">
                 <p class="como-cycle__step-label">
-                  Etapa 04 · Confronto com o laudo
+                  Etapa 04 · Confronto com o observado
                 </p>
                 <p class="como-cycle__step-desc">
-                  Quando o resultado de laboratório chega, ele vira o
-                  veredito daquela previsão. Acertos e erros voltam para a
-                  base e o ciclo recomeça mais informado.
+                  Quando o mês chega, o satélite mostra se houve floração, e os
+                  laudos do PEMMOBI mostram se houve toxina. Acertos e erros
+                  entram na próxima versão.
                 </p>
               </div>
             </div>
           </div>
 
           <p class="como-fineprint reveal reveal-d4" data-reveal>
-            A arquitetura de cinco módulos, os limiares e as integrações vêm
-            da especificação de requisitos do projeto. O desenho interno do
-            modelo — algoritmo, janela temporal e forma de validação — ainda
-            está em definição e deve ser fechado com os dados reais de
-            campo.
+            O modelo original da equipe usava informação do futuro sem querer.
+            Depois da correção, a nota caiu de 0,80 para 0,74 de PR-AUC, e
+            preferimos o número honesto. O alvo ainda é clorofila, não toxina:
+            para prever alga tóxica de verdade faltam séries de contagem de
+            células (CETESB e CDA), que não são públicas.
           </p>
         </div>
       </section>
@@ -418,15 +416,15 @@
               <p class="como-decision__tag">O que o modelo faz</p>
               <h3 class="como-decision__title">Antecipa e prioriza</h3>
               <p class="como-decision__desc">
-                Aponta onde a floração é provável, com quantos dias de
-                antecedência, e ordena a fila de coleta para que o
-                laboratório analise primeiro os pontos de maior risco.
+                Aponta onde e quando a floração é provável, até 12 meses à
+                frente, e indica quando o mar está propício para cada espécie
+                tóxica, para que a coleta comece pelos pontos de maior risco.
               </p>
               <ul class="como-decision__list">
-                <li>Estima probabilidade por região</li>
-                <li>Projeta o transporte da mancha</li>
+                <li>Estima probabilidade por ponto e município</li>
+                <li>Indica condições propícias por espécie</li>
                 <li>Sugere onde coletar primeiro</li>
-                <li>Propõe a ativação do Alerta 1</li>
+                <li>Apoia a decisão do Alerta 1</li>
               </ul>
             </div>
             <div class="como-decision__card">
@@ -439,7 +437,7 @@
               </p>
               <ul class="como-decision__list">
                 <li>Dispara Alerta 2 e Alerta 3</li>
-                <li>Bloqueia guias de trânsito animal</li>
+                <li>Suspende produção e extração</li>
                 <li>Exige 3 análises de água para reverter</li>
                 <li>Exige 2 análises de tecido para reverter</li>
               </ul>
@@ -464,8 +462,8 @@
           </h2>
           <p class="como-body reveal reveal-d2" data-reveal>
             Um modelo de saúde pública não é avaliado só pela taxa de acerto
-            geral. O que importa é qual tipo de erro ele comete — e o sistema
-            é calibrado assumindo que um deles é bem mais caro que o outro.
+            geral. O que importa é qual tipo de erro ele comete, e por isso
+            medimos as duas taxas separadas no teste de 2022 a 2026.
           </p>
 
           <div class="como-matrix reveal reveal-d3" data-reveal>
@@ -487,9 +485,9 @@
               <p class="como-matrix__cell-tag">Falso positivo</p>
               <h3 class="como-matrix__cell-title">Susto e custo</h3>
               <p class="como-matrix__cell-desc">
-                Coleta extra de laboratório e apreensão desnecessária.
-                Desgasta a confiança do produtor no sistema, mas ninguém
-                adoece.
+                Coleta extra e apreensão desnecessária. Desgasta a confiança
+                do produtor, mas ninguém adoece. No teste, 86% dos alertas
+                altos se confirmaram; 14% foram susto.
               </p>
             </div>
 
@@ -499,8 +497,8 @@
               <h3 class="como-matrix__cell-title">O erro que não se aceita</h3>
               <p class="como-matrix__cell-desc">
                 Molusco contaminado chega à mesa sem que nada tenha sido
-                rastreado. É o erro que o sistema existe para evitar, e é
-                por ele que o limiar de disparo é deliberadamente sensível.
+                rastreado. O nível alto pegou 70% das florações; o nível
+                moderado, a partir de 24%, existe para ampliar a rede.
               </p>
             </div>
             <div class="como-matrix__cell">
@@ -532,97 +530,95 @@
 
           <div class="como-stats__grid reveal reveal-d2" data-reveal>
             <div class="como-stat-card">
-              <p class="como-stat-card__value">99,9%</p>
+              <p class="como-stat-card__value">2.406</p>
               <p class="como-stat-card__label">
-                Disponibilidade do motor de alertas
+                Pontos de mar monitorados
               </p>
               <p class="como-stat-card__desc">
-                O envio automatizado de notificações é tratado como serviço
-                crítico, não como funcionalidade acessória.
+                Uma grade de 4 km do litoral de Ubatuba a Cananéia, com
+                probabilidade para cada um dos próximos 12 meses.
               </p>
             </div>
             <div class="como-stat-card">
-              <p class="como-stat-card__value">5 min</p>
+              <p class="como-stat-card__value">14</p>
               <p class="como-stat-card__label">
-                Tempo até o disparo da notificação
+                Municípios com risco próprio
               </p>
               <p class="como-stat-card__desc">
-                Do laudo confirmado até o SMS, e-mail ou WhatsApp sair para
-                o cadastro afetado.
+                De Ubatuba a Cananéia. O valor de cada município é a média
+                dos pontos de mar a até 20 km da orla.
               </p>
             </div>
             <div class="como-stat-card">
-              <p class="como-stat-card__value">2FA</p>
+              <p class="como-stat-card__value">SHA256</p>
               <p class="como-stat-card__label">
-                Autenticação de acesso ao portal
+                Modelos imutáveis
               </p>
               <p class="como-stat-card__desc">
-                Login de vigilância sanitária e gestores exige segundo
-                fator, dado o peso da decisão que o sistema apoia.
+                Cada versão do modelo é registrada com assinatura e não pode
+                ser alterada sem virar outra versão.
               </p>
             </div>
           </div>
 
           <div class="como-integrations__list reveal reveal-d3" data-reveal>
             <div class="como-integration-row">
-              <span class="como-integration-row__name">SMS e WhatsApp</span>
+              <span class="como-integration-row__name">Copernicus Marine</span>
               <span class="como-integration-row__desc"
-                >Canal direto com maricultores e extratores cadastrados.</span
-              >
-              <span class="como-integration-row__tag">Saída</span>
-            </div>
-            <div class="como-integration-row">
-              <span class="como-integration-row__name"
-                >E-mail institucional</span
-              >
-              <span class="como-integration-row__desc"
-                >Vigilâncias sanitárias e epidemiológicas do SUS.</span
-              >
-              <span class="como-integration-row__tag">Saída</span>
-            </div>
-            <div class="como-integration-row">
-              <span class="como-integration-row__name">GEDAVE · CDA/SAA</span>
-              <span class="como-integration-row__desc"
-                >Bloqueio automático de guias de trânsito animal de área
-                interditada.</span
-              >
-              <span class="como-integration-row__tag">Integração</span>
-            </div>
-            <div class="como-integration-row">
-              <span class="como-integration-row__name">PGA · MAPA</span>
-              <span class="como-integration-row__desc"
-                >Gestão agropecuária e rastreabilidade dos lotes de
-                bivalves.</span
-              >
-              <span class="como-integration-row__tag">Integração</span>
-            </div>
-            <div class="como-integration-row">
-              <span class="como-integration-row__name"
-                >RENAQUA e LAQUA</span
-              >
-              <span class="como-integration-row__desc"
-                >Entrada credenciada dos laudos de ficotoxinas por HPLC,
-                LC-MS/MS e ELISA.</span
+                >Clorofila, temperatura, salinidade, reanálise GLORYS e
+                vento.</span
               >
               <span class="como-integration-row__tag">Entrada</span>
             </div>
             <div class="como-integration-row">
-              <span class="como-integration-row__name">INMET e SimCosta</span>
+              <span class="como-integration-row__name">CEBIMar/USP</span>
               <span class="como-integration-row__desc"
-                >Meteorologia e oceanografia em tempo real, principal
-                gatilho preditivo.</span
+                >Chuva da estação meteorológica de São Sebastião.</span
               >
               <span class="como-integration-row__tag">Entrada</span>
             </div>
             <div class="como-integration-row">
               <span class="como-integration-row__name"
-                >Registro criptográfico</span
+                >PEMMOBI · Defesa Agropecuária</span
               >
               <span class="como-integration-row__desc"
-                >Histórico imutável das interdições, para impedir fraude de
-                lotes de área interditada.</span
+                >Laudos de toxina em moluscos, usados para conferir o
+                índice.</span
               >
-              <span class="como-integration-row__tag">Opcional</span>
+              <span class="como-integration-row__tag">Conferência</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name">API do modelo</span>
+              <span class="como-integration-row__desc"
+                >Entrega o mapa de risco e as condições propícias ao
+                dashboard.</span
+              >
+              <span class="como-integration-row__tag">Saída</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name">Dashboard Algamar</span>
+              <span class="como-integration-row__desc"
+                >Mapa, previsões, histórico, alertas e relatórios em
+                PDF.</span
+              >
+              <span class="como-integration-row__tag">Saída</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name"
+                >SMS, WhatsApp e e-mail</span
+              >
+              <span class="como-integration-row__desc"
+                >Aviso direto a maricultores e à vigilância sanitária.</span
+              >
+              <span class="como-integration-row__tag">Planejado</span>
+            </div>
+            <div class="como-integration-row">
+              <span class="como-integration-row__name">CETESB e CDA</span>
+              <span class="como-integration-row__desc"
+                >Séries de contagem de células, necessárias para prever alga
+                tóxica.</span
+              >
+              <span class="como-integration-row__tag">Pendente</span>
             </div>
           </div>
         </div>
@@ -661,8 +657,8 @@
         <p class="footer__text">
           Grupo de pesquisa em previsão de florações de algas nocivas no litoral
           de São Paulo.<br />
-          Os resultados de pesquisa apresentados nesta página são uma simulação
-          para fins de demonstração.<br />
+          Resultados de validação retrospectiva com dados de satélite. A Algamar
+          não substitui o monitoramento oficial.<br />
           Em caso de suspeita de contaminação, procure a vigilância sanitária
           local.
         </p>

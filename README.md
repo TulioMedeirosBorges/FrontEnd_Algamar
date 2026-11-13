@@ -15,8 +15,7 @@ uma das três partes do sistema. As outras duas estão em
     <img src="docs/gifs/apresentacao.gif" alt="Vídeo de apresentação do Algamar" width="760">
   </a>
   <br>
-  <sub>Vídeo de apresentação (prévia acelerada).
-  <a href="docs/InicioApresenta%C3%A7%C3%A3o.mp4">Assistir ao vídeo completo, com som (MP4, 43 s)</a></sub>
+  <sub>Vídeo de apresentação (prévia acelerada)
 </p>
 
 > **Como ler os resultados:** o Algamar mostra **risco estimado**, e isso não

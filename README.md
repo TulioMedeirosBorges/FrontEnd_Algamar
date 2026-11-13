@@ -11,7 +11,12 @@ uma das três partes do sistema. As outras duas estão em
 [Visão geral do projeto](#visão-geral-do-projeto).
 
 <p align="center">
-  <img src="docs/gifs/site-inicio.gif" alt="Página inicial do site do Algamar" width="760">
+  <a href="docs/InicioApresenta%C3%A7%C3%A3o.mp4">
+    <img src="docs/gifs/apresentacao.gif" alt="Vídeo de apresentação do Algamar" width="760">
+  </a>
+  <br>
+  <sub>Vídeo de apresentação (prévia acelerada).
+  <a href="docs/InicioApresenta%C3%A7%C3%A3o.mp4">Assistir ao vídeo completo, com som (MP4, 43 s)</a></sub>
 </p>
 
 > **Como ler os resultados:** o Algamar mostra **risco estimado**, e isso não
@@ -39,11 +44,13 @@ uma das três partes do sistema. As outras duas estão em
 
 ## Documentos do projeto
 
-A pasta [`docs/`](docs/) traz os dois documentos acadêmicos do projeto:
+A pasta [`docs/`](docs/) traz os documentos acadêmicos e o vídeo de
+apresentação do projeto:
 
 | Arquivo | O que é |
 |---|---|
 | [`docs/Artigo_Algamar.pdf`](docs/Artigo_Algamar.pdf) | **Artigo** *"Algamar: um sistema preditivo de florações de algas nocivas no litoral do estado de São Paulo"*. Analisa os relatórios emitidos pelo sistema em 29/10/2026 para 14 municípios: distribuição das classes de risco, ranking por município, condições ambientais, índice de condições propícias por espécie e projeção de nov/2026 a jan/2027. Também discute as limitações. |
+| [`docs/InicioApresentação.mp4`](docs/InicioApresenta%C3%A7%C3%A3o.mp4) | **Vídeo de apresentação** (43 s, com som). Mostra a pergunta "onde a alga tóxica vai florescer?", o modelo que aprende o mar com dados de satélite e o mapa de risco três meses à frente. |
 | [`docs/Documentacao_Tecnica_Algamar.pdf`](docs/Documentacao_Tecnica_Algamar.pdf) | **Documentação técnica** (v1.0, set/2026). Cobre a arquitetura, as fontes de dados (Copernicus Marine e Open-Meteo), os pipelines de ML, a API FastAPI, o backend Node/Express, o banco PostgreSQL, a segurança, a infraestrutura via Tailscale, o versionamento e o frontend (Capítulo 14). Também lista as limitações e as pendências. |
 
 Resultados do artigo, para referência rápida (saídas do sistema, **não**
@@ -180,7 +187,8 @@ index.html              redireciona para site/index.html
 docs/
   Artigo_Algamar.pdf               artigo do projeto
   Documentacao_Tecnica_Algamar.pdf documentação técnica v1.0
-  gifs/                            gravações do site e do software
+  InicioApresentação.mp4           vídeo de apresentação (43 s)
+  gifs/                            gravações do site e do software + prévia do vídeo
 
 shared/
   css/base.css          tokens de design (cores, fontes, espaçamentos) + reset
